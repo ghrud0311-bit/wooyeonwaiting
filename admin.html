@@ -459,7 +459,10 @@ function renderList() {
     const gender = row[4]||'';
     const gClass = gender==='남성' ? 'male' : 'female';
     const seat = row[7] || '테이블석';
-    const time = row[2] ? row[2].substring(11,16) : '';
+    const timeStr = row[2] || '';
+    const datepart = timeStr.substring(5,10).replace('-','/');
+    const timepart = timeStr.substring(11,16);
+    const time = timeStr ? datepart + ' ' + timepart : '';
     const priorityClass = seat === '프리패스' ? 'priority-free' : isStarred ? 'priority-star' : '';
     return `<div class="waiting-item ${priorityClass}">
       <button class="star-btn ${isStarred?'active':''}" onclick="toggleStar(${rawIdx})">★</button>
