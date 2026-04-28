@@ -46,7 +46,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .seat-dot.female { background: var(--female); }
 .seat-label { font-size: 11px; color: var(--text2); flex: 1; }
 .counter { display: flex; align-items: center; }
-.counter-btn { width: 28px; height: 28px; background: var(--surface2); border: 1px solid var(--border); font-size: 16px; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; }
+.counter-btn { width: 28px; height: 28px; background: var(--surface2); border: 1px solid var(--border); font-size: 16px; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .counter-btn:first-child { border-radius: 6px 0 0 6px; }
 .counter-btn:last-child { border-radius: 0 6px 6px 0; }
 .counter-btn:hover:not(:disabled) { background: var(--border); }
@@ -61,23 +61,35 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .seat-remain.ok { color: var(--success); }
 .seat-remain.warn { color: var(--warning); }
 .seat-remain.full { color: var(--danger); }
+
+/* Waiting list */
 .waiting-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 .waiting-empty { padding: 2rem; text-align: center; font-size: 13px; color: var(--text3); }
-.waiting-item { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.waiting-item { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
 .waiting-item:last-child { border-bottom: none; }
-.waiting-item.priority { background: #fffbf0; }
-.star-btn { background: none; border: none; font-size: 18px; cursor: pointer; flex-shrink: 0; line-height: 1; padding: 2px; color: var(--border2); transition: color 0.15s; }
+.waiting-item.priority-free { background: #fffbf0; }
+.waiting-item.priority-star { background: #f8f8ff; }
+.star-btn { background: none; border: none; font-size: 16px; cursor: pointer; flex-shrink: 0; line-height: 1; padding: 2px; color: var(--border2); transition: color 0.15s; }
 .star-btn.active { color: #f0b429; }
-.waiting-num { font-size: 11px; color: var(--text3); min-width: 20px; }
+.waiting-num { font-size: 11px; color: var(--text3); min-width: 18px; flex-shrink: 0; }
 .waiting-info { flex: 1; min-width: 0; }
+.waiting-name-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .waiting-name { font-size: 13px; font-weight: 500; }
-.waiting-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
-.waiting-gender { font-size: 11px; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
-.waiting-gender.male { background: #eef3fb; color: var(--male); }
-.waiting-gender.female { background: #fbeef5; color: var(--female); }
-.waiting-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.sms-btn { padding: 5px 9px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; color: var(--text2); cursor: pointer; font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; }
-.enter-btn { padding: 5px 9px; background: var(--accent); border: none; border-radius: 6px; font-size: 11px; color: #fff; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; }
+.waiting-meta { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.gender-badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; }
+.gender-badge.male { background: #eef3fb; color: var(--male); }
+.gender-badge.female { background: #fbeef5; color: var(--female); }
+.seat-badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 500; flex-shrink: 0; }
+.seat-badge.table { background: #eef3fb; color: #2a5fa8; }
+.seat-badge.bar { background: #eef6f1; color: #2a7a4a; }
+.seat-badge.free { background: #fdf6e0; color: #8a6020; }
+.waiting-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.action-btn { padding: 5px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); }
+.action-btn:hover { border-color: var(--border2); }
+.action-btn.call { background: #eef6f1; border-color: #c8e0d0; color: var(--success); }
+.action-btn.enter { background: var(--accent); border-color: var(--accent); color: #fff; }
+.action-btn.enter:hover { background: #3a3834; }
+
 .next-banner { background: #fffbf0; border: 1px solid #e8d89a; border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 8px; display: none; }
 .next-label { font-size: 10px; color: var(--warning); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
 .next-name { font-size: 15px; font-weight: 500; }
@@ -218,14 +230,22 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 <script>
 const SHEET_ID = '1NmPb6wxX0usqeP-gd7cFQPgHecLQsCYcA3i3wcU3uwc';
 const API_KEY = 'AIzaSyDNs6DjFlPRHukWl572r1pMZV72F6ZtODI';
-const RANGE = '시트1!A:G';
+const RANGE = '시트1!A:H';
 const ADMIN_PW = '1234';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
 const TABLE_MAX = 26;
 const BAR_MAX = 6;
 
+// 우선순위: 프리패스(0) > 별표(1) > 바(2) > 테이블(3)
+function getSeatPriority(seat) {
+  if (seat === '프리패스') return 0;
+  if (seat === '바자리') return 2;
+  return 3; // 테이블석 기본
+}
+
 let allRows = [];
-let starred = JSON.parse(localStorage.getItem('starred') || '[]');
+let rawRows = []; // 원본 인덱스 보존용
+let starred = JSON.parse(localStorage.getItem('starred') || '[]'); // 원본 인덱스 기준
 let seats = JSON.parse(localStorage.getItem('seats') || '{"tM":0,"tF":0,"bM":0,"bF":0}');
 let isFull = false;
 
@@ -257,11 +277,7 @@ function updateSeat(id, delta) {
   const max = prefix === 't' ? TABLE_MAX : BAR_MAX;
   const m = parseInt(document.getElementById(prefix+'M').textContent)||0;
   const f = parseInt(document.getElementById(prefix+'F').textContent)||0;
-  const currentTotal = m + f;
-
-  // 최대 초과 방지
-  if (delta > 0 && currentTotal >= max) return;
-
+  if (delta > 0 && m + f >= max) return;
   const el = document.getElementById(id);
   let val = parseInt(el.textContent) + delta;
   if (val < 0) val = 0;
@@ -270,8 +286,6 @@ function updateSeat(id, delta) {
   localStorage.setItem('seats', JSON.stringify(seats));
   updateSeatUI(prefix, max);
   updateNextRecommend();
-
-  // 테이블 변경 시 만석 자동 판단 + 구글시트 저장
   if (prefix === 't') {
     const tTotal = (parseInt(seats.tM)||0) + (parseInt(seats.tF)||0);
     const remain = Math.max(TABLE_MAX - tTotal, 0);
@@ -290,29 +304,18 @@ function updateSeatUI(prefix, max) {
   const f = parseInt(document.getElementById(prefix+'F').textContent)||0;
   const total = m + f;
   const remain = Math.max(max - total, 0);
-
   document.getElementById(prefix+'MBar').style.width = Math.min(m/max*100,100) + '%';
   document.getElementById(prefix+'FBar').style.width = Math.min(f/max*100,100) + '%';
   document.getElementById(prefix+'Ratio').textContent = '남 ' + m + ' / 여 ' + f + ' / 총 ' + total + '명';
-
-  // + 버튼 비활성화
   const mPlus = document.getElementById(prefix+'MPlus');
   const fPlus = document.getElementById(prefix+'FPlus');
   if (mPlus) mPlus.disabled = total >= max;
   if (fPlus) fPlus.disabled = total >= max;
-
   if (prefix === 't') {
     const remainEl = document.getElementById('tRemain');
-    if (remain === 0) {
-      remainEl.textContent = '만석!';
-      remainEl.className = 'seat-remain full';
-    } else if (remain <= 3) {
-      remainEl.textContent = '남은 자리 ' + remain + '명';
-      remainEl.className = 'seat-remain warn';
-    } else {
-      remainEl.textContent = '남은 자리 ' + remain + '명';
-      remainEl.className = 'seat-remain ok';
-    }
+    if (remain === 0) { remainEl.textContent = '만석!'; remainEl.className = 'seat-remain full'; }
+    else if (remain <= 3) { remainEl.textContent = '남은 자리 ' + remain + '명'; remainEl.className = 'seat-remain warn'; }
+    else { remainEl.textContent = '남은 자리 ' + remain + '명'; remainEl.className = 'seat-remain ok'; }
   }
 }
 
@@ -333,25 +336,34 @@ function updateFullStatusUI() {
   }
 }
 
-function toggleStar(idx) {
-  const i = starred.indexOf(idx);
-  if (i >= 0) starred.splice(i, 1); else starred.push(idx);
+function toggleStar(rawIdx) {
+  const i = starred.indexOf(rawIdx);
+  if (i >= 0) starred.splice(i, 1); else starred.push(rawIdx);
   localStorage.setItem('starred', JSON.stringify(starred));
-  renderList();
+  sortAndRender();
   updateNextRecommend();
+}
+
+function callGuest(phone) {
+  window.location.href = 'tel:' + phone.replace(/[^0-9]/g, '');
 }
 
 function updateNextRecommend() {
   if (!allRows.length) { document.getElementById('nextBanner').style.display = 'none'; return; }
-  const starredRows = allRows.filter((r,i) => starred.includes(i));
-  if (starredRows.length > 0) { showNextBanner(starredRows[0], '★ 우선순번'); return; }
+  // 우선순위 1위 = 프리패스
+  const freePass = allRows.find(r => (r.row[7]||'') === '프리패스');
+  if (freePass) { showNextBanner(freePass.row, '프리패스'); return; }
+  // 우선순위 2위 = 별표
+  const starredRow = allRows.find(r => starred.includes(r.rawIdx));
+  if (starredRow) { showNextBanner(starredRow.row, '★ 우선순번'); return; }
+  // 우선순위 3위 = 성비 기반
   const tM = parseInt(document.getElementById('tM').textContent)||0;
   const tF = parseInt(document.getElementById('tF').textContent)||0;
   const bM = parseInt(document.getElementById('bM').textContent)||0;
   const bF = parseInt(document.getElementById('bF').textContent)||0;
   const needMale = (tM+bM) <= (tF+bF);
-  const rec = allRows.find(r => needMale ? r[4]==='남성' : r[4]==='여성') || allRows[0];
-  showNextBanner(rec, needMale ? '남성 부족' : '여성 부족');
+  const rec = allRows.find(r => needMale ? r.row[4]==='남성' : r.row[4]==='여성') || allRows[0];
+  showNextBanner(rec.row, needMale ? '남성 부족' : '여성 부족');
 }
 
 function showNextBanner(row, reason) {
@@ -360,9 +372,11 @@ function showNextBanner(row, reason) {
   document.getElementById('nextMeta').textContent = (row[6]||'') + ' · ' + reason;
 }
 
-async function enterGuest(rowIndex) {
+async function enterGuest(rawIdx) {
   if (!confirm('입장 처리하시겠어요?')) return;
-  const row = allRows[rowIndex];
+  const item = allRows.find(r => r.rawIdx === rawIdx);
+  if (!item) return;
+  const row = item.row;
   try {
     await fetch(GAS_URL, {
       method: 'POST', mode: 'no-cors',
@@ -370,12 +384,9 @@ async function enterGuest(rowIndex) {
       body: JSON.stringify({ type: 'delete', name: row[3], phone: row[6] })
     });
   } catch(e) {}
-  allRows.splice(rowIndex, 1);
-  starred = starred.map(i => i > rowIndex ? i-1 : i).filter(i => i !== rowIndex);
+  starred = starred.filter(i => i !== rawIdx);
   localStorage.setItem('starred', JSON.stringify(starred));
-  renderList();
-  updateStats();
-  updateNextRecommend();
+  await loadData();
 }
 
 function sendSMS(row) {
@@ -387,21 +398,53 @@ function sendSMS(row) {
   }
 }
 
+function getSeatBadge(seat) {
+  if (seat === '바자리') return '<span class="seat-badge bar">바</span>';
+  if (seat === '프리패스') return '<span class="seat-badge free">프</span>';
+  return '<span class="seat-badge table">테</span>';
+}
+
 async function loadData() {
   try {
     const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + encodeURIComponent(RANGE) + '?key=' + API_KEY);
     const data = await res.json();
     if (data.error) return;
-    allRows = (data.values||[]).slice(1).filter(r => r[3] && r[3].toString().trim() !== '');
-    renderList();
+    rawRows = (data.values||[]).slice(1).filter(r => r[3] && r[3].toString().trim() !== '');
+    sortAndRender();
     updateStats();
     updateNextRecommend();
   } catch(e) {}
 }
 
+function sortAndRender() {
+  // 우선순위 정렬: 프리패스(0) > 별표(1) > 바(2) > 테이블(3), 같으면 등록순
+  allRows = rawRows.map((row, rawIdx) => ({ row, rawIdx })).sort((a, b) => {
+    const aSeat = a.row[7] || '테이블석';
+    const bSeat = b.row[7] || '테이블석';
+    const aStarred = starred.includes(a.rawIdx);
+    const bStarred = starred.includes(b.rawIdx);
+
+    // 프리패스 최우선
+    if (aSeat === '프리패스' && bSeat !== '프리패스') return -1;
+    if (bSeat === '프리패스' && aSeat !== '프리패스') return 1;
+
+    // 별표 다음
+    if (aStarred && !bStarred) return -1;
+    if (bStarred && !aStarred) return 1;
+
+    // 바 > 테이블
+    if (aSeat === '바자리' && bSeat !== '바자리') return -1;
+    if (bSeat === '바자리' && aSeat !== '바자리') return 1;
+
+    // 같으면 등록순
+    return a.rawIdx - b.rawIdx;
+  });
+  renderList();
+}
+
 function updateStats() {
-  document.getElementById('totalCount').textContent = allRows.length;
-  document.getElementById('totalPeople').textContent = allRows.reduce((s,r) => s+(parseInt(r[5])||0), 0);
+  document.getElementById('totalCount').textContent = rawRows.length;
+  document.getElementById('totalPeople').textContent = rawRows.reduce((s,r) => s+(parseInt(r[5])||0), 0);
 }
 
 function renderList() {
@@ -411,23 +454,28 @@ function renderList() {
     document.getElementById('nextBanner').style.display = 'none';
     return;
   }
-  el.innerHTML = allRows.map((row,i) => {
-    const isStarred = starred.includes(i);
+  el.innerHTML = allRows.map(({row, rawIdx}, displayIdx) => {
+    const isStarred = starred.includes(rawIdx);
     const gender = row[4]||'';
-    const gClass = gender==='남성' ? 'male' : gender==='여성' ? 'female' : '';
+    const gClass = gender==='남성' ? 'male' : 'female';
+    const seat = row[7] || '테이블석';
     const time = row[2] ? row[2].substring(11,16) : '';
-    const seat = row[7] || '';
-    return `<div class="waiting-item ${isStarred?'priority':''}">
-      <button class="star-btn ${isStarred?'active':''}" onclick="toggleStar(${i})">★</button>
-      <span class="waiting-num">${i+1}</span>
+    const priorityClass = seat === '프리패스' ? 'priority-free' : isStarred ? 'priority-star' : '';
+    return `<div class="waiting-item ${priorityClass}">
+      <button class="star-btn ${isStarred?'active':''}" onclick="toggleStar(${rawIdx})">★</button>
+      <span class="waiting-num">${displayIdx+1}</span>
       <div class="waiting-info">
-        <p class="waiting-name">${row[3]||'—'}</p>
-        <p class="waiting-meta">${row[5]||'—'}명 · ${row[6]||'—'} · ${time}${seat ? ' · ' + seat : ''}</p>
+        <div class="waiting-name-row">
+          <span class="waiting-name">${row[3]||'—'}</span>
+          <span class="gender-badge ${gClass}">${gender}</span>
+          ${getSeatBadge(seat)}
+        </div>
+        <p class="waiting-meta">${row[5]||'—'}명 · ${time}</p>
       </div>
-      <span class="waiting-gender ${gClass}">${gender}</span>
       <div class="waiting-actions">
-        <button class="sms-btn" onclick="sendSMS(allRows[${i}])">문자</button>
-        <button class="enter-btn" onclick="enterGuest(${i})">입장</button>
+        <button class="action-btn" onclick="sendSMS(rawRows[${rawIdx}])">문자</button>
+        <button class="action-btn call" onclick="callGuest('${row[6]||''}')">전화</button>
+        <button class="action-btn enter" onclick="enterGuest(${rawIdx})">입장</button>
       </div>
     </div>`;
   }).join('');
