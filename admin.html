@@ -436,27 +436,6 @@ function getTimeStr(row) {
   return t.substring(5,10).replace('-','/') + ' ' + t.substring(11,16);
 }
 
-  el.innerHTML = starred.map((rawIdx, i) => {
-    const row = rawRows[rawIdx];
-    if (!row) return '';
-    const gender = row[4]||'';
-    const gClass = gender==='남성'?'male':'female';
-    const seat = row[7]||'테이블석';
-    const isComingS = comingSet.includes(rawIdx);
-    return `<div class="starred-item ${rankClass[i]} ${isComingS?'coming-state':''}">
-      <span class="rank-label ${rankLabelClass[i]}">${rankLabel[i]}</span>
-      <div class="waiting-info">
-        <div class="name-row">
-          <span class="waiting-name">${row[3]||'—'}</span>
-          <span class="gender-badge ${gClass}">${gender}</span>
-          ${getSeatBadge(seat)}
-        </div>
-        <p class="waiting-meta">${row[5]||'—'}명 · ${getTimeStr(row)}</p>
-      </div>
-      ${getActionBtns(rawIdx, row[6]||'')}
-    </div>`;
-  }).join('');
-}
 
 async function loadData() {
   try {
