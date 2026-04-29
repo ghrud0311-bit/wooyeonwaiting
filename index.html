@@ -46,8 +46,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .dot { display: inline-block; animation: blink 1.2s ease-in-out infinite; color: var(--text3); font-size: 28px; line-height: 1; }
 .dot:nth-child(2) { animation-delay: 0.2s; }
 .dot:nth-child(3) { animation-delay: 0.4s; }
-.register-btn { display: block; width: 100%; margin: 0.8rem 0 0; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 400; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: background 0.15s; }
-.register-btn:hover { background: var(--accent2); }
+.register-btn { display: block; width: 100%; margin: 0.8rem 0 0; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; }
 .section-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin: 1.2rem 0 0.6rem; }
 .search-row { display: flex; gap: 8px; }
 .search-input { flex: 1; padding: 10px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; }
@@ -62,38 +61,80 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .refresh-row { display: flex; justify-content: center; margin-top: 1.4rem; }
 .refresh-btn { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 6px 12px; }
 .errmsg { font-size: 12px; color: var(--danger); text-align: center; margin-top: 6px; min-height: 16px; }
-.form-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(4px); z-index: 100; align-items: flex-end; justify-content: center; }
+
+/* Form overlay */
+.form-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 100; align-items: flex-end; justify-content: center; }
 .form-overlay.active { display: flex; }
-.form-sheet { background: var(--surface); border-radius: 18px 18px 0 0; border: 1px solid var(--border); width: 100%; max-width: 400px; padding: 1.3rem 1.2rem 2.5rem; max-height: 92vh; overflow-y: auto; animation: slideUp 0.28s ease; }
+.form-sheet { background: var(--surface); border-radius: 20px 20px 0 0; border: 1px solid var(--border); width: 100%; max-width: 400px; padding-bottom: 2rem; max-height: 90vh; overflow: hidden; animation: slideUp 0.3s ease; display: flex; flex-direction: column; }
 @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-.form-handle { width: 32px; height: 3px; background: var(--border2); border-radius: 2px; margin: 0 auto 1.4rem; }
-.form-title { font-size: 17px; font-weight: 400; margin-bottom: 0.3rem; }
-.form-sub { font-size: 12px; color: var(--text3); margin-bottom: 1.3rem; }
-.notice-box { background: #fdf8f2; border: 1px solid #e8ddd0; border-radius: 8px; padding: 0.9rem; margin-bottom: 1.2rem; }
-.notice-box-item { display: flex; gap: 8px; font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 0.35rem; }
+
+/* Step progress */
+.step-progress { padding: 1.2rem 1.4rem 0; }
+.progress-bar { display: flex; gap: 4px; margin-bottom: 1rem; }
+.progress-seg { flex: 1; height: 3px; background: var(--border); border-radius: 2px; transition: background 0.3s; }
+.progress-seg.done { background: var(--accent); }
+.progress-seg.active { background: var(--accent); opacity: 0.5; }
+
+/* Step nav */
+.step-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 1.4rem 1rem; }
+.nav-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.nav-btn:hover:not(:disabled) { border-color: var(--border2); background: var(--border); }
+.nav-btn:disabled { opacity: 0; pointer-events: none; }
+.nav-btn.next { background: var(--accent); color: #fff; border-color: var(--accent); }
+.nav-btn.next:hover { background: var(--accent2); }
+.nav-btn.next:disabled { opacity: 0.3; pointer-events: none; }
+.step-counter { font-size: 11px; color: var(--text3); }
+
+/* Slides container */
+.slides-container { overflow: hidden; flex: 1; }
+.slides-track { display: flex; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
+.slide { min-width: 100%; padding: 0 1.4rem; overflow-y: auto; max-height: 55vh; }
+
+/* Slide content */
+.slide-title { font-size: 17px; font-weight: 500; margin-bottom: 0.3rem; }
+.slide-sub { font-size: 12px; color: var(--text3); margin-bottom: 1.4rem; }
+
+/* Notice */
+.notice-box { background: #fdf8f2; border: 1px solid #e8ddd0; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+.notice-box-item { display: flex; gap: 8px; font-size: 12px; color: var(--text2); line-height: 1.7; margin-bottom: 0.3rem; }
 .notice-box-item:last-child { margin-bottom: 0; }
-.notice-agree { display: flex; align-items: center; gap: 8px; margin-bottom: 1.3rem; cursor: pointer; }
-.notice-agree input { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
-.notice-agree span { font-size: 12px; color: var(--text2); }
-.field { margin-bottom: 0.9rem; }
-.field-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 5px; }
-.field-input { width: 100%; padding: 10px 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; }
+.confirm-btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; margin-top: 0.5rem; }
+
+/* Input */
+.field-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 6px; }
+.field-input { width: 100%; padding: 12px 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 15px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; }
 .field-input:focus { border-color: var(--border2); }
-.btn-group { display: grid; gap: 8px; }
-.btn-group.col2 { grid-template-columns: 1fr 1fr; }
-.btn-group.col3 { grid-template-columns: 1fr 1fr 1fr; }
-.btn-group.col4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-.sel-btn { padding: 10px 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--text2); font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: all 0.15s; text-align: center; line-height: 1.4; }
-.sel-btn.selected { background: var(--text); border-color: var(--text); color: #fff; }
-.seat-desc { font-size: 11px; color: var(--text2); background: var(--surface2); border-radius: 8px; padding: 0.7rem 0.9rem; margin-top: 8px; line-height: 1.6; display: none; }
-.seat-desc.visible { display: block; }
-.submit-btn { width: 100%; padding: 13px; margin-top: 0.4rem; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 400; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; }
-.submit-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.cancel-btn { width: 100%; padding: 11px; margin-top: 6px; background: none; color: var(--text3); border: none; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; }
 .phone-wrap { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.phone-prefix { padding: 10px 0 10px 13px; font-size: 14px; color: var(--text); white-space: nowrap; }
-.phone-input { flex: 1; padding: 10px 13px 10px 4px; background: transparent; border: none; font-size: 14px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; }
+.phone-prefix { padding: 12px 0 12px 13px; font-size: 15px; color: var(--text); white-space: nowrap; }
+.phone-input { flex: 1; padding: 12px 13px 12px 4px; background: transparent; border: none; font-size: 15px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; }
 .phone-wrap:focus-within { border-color: var(--border2); }
+
+/* Buttons */
+.btn-group { display: grid; gap: 8px; margin-bottom: 10px; }
+.btn-group.col2 { grid-template-columns: 1fr 1fr; }
+.btn-group.col4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.sel-btn { padding: 12px 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--text2); font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: all 0.15s; text-align: center; }
+.sel-btn.selected { background: var(--text); border-color: var(--text); color: #fff; }
+.people-group { display: none; margin-top: 8px; }
+.people-group.visible { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+
+/* Choice buttons (바틀/바자리) */
+.choice-wrap { display: flex; flex-direction: column; gap: 10px; margin-top: 0.5rem; }
+.choice-btn { padding: 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); font-size: 13px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; cursor: pointer; text-align: left; transition: all 0.15s; line-height: 1.4; }
+.choice-btn:hover { border-color: var(--border2); }
+.choice-btn.selected-yes { background: var(--text); border-color: var(--text); color: #fff; }
+.choice-btn.selected-no { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+.choice-label { font-weight: 500; font-size: 14px; margin-bottom: 2px; }
+.choice-note { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+
+/* Complete popup */
+.complete-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+.complete-overlay.active { display: flex; }
+.complete-box { background: var(--surface); border-radius: 16px; padding: 2rem 1.5rem; width: 100%; max-width: 320px; text-align: center; animation: popIn 0.3s ease; }
+@keyframes popIn { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
+.complete-icon { font-size: 36px; margin-bottom: 0.8rem; }
+.complete-title { font-size: 17px; font-weight: 500; margin-bottom: 0.5rem; }
+.complete-sub { font-size: 13px; color: var(--text2); line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -150,59 +191,126 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   <div class="errmsg" id="errmsg"></div>
 </div>
 
+<!-- Form overlay -->
 <div class="form-overlay" id="formOverlay">
   <div class="form-sheet">
-    <div class="form-handle"></div>
-    <p class="form-title">웨이팅 등록</p>
-    <p class="form-sub">아래 정보를 입력해주세요</p>
-    <div class="notice-box">
-      <div class="notice-box-item"><span>✨</span><span>88년생(39세) 이하 고객님만 입장 가능합니다.</span></div>
-      <div class="notice-box-item"><span>📞</span><span>연락 부재 시 다음 순번으로 넘어갑니다. 전화 꼭 확인해주세요!</span></div>
-      <div class="notice-box-item"><span>⏳</span><span>대기 인원이 많을 경우 순번 없이 마감될 수 있습니다.</span></div>
-      <div class="notice-box-item"><span>🕑</span><span>1시 30분 마감입니다.</span></div>
-    </div>
-    <label class="notice-agree">
-      <input type="checkbox" id="agreeCheck" onchange="checkAgree()">
-      <span>안내사항을 확인했습니다</span>
-    </label>
-    <div class="field">
-      <p class="field-label">성함</p>
-      <input class="field-input" id="fName" type="text" placeholder="홍길동">
-    </div>
-    <div class="field">
-      <p class="field-label">성별</p>
-      <div class="btn-group col2">
-        <button class="sel-btn" id="g0" onclick="selectGender('남성')">남성</button>
-        <button class="sel-btn" id="g1" onclick="selectGender('여성')">여성</button>
+
+    <!-- Progress -->
+    <div class="step-progress">
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-seg active" id="seg0"></div>
+        <div class="progress-seg" id="seg1"></div>
+        <div class="progress-seg" id="seg2"></div>
+        <div class="progress-seg" id="seg3"></div>
+        <div class="progress-seg" id="seg4"></div>
       </div>
     </div>
-    <div class="field">
-      <p class="field-label">인원</p>
-      <div class="btn-group col4">
-        <button class="sel-btn" id="p1" onclick="selectPeople('1')">1</button>
-        <button class="sel-btn" id="p2" onclick="selectPeople('2')">2</button>
-        <button class="sel-btn" id="p3" onclick="selectPeople('3')">3</button>
-        <button class="sel-btn" id="p4" onclick="selectPeople('4')">4</button>
+
+    <!-- Nav -->
+    <div class="step-nav">
+      <button class="nav-btn prev" id="prevBtn" onclick="prevStep()" disabled>‹</button>
+      <span class="step-counter" id="stepCounter"></span>
+      <button class="nav-btn next" id="nextBtn" onclick="nextStep()" disabled>›</button>
+    </div>
+
+    <!-- Slides -->
+    <div class="slides-container">
+      <div class="slides-track" id="slidesTrack">
+
+        <!-- Step 0: 유의사항 -->
+        <div class="slide">
+          <p class="slide-title">웨이팅 등록 전<br>꼭 확인해주세요</p>
+          <p class="slide-sub">아래 내용을 확인하신 후 등록해주세요</p>
+          <div class="notice-box">
+            <div class="notice-box-item"><span>✨</span><span>88년생(39세) 이하 고객님만 입장 가능합니다.</span></div>
+            <div class="notice-box-item"><span>📞</span><span>연락 부재 시 다음 순번으로 바로 넘어갑니다. 전화 꼭 확인해주세요!</span></div>
+            <div class="notice-box-item"><span>⏳</span><span>대기 인원이 많을 경우 순번 없이 마감될 수 있습니다.</span></div>
+            <div class="notice-box-item"><span>🕑</span><span>1시 30분 마감입니다.</span></div>
+          </div>
+          <button class="confirm-btn" onclick="goStep(1)">확인했어요</button>
+        </div>
+
+        <!-- Step 1: 이름 -->
+        <div class="slide">
+          <p class="slide-title">성함을<br>입력해주세요</p>
+          <p class="slide-sub">입장 시 호명에 사용돼요</p>
+          <p class="field-label">성함</p>
+          <input class="field-input" id="fName" type="text" placeholder="홍길동" oninput="checkStep(1)">
+        </div>
+
+        <!-- Step 2: 성별 + 인원 -->
+        <div class="slide">
+          <p class="slide-title">성별과 인원을<br>선택해주세요</p>
+          <p class="slide-sub">성별 선택 후 인원이 나타나요</p>
+          <p class="field-label" style="margin-bottom:8px">성별</p>
+          <div class="btn-group col2">
+            <button class="sel-btn" id="g0" onclick="selectGender('남성')">남성</button>
+            <button class="sel-btn" id="g1" onclick="selectGender('여성')">여성</button>
+          </div>
+          <div class="people-group" id="peopleGroup">
+            <button class="sel-btn" id="p1" onclick="selectPeople('1')">1명</button>
+            <button class="sel-btn" id="p2" onclick="selectPeople('2')">2명</button>
+            <button class="sel-btn" id="p3" onclick="selectPeople('3')">3명</button>
+            <button class="sel-btn" id="p4" onclick="selectPeople('4')">4명</button>
+          </div>
+        </div>
+
+        <!-- Step 3: 연락처 -->
+        <div class="slide">
+          <p class="slide-title">연락처를<br>입력해주세요</p>
+          <p class="slide-sub">입장 안내 전화에 사용돼요</p>
+          <p class="field-label">연락처</p>
+          <div class="phone-wrap">
+            <span class="phone-prefix">010-</span>
+            <input class="phone-input" id="fPhone" type="tel" placeholder="0000-0000" maxlength="9" oninput="formatPhone(); checkStep(3)">
+          </div>
+        </div>
+
+        <!-- Step 4: 바틀 -->
+        <div class="slide">
+          <p class="slide-title">바틀 구매 시<br>최우선으로 연락드려요</p>
+          <p class="slide-sub">바틀을 구매하시겠어요?</p>
+          <div class="choice-wrap">
+            <button class="choice-btn" id="bottleYes" onclick="selectChoice('bottle','yes')">
+              <div class="choice-label">네, 구매할게요 🥃</div>
+              <div class="choice-note">최우선으로 연락드릴게요</div>
+            </button>
+            <button class="choice-btn" id="bottleNo" onclick="selectChoice('bottle','no')">
+              <div class="choice-label">아니오, 기다릴게요</div>
+            </button>
+          </div>
+          <p style="font-size:11px;color:var(--text3);margin-top:10px;">* 3인 이상 시 20만원 이상 바틀을 구매하셔야 해요</p>
+        </div>
+
+        <!-- Step 5: 바자리 -->
+        <div class="slide">
+          <p class="slide-title">닷지석도<br>괜찮으신가요?</p>
+          <p class="slide-sub">주방 앞 바 자리를 먼저 안내드릴 수 있어요</p>
+          <div class="choice-wrap">
+            <button class="choice-btn" id="barYes" onclick="selectChoice('bar','yes')">
+              <div class="choice-label">네, 바 자리도 괜찮아요</div>
+              <div class="choice-note">바 자리 나면 먼저 연락드려요</div>
+            </button>
+            <button class="choice-btn" id="barNo" onclick="selectChoice('bar','no')">
+              <div class="choice-label">아니오, 테이블석 기다릴게요</div>
+            </button>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:0.8rem;margin-top:10px;">
+            <p style="font-size:11px;color:var(--text3);line-height:1.7;">* 닷지석에 앉아계시다 테이블석 자리가 나면 먼저 이동시켜드려요<br>* 테이블석에 자리가 나지 않을 경우 이동이 어려울 수 있어요</p>
+          </div>
+        </div>
+
       </div>
     </div>
-    <div class="field">
-      <p class="field-label">연락처</p>
-      <div class="phone-wrap">
-        <span class="phone-prefix">010-</span>
-        <input class="phone-input" id="fPhone" type="tel" placeholder="0000-0000" maxlength="9">
-      </div>
-    </div>
-    <div class="field">
-      <p class="field-label">좌석 선택</p>
-      <div class="btn-group col3">
-        <button class="sel-btn selected" id="s0" onclick="selectSeat('테이블석')">테이블석<br><small>앉을래요</small></button>
-        <button class="sel-btn" id="s1" onclick="selectSeat('바자리')">바 자리도<br><small>괜찮아요</small></button>
-        <button class="sel-btn" id="s2" onclick="selectSeat('프리패스')">프리패스<br><small>할게요</small></button>
-      </div>
-      <div class="seat-desc visible" id="seatDesc">메인 좌석이에요. 다른 손님들과 마주 보며 편하게 대화할 수 있어요.</div>
-    </div>
-    <button class="submit-btn" id="submitBtn" onclick="submitForm()" disabled>등록하기</button>
-    <button class="cancel-btn" onclick="closeForm()">취소</button>
+  </div>
+</div>
+
+<!-- Complete popup -->
+<div class="complete-overlay" id="completeOverlay">
+  <div class="complete-box">
+    <div class="complete-icon">🎉</div>
+    <p class="complete-title">등록이 완료되었습니다</p>
+    <p class="complete-sub">잠시만 기다리시면<br>순번을 확인할 수 있어요</p>
   </div>
 </div>
 
@@ -213,16 +321,13 @@ const RANGE = '시트1!A:G';
 const SETTINGS_RANGE = '설정!A1:A2';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
 
-const SEAT_DESCS = {
-  '테이블석': '메인 좌석이에요. 다른 손님들과 마주 보며 편하게 대화할 수 있어요.',
-  '바자리': '주방 앞 바 자리에서 대기하다가 테이블석이 나면 이동해드려요. 바 자리가 먼저 나는 경우 우선 연락드리지만, 테이블석으로의 이동이 어려울 수도 있어요.',
-  '프리패스': '위스키 바틀 구매 시 최우선으로 연락드려요. 3인 이상은 20만원 이상 바틀 구매가 필요해요.'
-};
-
-let allRows = [];
+const TOTAL_STEPS = 6;
+let currentStep = 0;
 let selectedGender = '';
 let selectedPeople = '';
-let selectedSeat = '테이블석';
+let bottleChoice = ''; // 'yes' or 'no'
+let barChoice = '';    // 'yes' or 'no'
+let allRows = [];
 let isFullMode = false;
 let tableRemain = 26;
 
@@ -241,25 +346,14 @@ function updateStatus(total) {
   const text = document.getElementById('statusText');
   const btn = document.getElementById('registerBtn');
   if (!isFullMode) {
-    if (tableRemain > 3) {
-      banner.className = 'status-banner open';
-      text.textContent = '현재 입장 가능합니다.';
-    } else if (tableRemain > 0) {
-      banner.className = 'status-banner open-few';
-      text.textContent = '현재 ' + tableRemain + '명 입장 가능합니다.';
-    } else {
-      banner.className = 'status-banner closed';
-      text.textContent = '현재 웨이팅 등록이 마감되었습니다.';
-    }
+    if (tableRemain > 3) { banner.className = 'status-banner open'; text.textContent = '현재 입장 가능합니다.'; }
+    else if (tableRemain > 0) { banner.className = 'status-banner open-few'; text.textContent = '현재 ' + tableRemain + '명 입장 가능합니다.'; }
+    else { banner.className = 'status-banner closed'; text.textContent = '현재 웨이팅 등록이 마감되었습니다.'; }
     btn.style.display = 'none';
   } else if (total === 0) {
-    banner.className = 'status-banner full';
-    text.textContent = '만석입니다. 웨이팅 등록 부탁드립니다.';
-    btn.style.display = 'block';
+    banner.className = 'status-banner full'; text.textContent = '만석입니다. 웨이팅 등록 부탁드립니다.'; btn.style.display = 'block';
   } else {
-    banner.className = 'status-banner waiting';
-    text.textContent = '현재 ' + total + '팀 대기 중입니다';
-    btn.style.display = 'block';
+    banner.className = 'status-banner waiting'; text.textContent = '현재 ' + total + '팀 대기 중입니다'; btn.style.display = 'block';
   }
 }
 
@@ -296,7 +390,6 @@ document.getElementById('searchInput').addEventListener('keydown', e => { if(e.k
 
 async function loadData() {
   showLoading();
-  document.getElementById('errmsg').textContent = '';
   try {
     const settingsRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + encodeURIComponent(SETTINGS_RANGE) + '?key=' + API_KEY);
     const settingsData = await settingsRes.json();
@@ -306,89 +399,156 @@ async function loadData() {
     }
     const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + encodeURIComponent(RANGE) + '?key=' + API_KEY);
     const data = await res.json();
-    if (data.error) { document.getElementById('errmsg').textContent = '오류: ' + data.error.message; return; }
+    if (data.error) return;
     allRows = (data.values||[]).slice(1).filter(r => r[3] && r[3].toString().trim() !== '');
     document.getElementById('total').textContent = allRows.length;
     updateStatus(allRows.length);
     const n = getParam('name');
     if (n) updateMyInfo(n);
     else document.getElementById('ahead').textContent = '—';
-  } catch(e) {
-    document.getElementById('errmsg').textContent = '데이터를 불러오지 못했어요.';
+  } catch(e) {}
+}
+
+// Form
+function openForm() {
+  currentStep = 0;
+  selectedGender = ''; selectedPeople = ''; bottleChoice = ''; barChoice = '';
+  document.getElementById('fName').value = '';
+  document.getElementById('fPhone').value = '';
+  ['g0','g1','p1','p2','p3','p4'].forEach(id => document.getElementById(id).classList.remove('selected'));
+  ['bottleYes','bottleNo','barYes','barNo'].forEach(id => { document.getElementById(id).classList.remove('selected-yes','selected-no'); });
+  document.getElementById('peopleGroup').className = 'people-group';
+  document.getElementById('formOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  updateSlide();
+}
+
+function closeForm() {
+  document.getElementById('formOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function goStep(n) { currentStep = n; updateSlide(); }
+
+function nextStep() {
+  if (currentStep < TOTAL_STEPS - 1) { currentStep++; updateSlide(); }
+  else { submitForm(); }
+}
+
+function prevStep() {
+  if (currentStep > 0) { currentStep--; updateSlide(); }
+}
+
+function updateSlide() {
+  const track = document.getElementById('slidesTrack');
+  track.style.transform = 'translateX(-' + (currentStep * 100) + '%)';
+
+  // Progress bar
+  for (let i = 0; i < TOTAL_STEPS; i++) {
+    const seg = document.getElementById('seg' + i);
+    if (!seg) continue;
+    if (i < currentStep) seg.className = 'progress-seg done';
+    else if (i === currentStep) seg.className = 'progress-seg active';
+    else seg.className = 'progress-seg';
+  }
+
+  document.getElementById('stepCounter').textContent = (currentStep + 1) + ' / ' + TOTAL_STEPS;
+  document.getElementById('prevBtn').disabled = currentStep === 0;
+
+  // Next button 상태
+  const nextBtn = document.getElementById('nextBtn');
+  if (currentStep === TOTAL_STEPS - 1) {
+    nextBtn.textContent = '등록';
+    nextBtn.disabled = barChoice === '';
+  } else if (currentStep === 0) {
+    nextBtn.disabled = true; // step 0은 확인버튼으로만 이동
+  } else {
+    nextBtn.textContent = '›';
+    nextBtn.disabled = !canProceed();
   }
 }
 
-function openForm() { document.getElementById('formOverlay').classList.add('active'); document.body.style.overflow='hidden'; }
-function closeForm() { document.getElementById('formOverlay').classList.remove('active'); document.body.style.overflow=''; }
+function canProceed() {
+  if (currentStep === 1) return document.getElementById('fName').value.trim().length > 0;
+  if (currentStep === 2) return selectedGender !== '' && selectedPeople !== '';
+  if (currentStep === 3) return document.getElementById('fPhone').value.replace(/\D/g,'').length === 8;
+  if (currentStep === 4) return bottleChoice !== '';
+  if (currentStep === 5) return barChoice !== '';
+  return true;
+}
+
+function checkStep(step) {
+  if (currentStep === step) {
+    document.getElementById('nextBtn').disabled = !canProceed();
+  }
+}
 
 function selectGender(g) {
   selectedGender = g;
   document.getElementById('g0').classList.toggle('selected', g==='남성');
   document.getElementById('g1').classList.toggle('selected', g==='여성');
-  checkAgree();
+  document.getElementById('peopleGroup').className = 'people-group visible';
+  document.getElementById('nextBtn').disabled = !canProceed();
 }
 
 function selectPeople(p) {
   selectedPeople = p;
   for(let i=1;i<=4;i++) document.getElementById('p'+i).classList.toggle('selected', String(i)===p);
-  checkAgree();
+  document.getElementById('nextBtn').disabled = !canProceed();
 }
 
-function selectSeat(s) {
-  selectedSeat = s;
-  const map = {'테이블석': 's0', '바자리': 's1', '프리패스': 's2'};
-  Object.values(map).forEach(id => document.getElementById(id).classList.remove('selected'));
-  document.getElementById(map[s]).classList.add('selected');
-  const desc = document.getElementById('seatDesc');
-  desc.textContent = SEAT_DESCS[s];
-  desc.classList.add('visible');
-  checkAgree();
+function selectChoice(type, val) {
+  if (type === 'bottle') {
+    bottleChoice = val;
+    document.getElementById('bottleYes').className = 'choice-btn' + (val==='yes' ? ' selected-yes' : '');
+    document.getElementById('bottleNo').className = 'choice-btn' + (val==='no' ? ' selected-no' : '');
+  } else {
+    barChoice = val;
+    document.getElementById('barYes').className = 'choice-btn' + (val==='yes' ? ' selected-yes' : '');
+    document.getElementById('barNo').className = 'choice-btn' + (val==='no' ? ' selected-no' : '');
+  }
+  document.getElementById('nextBtn').disabled = !canProceed();
 }
 
-// 연락처 — 010- 고정, 뒤 8자리만 입력
-document.getElementById('fPhone').addEventListener('input', function() {
-  let val = this.value.replace(/\D/g,'');
+function formatPhone() {
+  const el = document.getElementById('fPhone');
+  let val = el.value.replace(/\D/g,'');
   if (val.length > 8) val = val.slice(0,8);
-  if (val.length <= 4) this.value = val;
-  else this.value = val.slice(0,4) + '-' + val.slice(4);
-  checkAgree();
-});
-
-function getFullPhone() {
-  return '010-' + document.getElementById('fPhone').value;
+  if (val.length <= 4) el.value = val;
+  else el.value = val.slice(0,4) + '-' + val.slice(4);
 }
 
-function checkAgree() {
-  const phone = document.getElementById('fPhone').value.replace(/\D/g,'');
-  const ok = document.getElementById('agreeCheck').checked
-    && document.getElementById('fName').value.trim()
-    && phone.length === 8
-    && selectedGender && selectedPeople && selectedSeat;
-  document.getElementById('submitBtn').disabled = !ok;
+function getSeat() {
+  if (bottleChoice === 'yes') return '프리패스';
+  if (barChoice === 'yes') return '바자리';
+  return '테이블석';
 }
-
-document.getElementById('fName').addEventListener('input', checkAgree);
-document.getElementById('agreeCheck').addEventListener('change', checkAgree);
 
 async function submitForm() {
-  const btn = document.getElementById('submitBtn');
   const name = document.getElementById('fName').value.trim();
-  btn.disabled = true; btn.textContent = '등록 중...';
+  const phone = '010-' + document.getElementById('fPhone').value.trim();
+  const seat = getSeat();
+
+  closeForm();
+  document.getElementById('completeOverlay').classList.add('active');
+
   try {
     await fetch(GAS_URL, {
       method: 'POST', mode: 'no-cors',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ name, gender: selectedGender, people: selectedPeople, phone: getFullPhone(), seat: selectedSeat })
+      body: JSON.stringify({ name, gender: selectedGender, people: selectedPeople, phone, seat })
     });
-    closeForm();
-    setTimeout(() => { window.location.href = window.location.pathname + '?name=' + encodeURIComponent(name); }, 4000);
-  } catch(e) {
-    btn.disabled = false; btn.textContent = '등록하기';
-    alert('오류가 발생했어요. 다시 시도해주세요.');
-  }
+  } catch(e) {}
+
+  setTimeout(() => {
+    document.getElementById('completeOverlay').classList.remove('active');
+    window.location.href = window.location.pathname + '?name=' + encodeURIComponent(name);
+  }, 3000);
 }
 
-document.getElementById('formOverlay').addEventListener('click', function(e) { if(e.target===this) closeForm(); });
+document.getElementById('formOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeForm();
+});
 
 const n = getParam('name');
 if (n) { showLoading(); setTimeout(() => { loadData(); setInterval(loadData, 30000); }, 5000); }
