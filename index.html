@@ -146,7 +146,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 @keyframes popIn { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
 .complete-icon { font-size: 36px; margin-bottom: 0.8rem; }
 .complete-title { font-size: 17px; font-weight: 500; margin-bottom: 0.5rem; }
-.complete-sub { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.complete-sub { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 1.2rem; }
+.complete-go-btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; margin-top: 0.5rem; }
+.complete-go-btn:hover { background: var(--accent2); }
 </style>
 </head>
 <body>
@@ -356,6 +358,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="complete-icon">🎉</div>
     <p class="complete-title">등록이 완료되었습니다</p>
     <p class="complete-sub">잠시만 기다리시면<br>순번을 확인할 수 있어요</p>
+    <button class="complete-go-btn" id="completeGoBtn" onclick="goToMyTurn()">순번 확인하러 가기</button>
   </div>
 </div>
 
@@ -549,26 +552,34 @@ function getSeat() {
   return '테이블석';
 }
 
+let pendingName = '';
+
 async function submitForm() {
   const name=document.getElementById('fName').value.trim();
   const phone='010-'+document.getElementById('fPhone').value.trim();
   const seat=getSeat();
+  pendingName = name;
   closeForm();
   document.getElementById('completeOverlay').classList.add('active');
   try {
     await fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({name,gender:selectedGender,people:selectedPeople,phone,seat})});
   } catch(e){}
-  setTimeout(()=>{
-    document.getElementById('completeOverlay').classList.remove('active');
-    window.location.href=window.location.pathname+'?name='+encodeURIComponent(name);
-  }, 1000);
+}
+
+function goToMyTurn() {
+  document.getElementById('completeOverlay').classList.remove('active');
+  window.location.href=window.location.pathname+'?name='+encodeURIComponent(pendingName);
 }
 
 document.getElementById('formOverlay').addEventListener('click',function(e){if(e.target===this)closeForm();});
 
 const n=getParam('name');
-if(n){showLoading();setTimeout(()=>{loadData();setInterval(loadData,30000);},5000);}
+if(n){
+  showLoading();
+  loadData();
+  setInterval(loadData,30000);
+}
 else{loadData();setInterval(loadData,30000);}
 </script>
 </body>
