@@ -268,10 +268,19 @@ function doLogout() {
   document.getElementById('pwInput').value = '';
 }
 
-function initAdmin() {
+async function initAdmin() {
   ['tM','tF','bM','bF'].forEach(k => { document.getElementById(k).textContent = seats[k] || 0; });
   updateSeatUI('t', TABLE_MAX);
   updateSeatUI('b', BAR_MAX);
+  // 구글시트에서 현재 만석 상태 읽어오기
+  try {
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1')+'?key='+API_KEY);
+    const d = await r.json();
+    if (!d.error && d.values) {
+      isFull = d.values[0][0] === 'TRUE';
+      updateOpStatusUI();
+    }
+  } catch(e) {}
   loadData();
   setInterval(loadData, 30000);
 }
@@ -293,11 +302,9 @@ function updateSeat(id, delta) {
     const tTotal = (parseInt(seats.tM)||0) + (parseInt(seats.tF)||0);
     const remain = Math.max(TABLE_MAX - tTotal, 0);
     const newFull = tTotal >= TABLE_MAX;
-    if (newFull !== isFull) {
-      isFull = newFull;
-      updateOpStatusUI();
-      fetch(GAS_URL + '?type=setFull&value=' + isFull);
-    }
+    isFull = newFull;
+    updateOpStatusUI();
+    fetch(GAS_URL + '?type=setFull&value=' + isFull);
     fetch(GAS_URL + '?type=setSeats&value=' + remain);
   }
 }
