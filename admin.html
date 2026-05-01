@@ -45,7 +45,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .counter-btn:last-child { border-radius: 0 6px 6px 0; }
 .counter-btn:hover:not(:disabled) { background: var(--border); }
 .counter-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.counter-val { width: 32px; height: 28px; background: var(--bg); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); display: flex; align-items: center; justify-content: center; }
+.counter-val { width: 42px; height: 28px; background: var(--bg); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); text-align: center; outline: none; border-left: none; border-right: none; }
 .seat-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 4px; }
 .seat-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
 .seat-bar-fill.male { background: var(--male); }
@@ -178,7 +178,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <span class="seat-label">남성</span>
           <div class="counter">
             <button class="counter-btn" onclick="updateSeat('tM',-1)">−</button>
-            <div class="counter-val" id="tM">0</div>
+            <input class="counter-val" id="tM" type="number" value="0" min="0" max="26" onchange="setSeatDirect('tM', this.value)">
             <button class="counter-btn" id="tMPlus" onclick="updateSeat('tM',1)">+</button>
           </div>
         </div>
@@ -187,7 +187,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <span class="seat-label">여성</span>
           <div class="counter">
             <button class="counter-btn" onclick="updateSeat('tF',-1)">−</button>
-            <div class="counter-val" id="tF">0</div>
+            <input class="counter-val" id="tF" type="number" value="0" min="0" max="26" onchange="setSeatDirect('tF', this.value)">
             <button class="counter-btn" id="tFPlus" onclick="updateSeat('tF',1)">+</button>
           </div>
         </div>
@@ -214,7 +214,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <span class="seat-label">남성</span>
           <div class="counter">
             <button class="counter-btn" onclick="updateSeat('bM',-1)">−</button>
-            <div class="counter-val" id="bM">0</div>
+            <input class="counter-val" id="bM" type="number" value="0" min="0" max="6" onchange="setSeatDirect('bM', this.value)">
             <button class="counter-btn" id="bMPlus" onclick="updateSeat('bM',1)">+</button>
           </div>
         </div>
@@ -223,7 +223,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <span class="seat-label">여성</span>
           <div class="counter">
             <button class="counter-btn" onclick="updateSeat('bF',-1)">−</button>
-            <div class="counter-val" id="bF">0</div>
+            <input class="counter-val" id="bF" type="number" value="0" min="0" max="6" onchange="setSeatDirect('bF', this.value)">
             <button class="counter-btn" id="bFPlus" onclick="updateSeat('bF',1)">+</button>
           </div>
         </div>
@@ -320,7 +320,7 @@ async function syncSettings() {
       localStorage.setItem('seats', JSON.stringify(seats));
     }
   } catch(e) {}
-  ['tM','tF','bM','bF'].forEach(k => { document.getElementById(k).textContent = seats[k] || 0; });
+  ['tM','tF','bM','bF'].forEach(k => { const el=document.getElementById(k); if(el.tagName==='INPUT'){el.value=seats[k]||0;}else{el.textContent=seats[k]||0;} });
   updateSeatUI('t', TABLE_MAX);
   updateSeatUI('b', BAR_MAX);
   updateOpStatusUI();
@@ -342,23 +342,62 @@ function resetAll() {
       itemRows = {};
       starred = [];
       hearted = [];
+      seats = { tM: 0, tF: 0, bM: 0, bF: 0 };
+      localStorage.setItem('seats', JSON.stringify(seats));
       saveStates(); saveStarred(); saveHearted();
+      // 구글시트 설정도 초기화
+      fetch(GAS_URL + '?type=setSeatDetail&tM=0&tF=0&bM=0&bF=0');
+      fetch(GAS_URL + '?type=setSeats&value=26');
+      fetch(GAS_URL + '?type=setFull&value=false');
+      isFull = false;
+      ['tM','tF','bM','bF'].forEach(k => { const el2=document.getElementById(k); if(el2.tagName==='INPUT'){el2.value=0;}else{el2.textContent=0;} });
+      updateSeatUI('t', TABLE_MAX);
+      updateSeatUI('b', BAR_MAX);
+      updateOpStatusUI();
       await loadData();
     }},
     { label: '취소', cls: 'secondary', action: () => {} }
   ]);
 }
 
+function setSeatDirect(id, val) {
+  const prefix = id[0];
+  const max = prefix === 't' ? TABLE_MAX : BAR_MAX;
+  const mEl = document.getElementById(prefix+'M');
+  const fEl = document.getElementById(prefix+'F');
+  const m = parseInt(mEl.tagName==='INPUT'?mEl.value:mEl.textContent)||0;
+  const f = parseInt(fEl.tagName==='INPUT'?fEl.value:fEl.textContent)||0;
+  const other = id.endsWith('M') ? f : m;
+  let v = parseInt(val)||0;
+  if (v < 0) v = 0;
+  if (v + other > max) v = max - other;
+  const el = document.getElementById(id);
+  if(el.tagName==='INPUT') el.value = v; else el.textContent = v;
+  seats[id] = v;
+  localStorage.setItem('seats', JSON.stringify(seats));
+  updateSeatUI(prefix, max);
+  fetch(GAS_URL + '?type=setSeatDetail&tM='+seats.tM+'&tF='+seats.tF+'&bM='+seats.bM+'&bF='+seats.bF);
+  if (prefix === 't') {
+    const tTotal = (parseInt(seats.tM)||0) + (parseInt(seats.tF)||0);
+    const remain = Math.max(TABLE_MAX - tTotal, 0);
+    isFull = tTotal >= TABLE_MAX;
+    updateOpStatusUI();
+    fetch(GAS_URL + '?type=setFull&value=' + isFull);
+    fetch(GAS_URL + '?type=setSeats&value=' + remain);
+  }
+}
+
 function updateSeat(id, delta) {
   const prefix = id[0];
   const max = prefix === 't' ? TABLE_MAX : BAR_MAX;
-  const m = parseInt(document.getElementById(prefix+'M').textContent)||0;
-  const f = parseInt(document.getElementById(prefix+'F').textContent)||0;
+  const mEl=document.getElementById(prefix+'M'); const fEl=document.getElementById(prefix+'F');
+  const m=parseInt(mEl.tagName==='INPUT'?mEl.value:mEl.textContent)||0;
+  const f=parseInt(fEl.tagName==='INPUT'?fEl.value:fEl.textContent)||0;
   if (delta > 0 && m + f >= max) return;
   const el = document.getElementById(id);
-  let val = parseInt(el.textContent) + delta;
+  let val = (parseInt(el.tagName==='INPUT'?el.value:el.textContent)||0) + delta;
   if (val < 0) val = 0;
-  el.textContent = val;
+  if(el.tagName==='INPUT') el.value=val; else el.textContent=val;
   seats[id] = val;
   localStorage.setItem('seats', JSON.stringify(seats));
   updateSeatUI(prefix, max);
@@ -374,8 +413,9 @@ function updateSeat(id, delta) {
 }
 
 function updateSeatUI(prefix, max) {
-  const m = parseInt(document.getElementById(prefix+'M').textContent)||0;
-  const f = parseInt(document.getElementById(prefix+'F').textContent)||0;
+  const mEl2=document.getElementById(prefix+'M'); const fEl2=document.getElementById(prefix+'F');
+  const m=parseInt(mEl2.tagName==='INPUT'?mEl2.value:mEl2.textContent)||0;
+  const f=parseInt(fEl2.tagName==='INPUT'?fEl2.value:fEl2.textContent)||0;
   const total = m + f;
   const remain = Math.max(max - total, 0);
   document.getElementById(prefix+'MBar').style.width = Math.min(m/max*100,100) + '%';
