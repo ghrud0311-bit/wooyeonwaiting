@@ -583,13 +583,7 @@ document.getElementById('completeOverlay').addEventListener('click',function(e){
   e.stopPropagation();
 });
 
-const n=getParam('name');
-if(n){
-  showLoading();
-  loadData();
-  setInterval(loadData,30000);
-}
-else{loadData();setInterval(loadData,30000);}
-</script>
-</body>
-</html>
+// 방문자 카운트 (직원 쿠키 없을 때만)
+function getCookie(name) {
+  const v = document.cookie.split('; ').find(r => r.startsWith(name + '='));
+  return v ?

@@ -25,6 +25,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .admin { display: none; max-width: 480px; margin: 0 auto; padding: 0 1rem 4rem; }
 .admin-header { padding: 1.5rem 0 1rem; display: flex; justify-content: space-between; align-items: center; }
 .admin-title { font-size: 18px; font-weight: 400; }
+.header-btns { display: flex; align-items: center; gap: 8px; }
+.open-index-btn { font-size: 11px; color: var(--surface); background: var(--accent); border: none; border-radius: 6px; cursor: pointer; padding: 6px 10px; }
 .logout-btn { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; }
 .section { margin-bottom: 1rem; }
 .section-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.6rem; }
@@ -97,9 +99,11 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .action-btn.noreply-label { background: var(--warning); border-color: var(--warning); color: #fff; cursor: default; opacity: 0.7; }
 .action-btn.visitx-label { background: #555; border-color: #555; color: #fff; cursor: default; opacity: 0.7; }
 .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.stats-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .stat-mini { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem 1rem; }
 .stat-mini-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
 .stat-mini-val { font-size: 26px; font-weight: 300; color: var(--text); line-height: 1; }
+.stat-mini-val.rate { font-size: 22px; }
 .stat-mini-unit { font-size: 11px; color: var(--text3); margin-top: 3px; }
 .bottom-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
 .refresh-btn { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 6px 12px; }
@@ -144,7 +148,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 <div class="admin" id="adminWrap">
   <div class="admin-header">
     <p class="admin-title">관리자</p>
-    <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+    <div class="header-btns">
+      <button class="open-index-btn" onclick="openIndexPage()">등록 화면 열기</button>
+      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+    </div>
   </div>
 
   <div class="section">
@@ -158,6 +165,23 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <p class="stat-mini-label">대기 인원</p>
         <p class="stat-mini-val" id="totalPeople"><span class="dot">•</span><span class="dot">•</span><span class="dot">•</span></p>
         <p class="stat-mini-unit">명</p>
+      </div>
+    </div>
+    <div class="stats-row-3">
+      <div class="stat-mini">
+        <p class="stat-mini-label">오늘 방문</p>
+        <p class="stat-mini-val" id="todayVisits">—</p>
+        <p class="stat-mini-unit">명</p>
+      </div>
+      <div class="stat-mini">
+        <p class="stat-mini-label">오늘 등록</p>
+        <p class="stat-mini-val" id="todayRegs">—</p>
+        <p class="stat-mini-unit">팀</p>
+      </div>
+      <div class="stat-mini">
+        <p class="stat-mini-label">전환율</p>
+        <p class="stat-mini-val rate" id="todayRate">—</p>
+        <p class="stat-mini-unit">등록/방문</p>
       </div>
     </div>
   </div>
@@ -200,37 +224,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <span class="seat-remain ok" id="tRemain">남은 자리 26명</span>
       </div>
     </div>
-    <div class="seat-card">
-      <div class="seat-header">
-        <span class="seat-name">닷지석</span>
-        <div>
-          <div class="seat-meta-nums" id="bMetaNums">남 0명 / 여 0명 / 총 0명</div>
-          <div class="seat-meta-cap">최대 6명</div>
-        </div>
-      </div>
-      <div class="seat-row">
-        <div class="seat-input-wrap">
-          <div class="seat-dot male"></div>
-          <span class="seat-label">남성</span>
-          <div class="counter">
-            <button class="counter-btn" onclick="updateSeat('bM',-1)">−</button>
-            <input class="counter-val" id="bM" type="number" value="0" min="0" max="6" onchange="setSeatDirect('bM', this.value)">
-            <button class="counter-btn" id="bMPlus" onclick="updateSeat('bM',1)">+</button>
-          </div>
-        </div>
-        <div class="seat-input-wrap">
-          <div class="seat-dot female"></div>
-          <span class="seat-label">여성</span>
-          <div class="counter">
-            <button class="counter-btn" onclick="updateSeat('bF',-1)">−</button>
-            <input class="counter-val" id="bF" type="number" value="0" min="0" max="6" onchange="setSeatDirect('bF', this.value)">
-            <button class="counter-btn" id="bFPlus" onclick="updateSeat('bF',1)">+</button>
-          </div>
-        </div>
-      </div>
-      <div class="seat-bar"><div class="seat-bar-fill male" id="bMBar" style="width:0%"></div></div>
-      <div class="seat-bar" style="margin-top:3px"><div class="seat-bar-fill female" id="bFBar" style="width:0%"></div></div>
-    </div>
   </div>
 
   <div class="section">
@@ -253,21 +246,17 @@ const RANGE = '시트1!A:H';
 const ADMIN_PW = '1128';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
 const TABLE_MAX = 26;
-const BAR_MAX = 6;
 
-let rawRows = []; // 구글시트에서 읽은 전체 데이터
-let allItems = []; // 화면에 표시할 항목 (구글시트 데이터 + 로컬 상태 합산)
-let starred = JSON.parse(localStorage.getItem('starred') || '[]'); // key 기반
-let hearted = JSON.parse(localStorage.getItem('hearted') || '[]'); // key 기반
-let seats = JSON.parse(localStorage.getItem('seats') || '{"tM":0,"tF":0,"bM":0,"bF":0}');
+let rawRows = [];
+let allItems = [];
+let starred = JSON.parse(localStorage.getItem('starred') || '[]');
+let hearted = JSON.parse(localStorage.getItem('hearted') || '[]');
+let seats = JSON.parse(localStorage.getItem('seats') || '{"tM":0,"tF":0}');
 let isFull = false;
 
-// itemStates: { "이름|전화번호": 'coming'|'done'|'noshow'|'noreply'|'visitx' }
 let itemStates = JSON.parse(localStorage.getItem('itemStates2') || '{}');
-// itemRows: { "이름|전화번호": row배열 } - 회색 처리 후에도 데이터 보존
 let itemRows = JSON.parse(localStorage.getItem('itemRows') || '{}');
 
-// 고유 키 생성 (이름+전화번호)
 function getKey(row) { return (row[3]||'') + '|' + (row[6]||''); }
 
 function saveStates() {
@@ -276,6 +265,19 @@ function saveStates() {
 }
 function saveStarred() { localStorage.setItem('starred', JSON.stringify(starred)); }
 function saveHearted() { localStorage.setItem('hearted', JSON.stringify(hearted)); }
+
+// 쿠키 설정/삭제
+function setStaffCookie() {
+  document.cookie = 'wooyeon_staff=1; path=/; max-age=604800'; // 7일
+}
+function clearStaffCookie() {
+  document.cookie = 'wooyeon_staff=; path=/; max-age=0';
+}
+
+// 등록 화면 열기 (새 탭)
+function openIndexPage() {
+  window.open('https://wooyeonbar.github.io/wooyeonwaiting/', '_blank');
+}
 
 // 팝업
 function showPopup(title, sub, btns) {
@@ -296,15 +298,24 @@ function closePopup() { document.getElementById('popupOverlay').classList.remove
 
 function doLogin() {
   if (document.getElementById('pwInput').value === ADMIN_PW) {
+    setStaffCookie(); // 직원 쿠키 저장
     document.getElementById('loginWrap').style.display = 'none';
     document.getElementById('adminWrap').style.display = 'block';
     initAdmin();
   } else { document.getElementById('loginErr').textContent = '비밀번호가 틀렸어요.'; }
 }
 function doLogout() {
+  clearStaffCookie(); // 쿠키 삭제
   document.getElementById('loginWrap').style.display = 'flex';
   document.getElementById('adminWrap').style.display = 'none';
   document.getElementById('pwInput').value = '';
+}
+
+// 오늘 날짜 (한국시간 기준)
+function getTodayKST() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().substring(0, 10);
 }
 
 async function syncSettings() {
@@ -315,15 +326,38 @@ async function syncSettings() {
       isFull = d.values[0] && d.values[0][0] === 'TRUE';
       seats.tM = parseInt(d.values[2] && d.values[2][0]) || 0;
       seats.tF = parseInt(d.values[3] && d.values[3][0]) || 0;
-      seats.bM = parseInt(d.values[4] && d.values[4][0]) || 0;
-      seats.bF = parseInt(d.values[5] && d.values[5][0]) || 0;
       localStorage.setItem('seats', JSON.stringify(seats));
     }
   } catch(e) {}
-  ['tM','tF','bM','bF'].forEach(k => { const el=document.getElementById(k); if(el.tagName==='INPUT'){el.value=seats[k]||0;}else{el.textContent=seats[k]||0;} });
+  const tMEl = document.getElementById('tM');
+  const tFEl = document.getElementById('tF');
+  if (tMEl) tMEl.value = seats.tM || 0;
+  if (tFEl) tFEl.value = seats.tF || 0;
   updateSeatUI('t', TABLE_MAX);
-  updateSeatUI('b', BAR_MAX);
   updateOpStatusUI();
+}
+
+// 오늘 방문자/전환율 불러오기
+async function loadTodayStats() {
+  try {
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A7:A8')+'?key='+API_KEY);
+    const d = await r.json();
+    const today = getTodayKST();
+    let visitCount = 0;
+    if (!d.error && d.values && d.values.length >= 2) {
+      const storedDate = d.values[0][0] || '';
+      if (storedDate === today) {
+        visitCount = parseInt(d.values[1][0]) || 0;
+      }
+    }
+    // 오늘 등록 수 (rawRows에서 오늘 날짜 필터)
+    const todayRegs = rawRows.filter(r => (r[2]||'').startsWith(today)).length;
+    const rate = visitCount > 0 ? Math.round(todayRegs / visitCount * 100) : 0;
+
+    document.getElementById('todayVisits').textContent = visitCount;
+    document.getElementById('todayRegs').textContent = todayRegs;
+    document.getElementById('todayRate').textContent = visitCount > 0 ? rate + '%' : '—';
+  } catch(e) {}
 }
 
 async function initAdmin() {
@@ -342,17 +376,18 @@ function resetAll() {
       itemRows = {};
       starred = [];
       hearted = [];
-      seats = { tM: 0, tF: 0, bM: 0, bF: 0 };
+      seats = { tM: 0, tF: 0 };
       localStorage.setItem('seats', JSON.stringify(seats));
       saveStates(); saveStarred(); saveHearted();
-      // 구글시트 설정도 초기화
       fetch(GAS_URL + '?type=setSeatDetail&tM=0&tF=0&bM=0&bF=0');
       fetch(GAS_URL + '?type=setSeats&value=26');
       fetch(GAS_URL + '?type=setFull&value=false');
       isFull = false;
-      ['tM','tF','bM','bF'].forEach(k => { const el2=document.getElementById(k); if(el2.tagName==='INPUT'){el2.value=0;}else{el2.textContent=0;} });
+      const tMEl = document.getElementById('tM');
+      const tFEl = document.getElementById('tF');
+      if (tMEl) tMEl.value = 0;
+      if (tFEl) tFEl.value = 0;
       updateSeatUI('t', TABLE_MAX);
-      updateSeatUI('b', BAR_MAX);
       updateOpStatusUI();
       await loadData();
     }},
@@ -361,76 +396,68 @@ function resetAll() {
 }
 
 function setSeatDirect(id, val) {
-  const prefix = id[0];
-  const max = prefix === 't' ? TABLE_MAX : BAR_MAX;
-  const mEl = document.getElementById(prefix+'M');
-  const fEl = document.getElementById(prefix+'F');
-  const m = parseInt(mEl.tagName==='INPUT'?mEl.value:mEl.textContent)||0;
-  const f = parseInt(fEl.tagName==='INPUT'?fEl.value:fEl.textContent)||0;
+  const mEl = document.getElementById('tM');
+  const fEl = document.getElementById('tF');
+  const m = parseInt(mEl.value)||0;
+  const f = parseInt(fEl.value)||0;
   const other = id.endsWith('M') ? f : m;
   let v = parseInt(val)||0;
   if (v < 0) v = 0;
-  if (v + other > max) v = max - other;
+  if (v + other > TABLE_MAX) v = TABLE_MAX - other;
   const el = document.getElementById(id);
-  if(el.tagName==='INPUT') el.value = v; else el.textContent = v;
+  el.value = v;
   seats[id] = v;
   localStorage.setItem('seats', JSON.stringify(seats));
-  updateSeatUI(prefix, max);
-  fetch(GAS_URL + '?type=setSeatDetail&tM='+seats.tM+'&tF='+seats.tF+'&bM='+seats.bM+'&bF='+seats.bF);
-  if (prefix === 't') {
-    const tTotal = (parseInt(seats.tM)||0) + (parseInt(seats.tF)||0);
-    const remain = Math.max(TABLE_MAX - tTotal, 0);
-    isFull = tTotal >= TABLE_MAX;
-    updateOpStatusUI();
-    fetch(GAS_URL + '?type=setFull&value=' + isFull);
-    fetch(GAS_URL + '?type=setSeats&value=' + remain);
-  }
+  updateSeatUI('t', TABLE_MAX);
+  fetch(GAS_URL + '?type=setSeatDetail&tM='+seats.tM+'&tF='+seats.tF+'&bM=0&bF=0');
+  const tTotal = (parseInt(seats.tM)||0) + (parseInt(seats.tF)||0);
+  const remain = Math.max(TABLE_MAX - tTotal, 0);
+  isFull = tTotal >= TABLE_MAX;
+  updateOpStatusUI();
+  fetch(GAS_URL + '?type=setFull&value=' + isFull);
+  fetch(GAS_URL + '?type=setSeats&value=' + remain);
 }
 
 function updateSeat(id, delta) {
-  const prefix = id[0];
-  const max = prefix === 't' ? TABLE_MAX : BAR_MAX;
-  const mEl=document.getElementById(prefix+'M'); const fEl=document.getElementById(prefix+'F');
-  const m=parseInt(mEl.tagName==='INPUT'?mEl.value:mEl.textContent)||0;
-  const f=parseInt(fEl.tagName==='INPUT'?fEl.value:fEl.textContent)||0;
-  if (delta > 0 && m + f >= max) return;
+  const mEl = document.getElementById('tM');
+  const fEl = document.getElementById('tF');
+  const m = parseInt(mEl.value)||0;
+  const f = parseInt(fEl.value)||0;
+  if (delta > 0 && m + f >= TABLE_MAX) return;
   const el = document.getElementById(id);
-  let val = (parseInt(el.tagName==='INPUT'?el.value:el.textContent)||0) + delta;
+  let val = (parseInt(el.value)||0) + delta;
   if (val < 0) val = 0;
-  if(el.tagName==='INPUT') el.value=val; else el.textContent=val;
+  el.value = val;
   seats[id] = val;
   localStorage.setItem('seats', JSON.stringify(seats));
-  updateSeatUI(prefix, max);
-  fetch(GAS_URL + '?type=setSeatDetail&tM='+seats.tM+'&tF='+seats.tF+'&bM='+seats.bM+'&bF='+seats.bF);
-  if (prefix === 't') {
-    const tTotal = (parseInt(seats.tM)||0) + (parseInt(seats.tF)||0);
-    const remain = Math.max(TABLE_MAX - tTotal, 0);
-    isFull = tTotal >= TABLE_MAX;
-    updateOpStatusUI();
-    fetch(GAS_URL + '?type=setFull&value=' + isFull);
-    fetch(GAS_URL + '?type=setSeats&value=' + remain);
-  }
+  updateSeatUI('t', TABLE_MAX);
+  fetch(GAS_URL + '?type=setSeatDetail&tM='+seats.tM+'&tF='+seats.tF+'&bM=0&bF=0');
+  const tTotal = (parseInt(seats.tM)||0) + (parseInt(seats.tF)||0);
+  const remain = Math.max(TABLE_MAX - tTotal, 0);
+  isFull = tTotal >= TABLE_MAX;
+  updateOpStatusUI();
+  fetch(GAS_URL + '?type=setFull&value=' + isFull);
+  fetch(GAS_URL + '?type=setSeats&value=' + remain);
 }
 
 function updateSeatUI(prefix, max) {
-  const mEl2=document.getElementById(prefix+'M'); const fEl2=document.getElementById(prefix+'F');
-  const m=parseInt(mEl2.tagName==='INPUT'?mEl2.value:mEl2.textContent)||0;
-  const f=parseInt(fEl2.tagName==='INPUT'?fEl2.value:fEl2.textContent)||0;
+  const mEl = document.getElementById('tM');
+  const fEl = document.getElementById('tF');
+  const m = parseInt(mEl.value)||0;
+  const f = parseInt(fEl.value)||0;
   const total = m + f;
   const remain = Math.max(max - total, 0);
-  document.getElementById(prefix+'MBar').style.width = Math.min(m/max*100,100) + '%';
-  document.getElementById(prefix+'FBar').style.width = Math.min(f/max*100,100) + '%';
-  document.getElementById(prefix+'MetaNums').textContent = '남 '+m+'명 / 여 '+f+'명 / 총 '+total+'명';
-  const mP = document.getElementById(prefix+'MPlus');
-  const fP = document.getElementById(prefix+'FPlus');
+  document.getElementById('tMBar').style.width = Math.min(m/max*100,100) + '%';
+  document.getElementById('tFBar').style.width = Math.min(f/max*100,100) + '%';
+  document.getElementById('tMetaNums').textContent = '남 '+m+'명 / 여 '+f+'명 / 총 '+total+'명';
+  const mP = document.getElementById('tMPlus');
+  const fP = document.getElementById('tFPlus');
   if (mP) mP.disabled = total >= max;
   if (fP) fP.disabled = total >= max;
-  if (prefix === 't') {
-    const el = document.getElementById('tRemain');
-    if (remain === 0) { el.textContent = '만석!'; el.className = 'seat-remain full'; }
-    else if (remain <= 3) { el.textContent = '남은 자리 '+remain+'명'; el.className = 'seat-remain warn'; }
-    else { el.textContent = '남은 자리 '+remain+'명'; el.className = 'seat-remain ok'; }
-  }
+  const el = document.getElementById('tRemain');
+  if (remain === 0) { el.textContent = '만석!'; el.className = 'seat-remain full'; }
+  else if (remain <= 3) { el.textContent = '남은 자리 '+remain+'명'; el.className = 'seat-remain warn'; }
+  else { el.textContent = '남은 자리 '+remain+'명'; el.className = 'seat-remain ok'; }
 }
 
 function updateOpStatusUI() {
@@ -473,7 +500,6 @@ function sendSMS(key) {
   }
 }
 
-// 구글시트에서 해당 항목만 삭제
 async function removeFromSheet(key) {
   const item = allItems.find(it => it.key === key);
   if (!item) return;
@@ -572,24 +598,17 @@ async function loadData() {
     if (data.error) return;
     rawRows = (data.values||[]).slice(1).filter(r => r[3] && r[3].toString().trim() !== '');
 
-    // 구글시트에 있는 항목 + 로컬 상태(grey)인 항목 합산
     const activeKeys = new Set(rawRows.map(r => getKey(r)));
-
-    // 로컬에 grey 상태로 남은 항목 (구글시트에서 삭제됐지만 화면엔 표시)
     const greyKeys = Object.keys(itemStates).filter(k =>
       ['done','noshow','noreply','visitx'].includes(itemStates[k]) && !activeKeys.has(k)
     );
 
-    // allItems = 활성(구글시트) + 회색(로컬)
-    // 현재 활성 항목들의 row 데이터 저장 (회색 처리 후에도 유지)
-rawRows.forEach(r => { itemRows[getKey(r)] = r; });
-localStorage.setItem('itemRows', JSON.stringify(itemRows));
-allItems = rawRows.map(r => ({ row: r, key: getKey(r) }));
+    rawRows.forEach(r => { itemRows[getKey(r)] = r; });
+    localStorage.setItem('itemRows', JSON.stringify(itemRows));
+    allItems = rawRows.map(r => ({ row: r, key: getKey(r) }));
 
-    // 회색 항목은 별도로 저장해두고 같이 표시
     greyKeys.forEach(k => {
       if (!allItems.find(it => it.key === k)) {
-        // 저장된 row 데이터 복원 (없으면 이름|전화번호로 최소 복원)
         const savedRow = itemRows[k] || null;
         const [name, phone] = k.split('|');
         const row = savedRow || ['','','',name,'','',phone,''];
@@ -603,6 +622,7 @@ allItems = rawRows.map(r => ({ row: r, key: getKey(r) }));
 
     renderList();
     updateStats();
+    await loadTodayStats();
   } catch(e) {}
 }
 
@@ -618,7 +638,6 @@ function renderList() {
   const el = document.getElementById('waitingList');
   if (!allItems.length) { el.innerHTML = '<div class="waiting-empty">현재 대기 없음</div>'; return; }
 
-  // 별표 있는 항목 먼저, 나머지 원래 순서
   const sorted = [...allItems].sort((a, b) => {
     const aS = starred.includes(a.key);
     const bS = starred.includes(b.key);
@@ -668,3 +687,4 @@ function renderList() {
 </script>
 </body>
 </html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
