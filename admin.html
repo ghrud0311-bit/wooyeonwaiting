@@ -126,14 +126,12 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .card-tag.empty-red { background: #5a2820; color: #e07060; font-size: 11px; }
 .shuffle-divider { font-size: 10px; color: var(--text3); padding: 0 4px; align-self: center; }
 .table-vis-wrap { margin-top: 8px; }
-.table-vis { margin-bottom: 8px; }
+.table-vis { margin-bottom: 10px; }
 .table-vis-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; letter-spacing: 0.06em; }
-.tbl-diagram { display: inline-flex; align-items: center; gap: 4px; }
-.tbl-diagram.right-tbl { flex-direction: row-reverse; }
-.tbl-k-wrap { display: flex; align-items: center; align-self: stretch; }
-.tbl-pairs { display: flex; flex-direction: column; gap: 4px; }
-.tbl-row { display: flex; gap: 4px; }
-.seat { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; flex-shrink: 0; }
+.row-outer, .row-inner { display: flex; gap: 3px; align-items: center; }
+.row-inner { margin-top: 2px; padding-left: 13px; }
+.seat-spacer { width: 12px; flex-shrink: 0; }
+.seat { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; flex-shrink: 0; }
 .seat.man { background: #1a1916; color: #fff; }
 .seat.woman { background: #c0503e; color: #fff; }
 .seat.empty-b { background: #3a3835; color: #666; }
@@ -847,36 +845,25 @@ function showShuffle() {
     tagList(emptyBlack, 'empty-black') + tagList(emptyRed, 'empty-red');
 
   // 테이블 배치 시각화
-  const lTopSeats = [{c:'A',t:'red'},{c:'2',t:'blue'},{c:'3',t:'red'},{c:'4',t:'blue'},{c:'5',t:'red'},{c:'6',t:'blue'}];
-  const lBotSeats = [{c:'A',t:'blue'},{c:'2',t:'red'},{c:'3',t:'blue'},{c:'4',t:'red'},{c:'5',t:'blue'}];
-  const rTopSeats = [{c:'6',t:'red'},{c:'7',t:'blue'},{c:'8',t:'red'},{c:'9',t:'blue'},{c:'10',t:'red'},{c:'J',t:'blue'},{c:'Q',t:'red'}];
-  const rBotSeats = [{c:'7',t:'red'},{c:'8',t:'blue'},{c:'9',t:'red'},{c:'10',t:'blue'},{c:'J',t:'red'},{c:'Q',t:'blue'}];
+  const lOuter = [{c:'K',t:'red'},{c:'A',t:'blue'},{c:'2',t:'blue'},{c:'3',t:'blue'},{c:'4',t:'blue'},{c:'5',t:'blue'},{c:'6',t:'blue'}];
+  const lInner = [{c:'A',t:'red'},{c:'2',t:'red'},{c:'3',t:'red'},{c:'4',t:'red'},{c:'5',t:'red'}];
+  const rOuter = [{c:'6',t:'red'},{c:'7',t:'blue'},{c:'8',t:'blue'},{c:'9',t:'blue'},{c:'10',t:'blue'},{c:'J',t:'blue'},{c:'Q',t:'blue'},{c:'K',t:'blue'}];
+  const rInner = [{c:'7',t:'red'},{c:'8',t:'red'},{c:'9',t:'red'},{c:'10',t:'red'},{c:'J',t:'red'},{c:'Q',t:'red'}];
 
   function sCls(card, type, data) {
     if (type === 'blue') return data.blue.includes(card) ? 'man' : data.overBlue.includes(card) ? 'woman' : 'empty-b';
     return data.red.includes(card) ? 'woman' : data.overRed.includes(card) ? 'man' : 'empty-r';
   }
-  function sRow(seats, data) {
+  function sHtml(seats, data) {
     return seats.map(s => `<div class="seat ${sCls(s.c,s.t,data)}">${s.c}</div>`).join('');
   }
-  const lKcls = sCls('K','red',L);
-  const rKcls = sCls('K','blue',R);
   document.getElementById('leftTableVis').innerHTML =
-    `<div class="tbl-diagram">
-      <div class="tbl-k-wrap"><div class="seat ${lKcls}">K</div></div>
-      <div class="tbl-pairs">
-        <div class="tbl-row">${sRow(lTopSeats,L)}</div>
-        <div class="tbl-row">${sRow(lBotSeats,L)}</div>
-      </div>
-    </div>`;
+    `<div class="row-outer">${sHtml(lOuter,L)}</div>` +
+    `<div class="row-inner"><div class="seat-spacer"></div>${sHtml(lInner,L)}</div>`;
   document.getElementById('rightTableVis').innerHTML = rightCount > 0
-    ? `<div class="tbl-diagram right-tbl">
-        <div class="tbl-k-wrap"><div class="seat ${rKcls}">K</div></div>
-        <div class="tbl-pairs">
-          <div class="tbl-row">${sRow(rTopSeats,R)}</div>
-          <div class="tbl-row" style="margin-left:30px">${sRow(rBotSeats,R)}</div>
-        </div>
-      </div>` : '';
+    ? `<div class="row-outer">${sHtml(rOuter,R)}</div>` +
+      `<div class="row-inner"><div class="seat-spacer"></div>${sHtml(rInner,R)}</div>`
+    : '';
   document.getElementById('tableVisGroup').style.display = '';
 
   el.classList.add('active');
