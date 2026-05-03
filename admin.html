@@ -108,6 +108,20 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .bottom-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
 .refresh-btn { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 6px 12px; }
 .reset-btn { font-size: 11px; color: var(--danger); background: none; border: 1px solid var(--danger); border-radius: 6px; cursor: pointer; padding: 6px 12px; }
+.shuffle-btn { width: 100%; margin-top: 10px; padding: 10px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; color: var(--text2); letter-spacing: 0.05em; }
+.shuffle-btn:hover { background: var(--border); }
+.shuffle-result { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-top: 8px; display: none; }
+.shuffle-result.active { display: block; }
+.shuffle-group { margin-bottom: 0.9rem; }
+.shuffle-group:last-child { margin-bottom: 0; }
+.shuffle-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.card-tag { font-size: 12px; padding: 3px 9px; border-radius: 5px; font-weight: 500; line-height: 1.6; }
+.card-tag.black { background: #1a1916; color: #fff; }
+.card-tag.red-card { background: #c0503e; color: #fff; }
+.card-tag.extra-black { background: #555; color: #fff; }
+.card-tag.empty { background: var(--surface2); color: var(--text3); font-size: 11px; }
+.shuffle-divider { font-size: 10px; color: var(--text3); padding: 0 2px; align-self: center; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
 .dot { display: inline-block; animation: blink 1.2s ease-in-out infinite; color: var(--text3); font-size: 22px; line-height: 1; }
 .dot:nth-child(2) { animation-delay: 0.2s; }
@@ -167,23 +181,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <p class="stat-mini-unit">명</p>
       </div>
     </div>
-    <div class="stats-row-3">
-      <div class="stat-mini">
-        <p class="stat-mini-label">오늘 방문</p>
-        <p class="stat-mini-val" id="todayVisits">—</p>
-        <p class="stat-mini-unit">명</p>
-      </div>
-      <div class="stat-mini">
-        <p class="stat-mini-label">오늘 등록</p>
-        <p class="stat-mini-val" id="todayRegs">—</p>
-        <p class="stat-mini-unit">팀</p>
-      </div>
-      <div class="stat-mini">
-        <p class="stat-mini-label">전환율</p>
-        <p class="stat-mini-val rate" id="todayRate">—</p>
-        <p class="stat-mini-unit">등록/방문</p>
-      </div>
-    </div>
   </div>
 
   <div class="section">
@@ -223,6 +220,25 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <span class="op-text" id="opText" style="color:var(--text3)">웨이팅 불가</span>
         <span class="seat-remain ok" id="tRemain">남은 자리 26명</span>
       </div>
+      <button class="shuffle-btn" onclick="showShuffle()">🃏 자리 섞기</button>
+    </div>
+    <div class="shuffle-result" id="shuffleResult">
+      <div class="shuffle-group">
+        <div class="shuffle-label">남자 — 검정 카드</div>
+        <div class="card-tags" id="menCards"></div>
+      </div>
+      <div class="shuffle-group">
+        <div class="shuffle-label">여자 — 빨강 카드</div>
+        <div class="card-tags" id="womenRedCards"></div>
+      </div>
+      <div class="shuffle-group" id="womenBlueGroup" style="display:none">
+        <div class="shuffle-label">여자 — 검정 카드 추가</div>
+        <div class="card-tags" id="womenBlueCards"></div>
+      </div>
+      <div class="shuffle-group">
+        <div class="shuffle-label">빈 자리</div>
+        <div class="card-tags" id="emptyCards"></div>
+      </div>
     </div>
   </div>
 
@@ -230,6 +246,26 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <p class="section-label">대기 목록</p>
     <div class="waiting-card" id="waitingList">
       <div class="waiting-empty">불러오는 중...</div>
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:1rem">
+    <div class="stats-row-3">
+      <div class="stat-mini">
+        <p class="stat-mini-label">오늘 방문</p>
+        <p class="stat-mini-val" id="todayVisits">—</p>
+        <p class="stat-mini-unit">명</p>
+      </div>
+      <div class="stat-mini">
+        <p class="stat-mini-label">오늘 등록</p>
+        <p class="stat-mini-val" id="todayRegs">—</p>
+        <p class="stat-mini-unit">팀</p>
+      </div>
+      <div class="stat-mini">
+        <p class="stat-mini-label">전환율</p>
+        <p class="stat-mini-val rate" id="todayRate">—</p>
+        <p class="stat-mini-unit">등록/방문</p>
+      </div>
     </div>
   </div>
 
@@ -634,57 +670,17 @@ function updateStats() {
   document.getElementById('totalPeople').textContent = active.reduce((s,it) => s+(parseInt(it.row[5])||0), 0);
 }
 
-function renderList() {
-  const el = document.getElementById('waitingList');
-  if (!allItems.length) { el.innerHTML = '<div class="waiting-empty">현재 대기 없음</div>'; return; }
+// ── 자리 섞기 알고리즘 ──
+function showShuffle() {
+  const M = parseInt(seats.tM) || 0;
+  const F = parseInt(seats.tF) || 0;
+  const T = M + F;
+  const el = document.getElementById('shuffleResult');
 
-  const sorted = [...allItems].sort((a, b) => {
-    const aS = starred.includes(a.key);
-    const bS = starred.includes(b.key);
-    if (aS && !bS) return -1;
-    if (!aS && bS) return 1;
-    return 0;
-  });
+  if (T === 0) {
+    el.classList.add('active');
+    el.innerHTML = '<p style="font-size:13px;color:var(--text3);text-align:center;padding:0.5rem">현재 매장 인원을 먼저 입력해 주세요</p>';
+    return;
+  }
 
-  let displayNum = 0;
-  el.innerHTML = sorted.map(({row, key, isGhost}) => {
-    const isStarred = starred.includes(key);
-    const isHearted = hearted.includes(key);
-    const state = itemStates[key] || null;
-    const isGreyed = removedStates.includes(state);
-    const isComing = state === 'coming';
-    const gender = row[4]||'';
-    const gClass = gender==='남성'?'male':'female';
-    const seat = row[7]||'테이블석';
-
-    if (!isGreyed) displayNum++;
-
-    let itemClass = '';
-    if (isGreyed) itemClass = 'greyed';
-    else if (isComing) itemClass = 'coming-state';
-    else if (isHearted) itemClass = 'hearted';
-
-    const safeKey = key.replace(/'/g, "\\'");
-
-    return `<div class="waiting-item ${itemClass}">
-      <div class="icon-btns">
-        <button class="star-btn ${isStarred?'active':''}" onclick="toggleStar('${safeKey}')">★</button>
-        <button class="heart-btn ${isHearted?'active':''}" onclick="toggleHeart('${safeKey}')">♥</button>
-      </div>
-      <span class="waiting-num">${isGreyed ? '—' : displayNum}</span>
-      <div class="waiting-info">
-        <div class="name-row">
-          <span class="waiting-name">${row[3]||'—'}</span>
-          ${gender ? `<span class="gender-badge ${gClass}">${gender}</span>` : ''}
-          ${getSeatBadge(seat)}
-        </div>
-        <p class="waiting-meta">${row[5]?row[5]+'명 · ':''}${getTimeStr(row)}${row[6]?' · '+row[6]:''}</p>
-      </div>
-      ${getActionBtns(key, row)}
-    </div>`;
-  }).join('');
-}
-</script>
-</body>
-</html>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+  // 왼�
