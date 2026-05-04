@@ -364,7 +364,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 const SHEET_ID = '1NmPb6wxX0usqeP-gd7cFQPgHecLQsCYcA3i3wcU3uwc';
 const API_KEY = 'AIzaSyDNs6DjFlPRHukWl572r1pMZV72F6ZtODI';
 const RANGE = '시트1!A:G';
-const SETTINGS_RANGE = '설정!A1:A2';
+const SETTINGS_RANGE = '설정!A1:A4';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
 const TOTAL_STEPS = 6;
 
@@ -437,10 +437,13 @@ async function loadData() {
     const sr=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(SETTINGS_RANGE)+'?key='+API_KEY);
     const sd=await sr.json();
     if (!sd.error&&sd.values){
+      const tM=parseInt(sd.values[2]&&sd.values[2][0])||0;
+      const tF=parseInt(sd.values[3]&&sd.values[3][0])||0;
+      const tTotal=tM+tF;
       const rawFull=sd.values[0]&&sd.values[0][0];
-      isFullMode=typeof rawFull==='string'&&rawFull.toUpperCase()==='TRUE';
-      const rawR=sd.values[1]&&sd.values[1][0];
-      tableRemain=rawR!=null&&rawR!==''&&!isNaN(parseInt(rawR))?parseInt(rawR):26;
+      const flagFull=typeof rawFull==='string'&&rawFull.toUpperCase()==='TRUE';
+      isFullMode=flagFull||tTotal>=26;
+      tableRemain=isFullMode?0:Math.max(26-tTotal,0);
     }
     const res=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY);
     const data=await res.json();
