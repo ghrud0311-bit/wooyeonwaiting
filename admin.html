@@ -473,7 +473,7 @@ function setSeatDirect(id, val) {
   const remain = Math.max(TABLE_MAX - tTotal, 0);
   isFull = tTotal >= TABLE_MAX;
   updateOpStatusUI();
-  fetch(GAS_URL + '?type=setFull&value=' + isFull);
+  fetch(GAS_URL + '?type=setFull&value=' + (isFull ? 'TRUE' : 'FALSE'));
   fetch(GAS_URL + '?type=setSeats&value=' + remain);
 }
 
@@ -495,7 +495,7 @@ function updateSeat(id, delta) {
   const remain = Math.max(TABLE_MAX - tTotal, 0);
   isFull = tTotal >= TABLE_MAX;
   updateOpStatusUI();
-  fetch(GAS_URL + '?type=setFull&value=' + isFull);
+  fetch(GAS_URL + '?type=setFull&value=' + (isFull ? 'TRUE' : 'FALSE'));
   fetch(GAS_URL + '?type=setSeats&value=' + remain);
 }
 

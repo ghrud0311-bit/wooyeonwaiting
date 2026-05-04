@@ -437,8 +437,10 @@ async function loadData() {
     const sr=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(SETTINGS_RANGE)+'?key='+API_KEY);
     const sd=await sr.json();
     if (!sd.error&&sd.values){
-      isFullMode=sd.values[0]&&sd.values[0][0]==='TRUE';
-      tableRemain=sd.values[1]?(parseInt(sd.values[1][0])||26):26;
+      const rawFull=sd.values[0]&&sd.values[0][0];
+      isFullMode=typeof rawFull==='string'&&rawFull.toUpperCase()==='TRUE';
+      const rawR=sd.values[1]&&sd.values[1][0];
+      tableRemain=rawR!=null&&rawR!==''&&!isNaN(parseInt(rawR))?parseInt(rawR):26;
     }
     const res=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY);
     const data=await res.json();
@@ -586,4 +588,14 @@ document.getElementById('completeOverlay').addEventListener('click',function(e){
 // 방문자 카운트 (직원 쿠키 없을 때만)
 function getCookie(name) {
   const v = document.cookie.split('; ').find(r => r.startsWith(name + '='));
-  return v ?
+  return v ? v.split('=')[1] : null;
+}
+if (!getCookie('wooyeon_staff')) {
+  fetch(GAS_URL + '?type=trackVisit');
+}
+
+loadData();
+setInterval(loadData,30000);
+</script>
+</body>
+</html>
