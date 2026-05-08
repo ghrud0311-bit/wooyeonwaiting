@@ -401,14 +401,28 @@ function getTodayKST() {
 
 async function syncSettings() {
   try {
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A6')+'?key='+API_KEY);
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A11')+'?key='+API_KEY+'&_t='+Date.now());
     const d = await r.json();
     if (!d.error && d.values) {
       isFull = d.values[0] && d.values[0][0] === 'TRUE';
       seats.tM = parseInt(d.values[2] && d.values[2][0]) || 0;
       seats.tF = parseInt(d.values[3] && d.values[3][0]) || 0;
       localStorage.setItem('seats', JSON.stringify(seats));
-      // GAS에 현재 자리 상태 동기화 (isFull/remain이 틀어진 경우 보정)
+      // A9: 대기목록 상태 동기화 (merge: terminal은 GAS 우선, 나머지는 local 우선)
+      if (d.values[8] && d.values[8][0]) {
+        try {
+          const gasStates = JSON.parse(d.values[8][0]);
+          const terminal = ['done','noshow','noreply','visitx'];
+          const rank = s => terminal.includes(s) ? 2 : s === 'coming' ? 1 : 0;
+          const merged = Object.assign({}, gasStates);
+          Object.keys(itemStates).forEach(k => {
+            if (rank(itemStates[k]) >= rank(merged[k])) merged[k] = itemStates[k];
+          });
+          itemStates = merged;
+          localStorage.setItem('itemStates2', JSON.stringify(itemStates));
+        } catch(e2) {}
+      }
+      // GAS에 현재 자리 상태 동기화
       const tTotal = seats.tM + seats.tF;
       const remain = Math.max(TABLE_MAX - tTotal, 0);
       isFull = isFull || tTotal >= TABLE_MAX;
@@ -429,7 +443,7 @@ async function syncSettings() {
 async function loadTodayStats() {
   try {
     // A7:A11 한번에 읽기 (A7=날짜, A8=오늘방문, A9=상태JSON, A10=누계방문, A11=누계등록)
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A7:A11')+'?key='+API_KEY);
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A7:A11')+'?key='+API_KEY+'&_t='+Date.now());
     const d = await r.json();
     const today = getTodayKST();
     let visitCount = 0, cumVisits = 0, cumRegs = 0;
@@ -697,7 +711,7 @@ function getActionBtns(key, row) {
 
 async function loadData() {
   try {
-    const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY);
+    const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY+'&_t='+Date.now());
     const data = await res.json();
     if (data.error) return;
     rawRows = (data.values||[]).slice(1).filter(r => r[3] && r[3].toString().trim() !== '');

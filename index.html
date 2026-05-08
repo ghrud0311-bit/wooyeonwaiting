@@ -434,7 +434,7 @@ document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==
 async function loadData() {
   showLoading();
   try {
-    const sr=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(SETTINGS_RANGE)+'?key='+API_KEY);
+    const sr=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(SETTINGS_RANGE)+'?key='+API_KEY+'&_t='+Date.now());
     const sd=await sr.json();
     if (!sd.error&&sd.values){
       const tM=parseInt(sd.values[2]&&sd.values[2][0])||0;
@@ -457,7 +457,7 @@ async function loadData() {
         fetch(GAS_URL + '?type=trackVisit');
       }
     }
-    const res=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY);
+    const res=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY+'&_t='+Date.now());
     const data=await res.json();
     if (data.error) return;
     allRows=(data.values||[]).slice(1).filter(r=>r[3]&&r[3].toString().trim()!=='');
