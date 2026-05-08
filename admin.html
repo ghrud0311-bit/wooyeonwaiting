@@ -401,7 +401,7 @@ function getTodayKST() {
 
 async function syncSettings() {
   try {
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A11')+'?key='+API_KEY+'&_t='+Date.now());
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A11')+'?key='+API_KEY,{cache:'no-store'};
     const d = await r.json();
     if (!d.error && d.values) {
       isFull = d.values[0] && d.values[0][0] === 'TRUE';
@@ -443,7 +443,7 @@ async function syncSettings() {
 async function loadTodayStats() {
   try {
     // A7:A11 한번에 읽기 (A7=날짜, A8=오늘방문, A9=상태JSON, A10=누계방문, A11=누계등록)
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A7:A11')+'?key='+API_KEY+'&_t='+Date.now());
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A7:A11')+'?key='+API_KEY,{cache:'no-store'};
     const d = await r.json();
     const today = getTodayKST();
     let visitCount = 0, cumVisits = 0, cumRegs = 0;
@@ -711,7 +711,7 @@ function getActionBtns(key, row) {
 
 async function loadData() {
   try {
-    const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY+'&_t='+Date.now());
+    const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY,{cache:'no-store'};
     const data = await res.json();
     if (data.error) return;
     rawRows = (data.values||[]).slice(1).filter(r => r[3] && r[3].toString().trim() !== '');
