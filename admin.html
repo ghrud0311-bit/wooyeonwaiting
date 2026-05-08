@@ -339,10 +339,10 @@ let itemRows = JSON.parse(localStorage.getItem('itemRows') || '{}');
 
 function getKey(row) { return (row[3]||'') + '|' + (row[6]||''); }
 
-function saveStates() {
+async function saveStates() {
   localStorage.setItem('itemStates2', JSON.stringify(itemStates));
   localStorage.setItem('itemRows', JSON.stringify(itemRows));
-  fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify(itemStates)));
+  try { await fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify(itemStates))); } catch(e) {}
 }
 function saveStarred() { localStorage.setItem('starred', JSON.stringify(starred)); }
 function saveHearted() { localStorage.setItem('hearted', JSON.stringify(hearted)); }
@@ -635,13 +635,13 @@ function clickX(key) {
   showPopup('사유를 선택해주세요', '', [
     { label: '미응답', cls: 'warning', action: async () => {
       itemStates[key] = 'noreply';
-      saveStates();
+      await saveStates();
       await removeFromSheet(key);
       await loadData();
     }},
     { label: '방문 X', cls: 'danger', action: async () => {
       itemStates[key] = 'visitx';
-      saveStates();
+      await saveStates();
       await removeFromSheet(key);
       await loadData();
     }},
@@ -659,13 +659,13 @@ function clickComing(key) {
   showPopup('어떻게 처리할까요?', '', [
     { label: '입장 처리', cls: 'primary', action: async () => {
       itemStates[key] = 'done';
-      saveStates();
+      await saveStates();
       await removeFromSheet(key);
       await loadData();
     }},
     { label: '노쇼', cls: 'danger', action: async () => {
       itemStates[key] = 'noshow';
-      saveStates();
+      await saveStates();
       await removeFromSheet(key);
       await loadData();
     }},
