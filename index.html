@@ -440,10 +440,17 @@ async function loadData() {
       const tM=parseInt(sd.values[2]&&sd.values[2][0])||0;
       const tF=parseInt(sd.values[3]&&sd.values[3][0])||0;
       const tTotal=tM+tF;
-      const rawFull=sd.values[0]&&sd.values[0][0];
-      const flagFull=typeof rawFull==='string'&&rawFull.toUpperCase()==='TRUE';
+      const rawFull=(sd.values[0]&&sd.values[0][0])||'';
+      const flagFull=rawFull.toString().toUpperCase()==='TRUE';
       isFullMode=flagFull||tTotal>=26;
-      tableRemain=isFullMode?0:Math.max(26-tTotal,0);
+      if(tTotal>0){
+        tableRemain=isFullMode?0:Math.max(26-tTotal,0);
+      }else{
+        // A3/A4 미설정 시 A2(setSeats 값) fallback
+        const rawR=sd.values[1]&&sd.values[1][0];
+        const a2=rawR!=null&&rawR!==''&&!isNaN(parseInt(rawR))?parseInt(rawR):26;
+        tableRemain=isFullMode?0:a2;
+      }
       // 만석(웨이팅 활성) 상태일 때만 방문 카운트 (세션당 1회)
       if (isFullMode && !getCookie('wooyeon_staff') && !sessionStorage.getItem('wv')) {
         sessionStorage.setItem('wv', '1');

@@ -414,6 +414,7 @@ async function syncSettings() {
       isFull = isFull || tTotal >= TABLE_MAX;
       fetch(GAS_URL + '?type=setFull&value=' + (isFull ? 'TRUE' : 'FALSE'));
       fetch(GAS_URL + '?type=setSeats&value=' + remain);
+      fetch(GAS_URL + '?type=setSeatDetail&tM='+seats.tM+'&tF='+seats.tF+'&bM=0&bF=0');
     }
   } catch(e) {}
   const tMEl = document.getElementById('tM');
