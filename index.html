@@ -434,7 +434,7 @@ document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==
 async function loadData() {
   showLoading();
   try {
-    const sr=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(SETTINGS_RANGE)+'?key='+API_KEY,{cache:'no-store'});
+    const sr=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(SETTINGS_RANGE)+'?key='+API_KEY);
     const sd=await sr.json();
     if (!sd.error&&sd.values){
       const tM=parseInt(sd.values[2]&&sd.values[2][0])||0;
@@ -457,7 +457,7 @@ async function loadData() {
         fetch(GAS_URL + '?type=trackVisit');
       }
     }
-    const res=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY,{cache:'no-store'});
+    const res=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY);
     const data=await res.json();
     if (data.error) {
       document.getElementById('total').textContent='—';
@@ -470,7 +470,10 @@ async function loadData() {
     const n=getParam('name');
     if (n) updateMyInfo(n);
     else document.getElementById('ahead').textContent='—';
-  } catch(e){}
+  } catch(e){
+    document.getElementById('total').textContent='—';
+    document.getElementById('ahead').textContent='—';
+  }
 }
 
 function openForm() {
@@ -589,7 +592,10 @@ async function submitForm() {
   try {
     await fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({name,gender:selectedGender,people:selectedPeople,phone,seat})});
-  } catch(e){}
+  } catch(e){
+    document.getElementById('total').textContent='—';
+    document.getElementById('ahead').textContent='—';
+  }
 }
 
 function goToMyTurn() {
