@@ -387,12 +387,15 @@ function updateStatus(total) {
 }
 
 function updateMyInfo(myPhone) {
-  if (!myPhone||!allRows.length) return;
+  if (!myPhone) { document.getElementById('ahead').textContent='—'; return; }
+  if (!allRows.length) { document.getElementById('ahead').textContent='—'; return; }
   const i=allRows.findIndex(r=>r[6]&&r[6].replace(/-/g,'').endsWith(myPhone.replace(/-/g,'')));
   if (i>=0){
     document.getElementById('mynum').textContent=(i+1)+'번';
     document.getElementById('mypeople').textContent=(allRows[i][5]||'—')+'명';
     document.getElementById('ahead').textContent=i;
+  } else {
+    document.getElementById('ahead').textContent='—';
   }
 }
 
@@ -568,14 +571,18 @@ async function submitForm() {
   formEl.classList.remove('active');
   formEl.style.display = 'none';
   document.body.style.overflow='';
+  const goBtn = document.getElementById('completeGoBtn');
+  goBtn.disabled = true;
+  goBtn.textContent = '등록 중...';
   document.getElementById('completeOverlay').classList.add('active');
   try {
     await fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({name:'',gender:selectedGender,people:selectedPeople,phone,seat})});
-  } catch(e){
-    document.getElementById('total').textContent='—';
-    document.getElementById('ahead').textContent='—';
-  }
+  } catch(e){}
+  // GAS가 시트에 쓸 시간 확보 후 버튼 활성화
+  await new Promise(r => setTimeout(r, 2000));
+  goBtn.disabled = false;
+  goBtn.textContent = '순번 확인하러 가기';
 }
 
 function goToMyTurn() {
@@ -584,19 +591,4 @@ function goToMyTurn() {
 }
 
 document.getElementById('formOverlay').addEventListener('click',function(e){
-  if(e.target===this && !document.getElementById('completeOverlay').classList.contains('active')) closeForm();
-});
-document.getElementById('completeOverlay').addEventListener('click',function(e){
-  e.stopPropagation();
-});
-
-function getCookie(name) {
-  const v = document.cookie.split('; ').find(r => r.startsWith(name + '='));
-  return v ? v.split('=')[1] : null;
-}
-
-loadData();
-setInterval(loadData,30000);
-</script>
-</body>
-</html>
+  if(e.target===this && !document.getElementById
