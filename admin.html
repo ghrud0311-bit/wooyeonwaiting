@@ -337,7 +337,7 @@ let isFull = false;
 let itemStates = JSON.parse(localStorage.getItem('itemStates2') || '{}');
 let itemRows = JSON.parse(localStorage.getItem('itemRows') || '{}');
 
-function getKey(row) { return (row[3]||'') + '|' + (row[6]||''); }
+function getKey(row) { return row[6]||''; }
 
 async function saveStates() {
   localStorage.setItem('itemStates2', JSON.stringify(itemStates));
@@ -729,8 +729,8 @@ async function loadData() {
     greyKeys.forEach(k => {
       if (!allItems.find(it => it.key === k)) {
         const savedRow = itemRows[k] || null;
-        const [name, phone] = k.split('|');
-        const row = savedRow || ['','','',name,'','',phone,''];
+        const phone = k;
+        const row = savedRow || ['','','','','','',phone,''];
         allItems.push({ row, key: k, isGhost: true });
       }
     });
@@ -851,7 +851,6 @@ function renderList() {
       <span class="waiting-num">${isGreyed ? '—' : displayNum}</span>
       <div class="waiting-info">
         <div class="name-row">
-          <span class="waiting-name">${row[3]||'—'}</span>
           ${gender ? `<span class="gender-badge ${gClass}">${gender}</span>` : ''}
           ${getSeatBadge(seat)}
         </div>

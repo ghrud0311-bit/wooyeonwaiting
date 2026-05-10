@@ -176,15 +176,13 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   <div class="my-card">
     <div class="my-row"><span class="my-label">접수 번호</span><span class="my-val" id="mynum">—</span></div>
     <hr class="my-divider">
-    <div class="my-row"><span class="my-label">성함</span><span class="my-val" id="myname">—</span></div>
-    <hr class="my-divider">
     <div class="my-row"><span class="my-label">인원</span><span class="my-val" id="mypeople">—</span></div>
   </div>
   <button class="register-btn" id="registerBtn" onclick="openForm()" style="display:none">웨이팅 등록하기</button>
-  <p class="section-label">순번 조회</p>
+  <p class="section-label">순번 조회 (전화번호 뒷 4자리)</p>
   <div class="search-row">
-    <input class="search-input" id="searchInput" type="text" placeholder="성함 입력 (예: 홍길동)">
-    <button class="search-btn" onclick="searchByName()">조회</button>
+    <input class="search-input" id="searchInput" type="tel" placeholder="전화번호 뒷 4자리">
+    <button class="search-btn" onclick="searchByPhone()">조회</button>
   </div>
   <p class="search-result" id="searchResult"></p>
   <div class="notice-panel">
@@ -209,7 +207,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <div class="progress-seg" id="seg2"></div>
         <div class="progress-seg" id="seg3"></div>
         <div class="progress-seg" id="seg4"></div>
-        <div class="progress-seg" id="seg5"></div>
       </div>
     </div>
 
@@ -234,7 +231,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <div class="privacy-box">
             <p class="privacy-title">개인정보 수집·이용 안내</p>
             <p class="privacy-item">
-              · 수집항목: 이름, 성별, 인원, 연락처, 접수일시<br>
+              · 수집항목: 성별, 인원, 연락처, 접수일시<br>
               · 이용목적: 예약 접수, 본인 확인, 예약 안내 연락, 좌석 운영<br>
               · 보관기간: 접수일 익일 파기<br>
               · 동의를 거부할 권리가 있으며, 필수항목 미동의 시 예약이 제한될 수 있습니다.
@@ -246,23 +243,11 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           </label>
           <div class="nav-row">
             <button class="nav-prev" disabled>이전</button>
-            <span class="step-counter">1 / 6</span>
+            <span class="step-counter">1 / 5</span>
             <button class="nav-next" id="next0" onclick="nextStep()" disabled>다음</button>
           </div>
         </div>
 
-        <!-- Step 1: 이름 -->
-        <div class="slide">
-          <p class="slide-title">성함을<br>입력해주세요</p>
-          <p class="slide-sub">입장 시 호명에 사용돼요</p>
-          <p class="field-label">성함</p>
-          <input class="field-input" id="fName" type="text" placeholder="홍길동" oninput="checkStep(1)">
-          <div class="nav-row">
-            <button class="nav-prev" onclick="prevStep()">이전</button>
-            <span class="step-counter">2 / 6</span>
-            <button class="nav-next" id="next1" onclick="nextStep()" disabled>다음</button>
-          </div>
-        </div>
 
         <!-- Step 2: 성별 + 인원 -->
         <div class="slide">
@@ -282,8 +267,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           </div>
           <div class="nav-row">
             <button class="nav-prev" onclick="prevStep()">이전</button>
-            <span class="step-counter">3 / 6</span>
-            <button class="nav-next" id="next2" onclick="nextStep()" disabled>다음</button>
+            <span class="step-counter">2 / 5</span>
+            <button class="nav-next" id="next1" onclick="nextStep()" disabled>다음</button>
           </div>
         </div>
 
@@ -294,13 +279,13 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <p class="field-label">연락처</p>
           <div class="phone-wrap">
             <span class="phone-prefix">010-</span>
-            <input class="phone-input" id="fPhone" type="tel" placeholder="0000-0000" maxlength="9" oninput="formatPhone(); checkStep(3)">
+            <input class="phone-input" id="fPhone" type="tel" placeholder="0000-0000" maxlength="9" oninput="formatPhone(); checkStep(2)">
           </div>
           <p class="field-hint">📌 번호만 입력해주세요.</p>
           <div class="nav-row">
             <button class="nav-prev" onclick="prevStep()">이전</button>
-            <span class="step-counter">4 / 6</span>
-            <button class="nav-next" id="next3" onclick="nextStep()" disabled>다음</button>
+            <span class="step-counter">3 / 5</span>
+            <button class="nav-next" id="next2" onclick="nextStep()" disabled>다음</button>
           </div>
         </div>
 
@@ -320,8 +305,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <div class="bottle-note">⚠️ 3인 이상 시 20만원 이상 바틀을 구매하셔야 해요</div>
           <div class="nav-row">
             <button class="nav-prev" onclick="prevStep()">이전</button>
-            <span class="step-counter">5 / 6</span>
-            <button class="nav-next" id="next4" onclick="nextStep()" disabled>다음</button>
+            <span class="step-counter">4 / 5</span>
+            <button class="nav-next" id="next3" onclick="nextStep()" disabled>다음</button>
           </div>
         </div>
 
@@ -342,8 +327,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           </div>
           <div class="nav-row">
             <button class="nav-prev" onclick="prevStep()">이전</button>
-            <span class="step-counter">6 / 6</span>
-            <button class="nav-next" id="next5" onclick="nextStep()" disabled>등록하기</button>
+            <span class="step-counter">5 / 5</span>
+            <button class="nav-next" id="next4" onclick="nextStep()" disabled>등록하기</button>
           </div>
         </div>
       </div>
@@ -366,7 +351,7 @@ const API_KEY = 'AIzaSyDNs6DjFlPRHukWl572r1pMZV72F6ZtODI';
 const RANGE = '시트1!A:G';
 const SETTINGS_RANGE = '설정!A1:A4';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 5;
 
 let currentStep = 0;
 let selectedGender = '';
@@ -401,35 +386,33 @@ function updateStatus(total) {
   }
 }
 
-function updateMyInfo(myName) {
-  if (!myName||!allRows.length) return;
-  const i=allRows.findIndex(r=>r[3]&&r[3].trim()===myName.trim());
+function updateMyInfo(myPhone) {
+  if (!myPhone||!allRows.length) return;
+  const i=allRows.findIndex(r=>r[6]&&r[6].replace(/-/g,'').endsWith(myPhone.replace(/-/g,'')));
   if (i>=0){
     document.getElementById('mynum').textContent=(i+1)+'번';
-    document.getElementById('myname').textContent=allRows[i][3]||'—';
     document.getElementById('mypeople').textContent=(allRows[i][5]||'—')+'명';
     document.getElementById('ahead').textContent=i;
   }
 }
 
-function searchByName() {
+function searchByPhone() {
   const input=document.getElementById('searchInput').value.trim();
   const result=document.getElementById('searchResult');
-  if (!input){result.textContent='이름을 입력해주세요.';return;}
-  const i=allRows.findIndex(r=>r[3]&&r[3].trim()===input);
+  if (!input){result.textContent='전화번호 뒷 4자리를 입력해주세요.';return;}
+  const i=allRows.findIndex(r=>r[6]&&r[6].replace(/-/g,'').endsWith(input.replace(/-/g,'')));
   if (i>=0){
     result.style.color='#6e6b66';
-    result.textContent=input+'님 — '+(i+1)+'번째 대기 중 (앞에 '+i+'팀 남음)';
+    result.textContent=(i+1)+'번째 대기 중 (앞에 '+i+'팀 남음)';
     document.getElementById('mynum').textContent=(i+1)+'번';
-    document.getElementById('myname').textContent=allRows[i][3]||'—';
     document.getElementById('mypeople').textContent=(allRows[i][5]||'—')+'명';
     document.getElementById('ahead').textContent=i;
   } else {
     result.style.color='#c0503e';
-    result.textContent='"'+input+'" 이름으로 접수된 내역이 없어요.';
+    result.textContent='해당 전화번호로 접수된 내역이 없어요.';
   }
 }
-document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchByName();});
+document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchByPhone();});
 
 async function loadData() {
   showLoading();
@@ -467,8 +450,8 @@ async function loadData() {
     allRows=(data.values||[]).slice(1).filter(r=>r[3]&&r[3].toString().trim()!=='');
     document.getElementById('total').textContent=allRows.length;
     updateStatus(allRows.length);
-    const n=getParam('name');
-    if (n) updateMyInfo(n);
+    const p=getParam('phone');
+    if (p) updateMyInfo(p);
     else document.getElementById('ahead').textContent='—';
   } catch(e){
     document.getElementById('total').textContent='—';
@@ -478,7 +461,6 @@ async function loadData() {
 
 function openForm() {
   currentStep=0; selectedGender=''; selectedPeople=''; bottleChoice=''; barChoice='';
-  document.getElementById('fName').value='';
   document.getElementById('fPhone').value='';
   document.getElementById('noticeAgree').checked=false;
   document.getElementById('privacyAgree').checked=false;
@@ -519,7 +501,6 @@ function updateSlide() {
 
 function canProceed() {
   if(currentStep===0) return document.getElementById('noticeAgree').checked && document.getElementById('privacyAgree').checked;
-  if(currentStep===1) return document.getElementById('fName').value.trim().length>0;
   if(currentStep===2) return selectedGender!==''&&selectedPeople!=='';
   if(currentStep===3) return document.getElementById('fPhone').value.replace(/\D/g,'').length===8;
   if(currentStep===4) return bottleChoice!=='';
@@ -540,13 +521,13 @@ function selectGender(g) {
   document.getElementById('g1').classList.toggle('selected',g==='여성');
   document.getElementById('g2').classList.toggle('selected',g==='혼성');
   document.getElementById('peopleGroup').className='people-group visible';
-  checkStep(2);
+  checkStep(1);
 }
 
 function selectPeople(p) {
   selectedPeople=p;
   for(let i=1;i<=4;i++) document.getElementById('p'+i).classList.toggle('selected',String(i)===p);
-  checkStep(2);
+  checkStep(1);
 }
 
 function selectChoice(type,val) {
@@ -576,13 +557,12 @@ function getSeat() {
   return '테이블석';
 }
 
-let pendingName = '';
+let pendingPhone = '';
 
 async function submitForm() {
-  const name=document.getElementById('fName').value.trim();
   const phone='010-'+document.getElementById('fPhone').value.trim();
   const seat=getSeat();
-  pendingName = name;
+  pendingPhone = phone;
   // formOverlay 완전히 숨기고 completeOverlay 표시
   const formEl = document.getElementById('formOverlay');
   formEl.classList.remove('active');
@@ -591,7 +571,7 @@ async function submitForm() {
   document.getElementById('completeOverlay').classList.add('active');
   try {
     await fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name,gender:selectedGender,people:selectedPeople,phone,seat})});
+      body:JSON.stringify({name:'',gender:selectedGender,people:selectedPeople,phone,seat})});
   } catch(e){
     document.getElementById('total').textContent='—';
     document.getElementById('ahead').textContent='—';
@@ -600,7 +580,7 @@ async function submitForm() {
 
 function goToMyTurn() {
   document.getElementById('completeOverlay').classList.remove('active');
-  window.location.href=window.location.pathname+'?name='+encodeURIComponent(pendingName);
+  window.location.href=window.location.pathname+'?phone='+encodeURIComponent(pendingPhone);
 }
 
 document.getElementById('formOverlay').addEventListener('click',function(e){
