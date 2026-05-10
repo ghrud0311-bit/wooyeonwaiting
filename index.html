@@ -501,10 +501,10 @@ function updateSlide() {
 
 function canProceed() {
   if(currentStep===0) return document.getElementById('noticeAgree').checked && document.getElementById('privacyAgree').checked;
-  if(currentStep===2) return selectedGender!==''&&selectedPeople!=='';
-  if(currentStep===3) return document.getElementById('fPhone').value.replace(/\D/g,'').length===8;
-  if(currentStep===4) return bottleChoice!=='';
-  if(currentStep===5) return barChoice!=='';
+  if(currentStep===1) return selectedGender!==''&&selectedPeople!=='';
+  if(currentStep===2) return document.getElementById('fPhone').value.replace(/\D/g,'').length===8;
+  if(currentStep===3) return bottleChoice!=='';
+  if(currentStep===4) return barChoice!=='';
   return true;
 }
 
@@ -535,12 +535,12 @@ function selectChoice(type,val) {
     bottleChoice=val;
     document.getElementById('bottleYes').className='choice-btn'+(val==='yes'?' selected':'');
     document.getElementById('bottleNo').className='choice-btn'+(val==='no'?' selected':'');
-    checkStep(4);
+    checkStep(3);
   } else {
     barChoice=val;
     document.getElementById('barYes').className='choice-btn'+(val==='yes'?' selected':'');
     document.getElementById('barNo').className='choice-btn'+(val==='no'?' selected':'');
-    checkStep(5);
+    checkStep(4);
   }
 }
 
