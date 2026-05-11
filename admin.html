@@ -113,6 +113,16 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .shuffle-btn:disabled { opacity: 0.38; cursor: not-allowed; }
 .shuffle-result { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-top: 8px; display: none; }
 .shuffle-result.active { display: block; }
+.notice-btn { padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; color: var(--text2); white-space: nowrap; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; justify-content: center; }
+.modal-overlay.active { display: flex; }
+.modal-box { background: var(--surface); border-radius: 16px 16px 0 0; width: 100%; max-width: 480px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.2rem 0.7rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.modal-title { font-size: 14px; font-weight: 600; }
+.modal-close-btn { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text3); padding: 4px 6px; }
+.modal-body { overflow-y: auto; padding: 1rem 1.2rem; flex: 1; }
+.notice-textarea { width: 100%; min-height: 180px; border: 1px solid var(--border2); border-radius: 8px; padding: 10px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; color: var(--text); background: var(--surface2); resize: vertical; box-sizing: border-box; line-height: 1.6; }
+.notice-save-btn { margin-top: 10px; width: 100%; padding: 10px; background: var(--accent,#7c6af7); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; font-weight: 500; }
 .shuffle-group { margin-bottom: 0.9rem; }
 .shuffle-group:last-child { margin-bottom: 0; }
 .shuffle-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
@@ -162,6 +172,57 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <input class="login-input" type="password" id="pwInput" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">로그인</button>
     <p class="login-err" id="loginErr"></p>
+  </div>
+</div>
+
+<!-- 자리섞기 팝업 -->
+<div class="modal-overlay" id="shuffleModal" onclick="closeShuffleModal(event)">
+  <div class="modal-box shuffle-modal-box">
+    <div class="modal-header">
+      <span class="modal-title">🃏 자리 배치</span>
+      <button class="modal-close-btn" onclick="closeShuffleModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="shuffle-group">
+        <div class="shuffle-label">남자 — 카드</div>
+        <div class="card-tags" id="menCards"></div>
+      </div>
+      <div class="shuffle-group">
+        <div class="shuffle-label">여자 — 카드</div>
+        <div class="card-tags" id="womenRedCards"></div>
+      </div>
+      <div class="shuffle-group">
+        <div class="shuffle-label">빈 자리</div>
+        <div class="card-tags" id="emptyCards"></div>
+      </div>
+      <div class="shuffle-group" id="tableVisGroup" style="display:none">
+        <div class="shuffle-label">테이블 배치</div>
+        <div class="table-vis-wrap">
+          <div class="table-vis">
+            <div class="table-vis-label">왼쪽 테이블</div>
+            <div class="seat-rows" id="leftTableVis"></div>
+          </div>
+          <div class="table-vis">
+            <div class="table-vis-label">오른쪽 테이블</div>
+            <div class="seat-rows" id="rightTableVis"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 공지사항 팝업 -->
+<div class="modal-overlay" id="noticeModal" onclick="closeNoticeModal(event)">
+  <div class="modal-box notice-modal-box">
+    <div class="modal-header">
+      <span class="modal-title">📢 공지사항</span>
+      <button class="modal-close-btn" onclick="closeNoticeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="noticeTxt" class="notice-textarea" placeholder="공지 내용을 입력하세요..."></textarea>
+      <button class="notice-save-btn" onclick="saveNotice()">저장</button>
+    </div>
   </div>
 </div>
 
@@ -804,13 +865,7 @@ function showShuffle() {
   const M = parseInt(seats.tM) || 0;
   const F = parseInt(seats.tF) || 0;
   const T = M + F;
-  const el = document.getElementById('shuffleResult');
 
-  // 토글: 이미 열려 있으면 닫기
-  if (el.classList.contains('active')) {
-    el.classList.remove('active');
-    return;
-  }
 
   // lookup table 기반 배치
   const key = `M${M}_F${F}`;
@@ -852,7 +907,29 @@ function showShuffle() {
     `<div class="row-inner"><div class="seat-spacer"></div>${renderRow(R_DEF.inner,data.ri)}</div>`;
   document.getElementById('tableVisGroup').style.display = '';
 
-  el.classList.add('active');
+  document.getElementById('shuffleModal').classList.add('active');
+}
+
+function closeShuffleModal(e) {
+  if (!e || e.target === document.getElementById('shuffleModal')) {
+    document.getElementById('shuffleModal').classList.remove('active');
+  }
+}
+
+function showNotice() {
+  document.getElementById('noticeTxt').value = localStorage.getItem('noticeText') || '';
+  document.getElementById('noticeModal').classList.add('active');
+}
+
+function closeNoticeModal(e) {
+  if (!e || e.target === document.getElementById('noticeModal')) {
+    document.getElementById('noticeModal').classList.remove('active');
+  }
+}
+
+function saveNotice() {
+  localStorage.setItem('noticeText', document.getElementById('noticeTxt').value);
+  document.getElementById('noticeModal').classList.remove('active');
 }
 
 function renderList() {
