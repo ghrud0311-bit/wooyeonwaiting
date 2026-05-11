@@ -604,4 +604,11 @@ function getCookie(name) {
 
 loadData();
 setInterval(loadData,30000);
-// 방금 등록한 경우
+// 방금 등록한 경우 GAS 반영 대기 후 재시도
+if (getParam('phone')) {
+  setTimeout(loadData, 3000);
+  setTimeout(loadData, 6000);
+}
+</script>
+</body>
+</html>
