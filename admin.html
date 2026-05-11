@@ -777,6 +777,7 @@ async function loadData() {
       const tB = b.row[2] || '9999-99-99';
       return tA < tB ? -1 : tA > tB ? 1 : 0;
     });
+    allItems.forEach((it, i) => { it._pos = i; });
 
     starred = starred.filter(k => allItems.some(it => it.key === k));
     hearted = hearted.filter(k => allItems.some(it => it.key === k));
@@ -863,7 +864,7 @@ function renderList() {
     const bS = starred.includes(b.key);
     if (aS && !bS) return -1;
     if (!aS && bS) return 1;
-    return 0;
+    return (a._pos ?? 0) - (b._pos ?? 0);
   });
 
   let displayNum = 0;
