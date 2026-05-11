@@ -383,8 +383,6 @@ async function saveStates() {
   const localResetAt = parseInt(localStorage.getItem('lastResetAt') || '0');
   const gasPayload = {};
   if (localResetAt) gasPayload._resetAt = localResetAt;
-  const _noticeVal = localStorage.getItem('noticeText') || '';
-  if (_noticeVal) gasPayload._notice = _noticeVal;
   Object.keys(itemStates).forEach(k => {
     const row = itemRows[k];
     const ts = row && row[2] ? row[2] : '';
@@ -449,7 +447,7 @@ function getTodayKST() {
 
 async function syncSettings() {
   try {
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A11')+'?key='+API_KEY);
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A12')+'?key='+API_KEY);
     const d = await r.json();
     if (!d.error && d.values) {
       isFull = d.values[0] && d.values[0][0] === 'TRUE';
@@ -462,13 +460,6 @@ async function syncSettings() {
           const gasRaw = JSON.parse(d.values[8][0]);
           // 다른 기기에서 초기화 감지
           const gasResetAt = gasRaw._resetAt || 0;
-          // _notice 동기화
-          if (gasRaw._notice !== undefined) {
-            const gasNotice = gasRaw._notice || '';
-            if (gasNotice !== localStorage.getItem('noticeText')) {
-              localStorage.setItem('noticeText', gasNotice);
-            }
-          }
           const localResetAt = parseInt(localStorage.getItem('lastResetAt') || '0');
           if (gasResetAt > localResetAt) {
             itemStates = {};
@@ -509,6 +500,13 @@ async function syncSettings() {
       fetch(GAS_URL + '?type=setFull&value=' + (isFull ? 'TRUE' : 'FALSE'));
       fetch(GAS_URL + '?type=setSeats&value=' + remain);
       fetch(GAS_URL + '?type=setSeatDetail&tM='+seats.tM+'&tF='+seats.tF+'&bM=0&bF=0');
+      // A12: 공지사항 동기화
+      if (d.values[11] && d.values[11][0] !== undefined) {
+        const gasNotice = d.values[11][0] || '';
+        if (gasNotice !== localStorage.getItem('noticeText')) {
+          localStorage.setItem('noticeText', gasNotice);
+        }
+      }
 
     }
   } catch(e) {}
@@ -917,17 +915,7 @@ function closeNoticeModal(e) {
 function saveNotice() {
   const txt = document.getElementById('noticeTxt').value;
   localStorage.setItem('noticeText', txt);
-  // _notice를 itemStates 페이로드에 포함해서 A9에 저장 (GAS 재배포 불필요)
-  const localResetAt = parseInt(localStorage.getItem('lastResetAt') || '0');
-  const gasPayload = {};
-  if (localResetAt) gasPayload._resetAt = localResetAt;
-  if (txt) gasPayload._notice = txt;
-  Object.keys(itemStates).forEach(k => {
-    const row = itemRows[k];
-    const ts = row && row[2] ? row[2] : '';
-    gasPayload[k] = ts ? (itemStates[k] + '|' + ts) : itemStates[k];
-  });
-  fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify(gasPayload)));
+  fetch(GAS_URL + '?type=setNotice&value=' + encodeURIComponent(txt));
   document.getElementById('noticeModal').classList.remove('active');
 }
 
