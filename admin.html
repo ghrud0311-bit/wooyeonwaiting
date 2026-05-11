@@ -342,7 +342,15 @@ function getKey(row) { return row[6]||''; }
 async function saveStates() {
   localStorage.setItem('itemStates2', JSON.stringify(itemStates));
   localStorage.setItem('itemRows', JSON.stringify(itemRows));
-  try { await fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify(itemStates))); } catch(e) {}
+  const localResetAt = parseInt(localStorage.getItem('lastResetAt') || '0');
+  const gasPayload = {};
+  if (localResetAt) gasPayload._resetAt = localResetAt;
+  Object.keys(itemStates).forEach(k => {
+    const row = itemRows[k];
+    const ts = row && row[2] ? row[2] : '';
+    gasPayload[k] = ts ? (itemStates[k] + '|' + ts) : itemStates[k];
+  });
+  try { await fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify(gasPayload))); } catch(e) {}
 }
 function saveStarred() { localStorage.setItem('starred', JSON.stringify(starred)); }
 function saveHearted() { localStorage.setItem('hearted', JSON.stringify(hearted)); }
@@ -411,9 +419,9 @@ async function syncSettings() {
       // A9: 대기목록 상태 동기화 (merge: terminal은 GAS 우선, 나머지는 local 우선)
       if (d.values[8] && d.values[8][0]) {
         try {
-          const gasStates = JSON.parse(d.values[8][0]);
+          const gasRaw = JSON.parse(d.values[8][0]);
           // 다른 기기에서 초기화 감지
-          const gasResetAt = gasStates._resetAt || 0;
+          const gasResetAt = gasRaw._resetAt || 0;
           const localResetAt = parseInt(localStorage.getItem('lastResetAt') || '0');
           if (gasResetAt > localResetAt) {
             itemStates = {};
@@ -423,14 +431,27 @@ async function syncSettings() {
             localStorage.setItem('lastResetAt', gasResetAt);
           } else {
             const terminal = ['done','noshow','noreply','visitx'];
-            const rank = s => terminal.includes(s) ? 2 : s === 'coming' ? 1 : 0;
+            const parseState = v => (typeof v==='string' && v.includes('|')) ? v.split('|')[0] : (v||'');
+            const parseTs    = v => (typeof v==='string' && v.includes('|')) ? v.split('|')[1] : '';
+            const rank = s => terminal.includes(s) ? 2 : s==='coming' ? 1 : 0;
+            // Parse gasRaw into clean states, and restore itemRows timestamps for cross-device ghost items
+            const gasStates = {};
+            Object.keys(gasRaw).forEach(k => {
+              if (k === '_resetAt') return;
+              const st = parseState(gasRaw[k]);
+              const ts = parseTs(gasRaw[k]);
+              gasStates[k] = st;
+              if (ts && !itemRows[k]) {
+                itemRows[k] = ['','',ts,'','','',k,''];
+              }
+            });
             const merged = Object.assign({}, gasStates);
-            delete merged._resetAt;
             Object.keys(itemStates).forEach(k => {
               if (rank(itemStates[k]) >= rank(merged[k])) merged[k] = itemStates[k];
             });
             itemStates = merged;
             localStorage.setItem('itemStates2', JSON.stringify(itemStates));
+            localStorage.setItem('itemRows', JSON.stringify(itemRows));
           }
         } catch(e2) {}
       }
@@ -504,12 +525,13 @@ function resetAll() {
       localStorage.setItem('seats', JSON.stringify(seats));
       const resetAt = Date.now();
       localStorage.setItem('lastResetAt', resetAt);
-      fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify({_resetAt: resetAt})));
+      localStorage.setItem('itemStates2', '{}');
+      localStorage.setItem('itemRows', '{}');
       saveStarred(); saveHearted();
       fetch(GAS_URL + '?type=setSeatDetail&tM=0&tF=0&bM=0&bF=0');
       fetch(GAS_URL + '?type=setSeats&value=26');
       fetch(GAS_URL + '?type=setFull&value=FALSE');
-      fetch(GAS_URL + '?type=clearSheet');
+      fetch(GAS_URL + '?type=clearSheet&resetAt=' + resetAt);
       isFull = false;
       const tMEl = document.getElementById('tM');
       const tFEl = document.getElementById('tF');
@@ -884,4 +906,3 @@ function renderList() {
 </script>
 </body>
 </html>
-           
