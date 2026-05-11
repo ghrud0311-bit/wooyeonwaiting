@@ -295,35 +295,12 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <span class="op-text" id="opText" style="color:var(--text3)">웨이팅 불가</span>
         <span class="seat-remain ok" id="tRemain">남은 자리 26명</span>
       </div>
-      <button class="shuffle-btn" id="shuffleBtn" onclick="showShuffle()" disabled>🃏 자리 섞기</button>
-    </div>
-    <div class="shuffle-result" id="shuffleResult">
-      <div class="shuffle-group">
-        <div class="shuffle-label">남자 — 카드</div>
-        <div class="card-tags" id="menCards"></div>
-      </div>
-      <div class="shuffle-group">
-        <div class="shuffle-label">여자 — 카드</div>
-        <div class="card-tags" id="womenRedCards"></div>
-      </div>
-      <div class="shuffle-group">
-        <div class="shuffle-label">빈 자리</div>
-        <div class="card-tags" id="emptyCards"></div>
-      </div>
-      <div class="shuffle-group" id="tableVisGroup" style="display:none">
-        <div class="shuffle-label">테이블 배치</div>
-        <div class="table-vis-wrap">
-          <div class="table-vis">
-            <div class="table-vis-label">왼쪽 테이블</div>
-            <div class="seat-rows" id="leftTableVis"></div>
-          </div>
-          <div class="table-vis">
-            <div class="table-vis-label">오른쪽 테이블</div>
-            <div class="seat-rows" id="rightTableVis"></div>
-          </div>
-        </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="shuffle-btn" id="shuffleBtn" onclick="showShuffle()" disabled style="flex:1;margin-top:0;">🃏 자리 섞기</button>
+        <button class="notice-btn" onclick="showNotice()">📢 공지사항</button>
       </div>
     </div>
+
   </div>
 
   <div class="section">
