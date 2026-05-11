@@ -580,7 +580,7 @@ async function submitForm() {
       body:JSON.stringify({name:'',gender:selectedGender,people:selectedPeople,phone,seat})});
   } catch(e){}
   // GAS가 시트에 쓸 시간 확보 후 버튼 활성화
-  await new Promise(r => setTimeout(r, 3000));
+  await new Promise(r => setTimeout(r, 500));
   goBtn.disabled = false;
   goBtn.textContent = '순번 확인하러 가기';
 }
@@ -612,3 +612,4 @@ if (getParam('phone')) {
 </script>
 </body>
 </html>
+ 
