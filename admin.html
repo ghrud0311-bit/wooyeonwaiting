@@ -412,14 +412,26 @@ async function syncSettings() {
       if (d.values[8] && d.values[8][0]) {
         try {
           const gasStates = JSON.parse(d.values[8][0]);
-          const terminal = ['done','noshow','noreply','visitx'];
-          const rank = s => terminal.includes(s) ? 2 : s === 'coming' ? 1 : 0;
-          const merged = Object.assign({}, gasStates);
-          Object.keys(itemStates).forEach(k => {
-            if (rank(itemStates[k]) >= rank(merged[k])) merged[k] = itemStates[k];
-          });
-          itemStates = merged;
-          localStorage.setItem('itemStates2', JSON.stringify(itemStates));
+          // 다른 기기에서 초기화 감지
+          const gasResetAt = gasStates._resetAt || 0;
+          const localResetAt = parseInt(localStorage.getItem('lastResetAt') || '0');
+          if (gasResetAt > localResetAt) {
+            itemStates = {};
+            itemRows = {};
+            localStorage.setItem('itemStates2', '{}');
+            localStorage.setItem('itemRows', '{}');
+            localStorage.setItem('lastResetAt', gasResetAt);
+          } else {
+            const terminal = ['done','noshow','noreply','visitx'];
+            const rank = s => terminal.includes(s) ? 2 : s === 'coming' ? 1 : 0;
+            const merged = Object.assign({}, gasStates);
+            delete merged._resetAt;
+            Object.keys(itemStates).forEach(k => {
+              if (rank(itemStates[k]) >= rank(merged[k])) merged[k] = itemStates[k];
+            });
+            itemStates = merged;
+            localStorage.setItem('itemStates2', JSON.stringify(itemStates));
+          }
         } catch(e2) {}
       }
       // GAS에 현재 자리 상태 동기화
@@ -490,7 +502,10 @@ function resetAll() {
       hearted = [];
       seats = { tM: 0, tF: 0 };
       localStorage.setItem('seats', JSON.stringify(seats));
-      saveStates(); saveStarred(); saveHearted();
+      const resetAt = Date.now();
+      localStorage.setItem('lastResetAt', resetAt);
+      fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify({_resetAt: resetAt})));
+      saveStarred(); saveHearted();
       fetch(GAS_URL + '?type=setSeatDetail&tM=0&tF=0&bM=0&bF=0');
       fetch(GAS_URL + '?type=setSeats&value=26');
       fetch(GAS_URL + '?type=setFull&value=FALSE');
@@ -637,14 +652,14 @@ function clickX(key) {
     { label: '미응답', cls: 'warning', action: async () => {
       itemStates[key] = 'noreply';
       await saveStates();
-      await removeFromSheet(key);
-      await loadData();
+      removeFromSheet(key);
+      renderList();
     }},
     { label: '방문 X', cls: 'danger', action: async () => {
       itemStates[key] = 'visitx';
       await saveStates();
-      await removeFromSheet(key);
-      await loadData();
+      removeFromSheet(key);
+      renderList();
     }},
     { label: '취소', cls: 'secondary', action: () => {} },
   ]);
@@ -661,14 +676,14 @@ function clickComing(key) {
     { label: '입장 처리', cls: 'primary', action: async () => {
       itemStates[key] = 'done';
       await saveStates();
-      await removeFromSheet(key);
-      await loadData();
+      removeFromSheet(key);
+      renderList();
     }},
     { label: '노쇼', cls: 'danger', action: async () => {
       itemStates[key] = 'noshow';
       await saveStates();
-      await removeFromSheet(key);
-      await loadData();
+      removeFromSheet(key);
+      renderList();
     }},
     { label: '취소', cls: 'secondary', action: () => {} },
   ]);
