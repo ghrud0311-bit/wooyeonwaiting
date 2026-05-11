@@ -715,7 +715,7 @@ async function loadData() {
     const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY);
     const data = await res.json();
     if (data.error) return;
-    rawRows = (data.values||[]).slice(1).filter(r => r[3] && r[3].toString().trim() !== '');
+    rawRows = (data.values||[]).slice(1).filter(r => r[6] && r[6].toString().trim() !== '');
 
     const activeKeys = new Set(rawRows.map(r => getKey(r)));
     const greyKeys = Object.keys(itemStates).filter(k =>

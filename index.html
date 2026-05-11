@@ -450,7 +450,7 @@ async function loadData() {
       document.getElementById('ahead').textContent='—';
       return;
     }
-    allRows=(data.values||[]).slice(1).filter(r=>r[3]&&r[3].toString().trim()!=='');
+    allRows=(data.values||[]).slice(1).filter(r=>r[6]&&r[6].toString().trim()!=='');
     document.getElementById('total').textContent=allRows.length;
     updateStatus(allRows.length);
     const p=getParam('phone');
