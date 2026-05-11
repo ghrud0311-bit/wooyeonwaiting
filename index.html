@@ -580,7 +580,7 @@ async function submitForm() {
       body:JSON.stringify({name:'',gender:selectedGender,people:selectedPeople,phone,seat})});
   } catch(e){}
   // GAS가 시트에 쓸 시간 확보 후 버튼 활성화
-  await new Promise(r => setTimeout(r, 2000));
+  await new Promise(r => setTimeout(r, 3000));
   goBtn.disabled = false;
   goBtn.textContent = '순번 확인하러 가기';
 }
@@ -604,6 +604,4 @@ function getCookie(name) {
 
 loadData();
 setInterval(loadData,30000);
-</script>
-</body>
-</html>
+// 방금 등록한 경우
