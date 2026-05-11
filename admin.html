@@ -724,15 +724,21 @@ async function loadData() {
 
     rawRows.forEach(r => { itemRows[getKey(r)] = r; });
     localStorage.setItem('itemRows', JSON.stringify(itemRows));
-    allItems = rawRows.map(r => ({ row: r, key: getKey(r) }));
 
-    greyKeys.forEach(k => {
-      if (!allItems.find(it => it.key === k)) {
+    // active + ghost 합쳐서 타임스탬프 기준 원래 순서 유지
+    const activeItems = rawRows.map(r => ({ row: r, key: getKey(r) }));
+    const ghostItems = greyKeys
+      .filter(k => !activeItems.find(it => it.key === k))
+      .map(k => {
         const savedRow = itemRows[k] || null;
         const phone = k;
         const row = savedRow || ['','','','','','',phone,''];
-        allItems.push({ row, key: k, isGhost: true });
-      }
+        return { row, key: k, isGhost: true };
+      });
+    allItems = [...activeItems, ...ghostItems].sort((a, b) => {
+      const tA = a.row[2] || '9999-99-99';
+      const tB = b.row[2] || '9999-99-99';
+      return tA < tB ? -1 : tA > tB ? 1 : 0;
     });
 
     starred = starred.filter(k => allItems.some(it => it.key === k));
