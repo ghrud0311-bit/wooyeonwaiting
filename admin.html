@@ -447,7 +447,7 @@ function getTodayKST() {
 
 async function syncSettings() {
   try {
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A11')+'?key='+API_KEY);
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A12')+'?key='+API_KEY);
     const d = await r.json();
     if (!d.error && d.values) {
       isFull = d.values[0] && d.values[0][0] === 'TRUE';
@@ -500,6 +500,13 @@ async function syncSettings() {
       fetch(GAS_URL + '?type=setFull&value=' + (isFull ? 'TRUE' : 'FALSE'));
       fetch(GAS_URL + '?type=setSeats&value=' + remain);
       fetch(GAS_URL + '?type=setSeatDetail&tM='+seats.tM+'&tF='+seats.tF+'&bM=0&bF=0');
+      // A12: 공지사항 동기화
+      if (d.values[11] && d.values[11][0] !== undefined) {
+        const gasNotice = d.values[11][0] || '';
+        if (gasNotice !== localStorage.getItem('noticeText')) {
+          localStorage.setItem('noticeText', gasNotice);
+        }
+      }
     }
   } catch(e) {}
   const tMEl = document.getElementById('tM');
@@ -905,7 +912,9 @@ function closeNoticeModal(e) {
 }
 
 function saveNotice() {
-  localStorage.setItem('noticeText', document.getElementById('noticeTxt').value);
+  const txt = document.getElementById('noticeTxt').value;
+  localStorage.setItem('noticeText', txt);
+  fetch(GAS_URL + '?type=setNotice&value=' + encodeURIComponent(txt));
   document.getElementById('noticeModal').classList.remove('active');
 }
 
