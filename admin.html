@@ -493,13 +493,9 @@ async function syncSettings() {
           }
         } catch(e2) {}
       }
-      // GAS에 현재 자리 상태 동기화
+      // isFull 계산만 (GAS 쓰기는 입력 핸들러에서만, 여기서 쓰면 리셋 race condition 발생)
       const tTotal = seats.tM + seats.tF;
-      const remain = Math.max(TABLE_MAX - tTotal, 0);
       isFull = isFull || tTotal >= TABLE_MAX;
-      fetch(GAS_URL + '?type=setFull&value=' + (isFull ? 'TRUE' : 'FALSE'));
-      fetch(GAS_URL + '?type=setSeats&value=' + remain);
-      fetch(GAS_URL + '?type=setSeatDetail&tM='+seats.tM+'&tF='+seats.tF+'&bM=0&bF=0');
       // A12: 공지사항 동기화
       if (d.values[11] && d.values[11][0] !== undefined) {
         const gasNotice = d.values[11][0] || '';
