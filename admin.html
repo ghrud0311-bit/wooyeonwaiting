@@ -493,9 +493,8 @@ async function syncSettings() {
           }
         } catch(e2) {}
       }
-      // isFull 계산만 (GAS 쓰기는 입력 핸들러에서만, 여기서 쓰면 리셋 race condition 발생)
-      const tTotal = seats.tM + seats.tF;
-      isFull = isFull || tTotal >= TABLE_MAX;
+      // isFull은 GAS A1 값만 사용 (입력 핸들러가 이미 정확하게 A1을 씀)
+      // tTotal 재계산으로 isFull 덮어쓰기 금지 - 리셋 race condition 원인
       // A12: 공지사항 동기화
       if (d.values[11] && d.values[11][0] !== undefined) {
         const gasNotice = d.values[11][0] || '';
