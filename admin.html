@@ -450,10 +450,18 @@ async function syncSettings() {
     const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A12')+'?key='+API_KEY);
     const d = await r.json();
     if (!d.error && d.values) {
-      isFull = d.values[0] && d.values[0][0] === 'TRUE';
-      seats.tM = parseInt(d.values[2] && d.values[2][0]) || 0;
-      seats.tF = parseInt(d.values[3] && d.values[3][0]) || 0;
-      localStorage.setItem('seats', JSON.stringify(seats));
+      // 리셋 후 2분 동안은 GAS 자리수/isFull 무시 (GAS 반영 전에 syncSettings가 복원하는 버그 방지)
+      const _resetAt = parseInt(localStorage.getItem('lastResetAt') || '0');
+      const _resetAge = Date.now() - _resetAt;
+      if (_resetAge > 120000) {
+        isFull = d.values[0] && d.values[0][0] === 'TRUE';
+        seats.tM = parseInt(d.values[2] && d.values[2][0]) || 0;
+        seats.tF = parseInt(d.values[3] && d.values[3][0]) || 0;
+        localStorage.setItem('seats', JSON.stringify(seats));
+      } else {
+        // 리셋 직후: GAS 값 무시, 로컬 0 유지
+        isFull = false;
+      }
       // A9: 대기목록 상태 동기화 (merge: terminal은 GAS 우선, 나머지는 local 우선)
       if (d.values[8] && d.values[8][0]) {
         try {
