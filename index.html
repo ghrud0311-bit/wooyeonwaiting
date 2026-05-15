@@ -573,7 +573,7 @@ async function submitForm() {
   document.body.style.overflow='';
   document.getElementById('completeOverlay').classList.add('active');
   // fire-and-forget: GAS 응답 기다리지 않고 즉시 버튼 활성화
-  fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
+  fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({name:'',gender:selectedGender,people:selectedPeople,phone,seat})}).catch(()=>{});
 }
 
