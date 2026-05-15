@@ -563,7 +563,7 @@ async function initAdmin() {
 async function refreshAll() { await syncSettings(); await loadData(); }
 
 // 초기화 (영업 종료)
-function resetAll() {
+async function resetAll() {
   showPopup('영업 종료 / 초기화', '대기 목록 상태가 모두 초기화돼요.', [
     { label: '초기화', cls: 'danger', action: async () => {
       itemStates = {};
@@ -577,9 +577,11 @@ function resetAll() {
       localStorage.setItem('itemStates2', '{}');
       localStorage.setItem('itemRows', '{}');
       saveStarred(); saveHearted();
-      fetch(GAS_URL + '?type=setSeatDetail&tM=0&tF=0&bM=0&bF=0');
-      fetch(GAS_URL + '?type=setSeats&value=26');
-      fetch(GAS_URL + '?type=setFull&value=FALSE');
+      await Promise.all([
+        fetch(GAS_URL + '?type=setSeatDetail&tM=0&tF=0&bM=0&bF=0'),
+        fetch(GAS_URL + '?type=setSeats&value=26'),
+        fetch(GAS_URL + '?type=setFull&value=FALSE'),
+      ]);
       fetch(GAS_URL + '?type=clearSheet&resetAt=' + resetAt);
       isFull = false;
       const tMEl = document.getElementById('tM');
@@ -588,6 +590,7 @@ function resetAll() {
       if (tFEl) tFEl.value = 0;
       updateSeatUI('t', TABLE_MAX);
       updateOpStatusUI();
+      await syncSettings();
       await loadData();
     }},
     { label: '취소', cls: 'secondary', action: () => {} }
