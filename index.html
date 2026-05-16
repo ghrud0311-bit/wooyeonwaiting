@@ -420,7 +420,7 @@ document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==
 async function loadData() {
   showLoading();
   try {
-    const sr=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(SETTINGS_RANGE)+'?key='+API_KEY);
+    const sr=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(SETTINGS_RANGE)+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const sd=await sr.json();
     if (!sd.error&&sd.values){
       const tM=parseInt(sd.values[2]&&sd.values[2][0])||0;
@@ -443,7 +443,7 @@ async function loadData() {
         fetch(GAS_URL + '?type=trackVisit');
       }
     }
-    const res=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY);
+    const res=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const data=await res.json();
     if (data.error) {
       document.getElementById('total').textContent='—';
@@ -609,7 +609,7 @@ function getCookie(name) {
 }
 
 loadData();
-setInterval(loadData,30000);
+setInterval(loadData,10000);
 // 방금 등록한 경우 GAS 반영 대기 후 재시도
 if (getParam('phone')) {
   setTimeout(loadData, 3000);

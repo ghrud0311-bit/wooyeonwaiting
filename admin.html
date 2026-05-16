@@ -447,7 +447,7 @@ function getTodayKST() {
 
 async function syncSettings() {
   try {
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A12')+'?key='+API_KEY);
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A12')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const d = await r.json();
     if (!d.error && d.values) {
       const gasIsFull = d.values[0] && d.values[0][0] === 'TRUE';
@@ -540,7 +540,7 @@ async function syncSettings() {
 async function loadTodayStats() {
   try {
     // A7:A11 한번에 읽기 (A7=날짜, A8=오늘방문, A9=상태JSON, A10=누계방문, A11=누계등록)
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A7:A11')+'?key='+API_KEY);
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A7:A11')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const d = await r.json();
     const today = getTodayKST();
     let visitCount = 0, cumVisits = 0, cumRegs = 0;
@@ -572,7 +572,7 @@ async function loadTodayStats() {
 async function initAdmin() {
   await syncSettings();
   await loadData();
-  setInterval(async () => { await syncSettings(); await loadData(); }, 30000);
+  setInterval(async () => { await syncSettings(); await loadData(); }, 10000);
 }
 
 async function refreshAll() { await syncSettings(); await loadData(); }
@@ -580,33 +580,36 @@ async function refreshAll() { await syncSettings(); await loadData(); }
 // 초기화 (영업 종료)
 async function resetAll() {
   showPopup('영업 종료 / 초기화', '대기 목록 상태가 모두 초기화돼요.', [
-    { label: '초기화', cls: 'danger', action: async () => {
+    { label: '초기화', cls: 'danger', action: () => {
+      // 1) 로컬 상태 + UI 즉시 갱신 (GAS 응답 대기 X → 화면 바로 0/0)
       itemStates = {};
       itemRows = {};
       starred = [];
       hearted = [];
       seats = { tM: 0, tF: 0 };
-      localStorage.setItem('seats', JSON.stringify(seats));
+      isFull = false;
+      allItems = [];
+      rawRows = [];
       const resetAt = Date.now();
+      localStorage.setItem('seats', JSON.stringify(seats));
       localStorage.setItem('lastResetAt', resetAt);
       localStorage.setItem('itemStates2', '{}');
       localStorage.setItem('itemRows', '{}');
       saveStarred(); saveHearted();
-      await Promise.all([
-        fetch(GAS_URL + '?type=setSeatDetail&tM=0&tF=0&bM=0&bF=0'),
-        fetch(GAS_URL + '?type=setSeats&value=26'),
-        fetch(GAS_URL + '?type=setFull&value=FALSE'),
-      ]);
-      fetch(GAS_URL + '?type=clearSheet&resetAt=' + resetAt);
-      isFull = false;
       const tMEl = document.getElementById('tM');
       const tFEl = document.getElementById('tF');
       if (tMEl) tMEl.value = 0;
       if (tFEl) tFEl.value = 0;
       updateSeatUI('t', TABLE_MAX);
       updateOpStatusUI();
-      await syncSettings();
-      await loadData();
+      try { renderList(); } catch(e) {}
+      // 2) GAS 호출은 fire-and-forget (응답 대기 X)
+      fetch(GAS_URL + '?type=setSeatDetail&tM=0&tF=0&bM=0&bF=0').catch(()=>{});
+      fetch(GAS_URL + '?type=setSeats&value=26').catch(()=>{});
+      fetch(GAS_URL + '?type=setFull&value=FALSE').catch(()=>{});
+      fetch(GAS_URL + '?type=clearSheet&resetAt=' + resetAt).catch(()=>{});
+      // 3) 5초 뒤 한 번 백그라운드 재동기화 (race 방어 로직이 이미 있음)
+      setTimeout(() => { syncSettings(); loadData(); }, 5000);
     }},
     { label: '취소', cls: 'secondary', action: () => {} }
   ]);
@@ -816,7 +819,7 @@ function getActionBtns(key, row) {
 
 async function loadData() {
   try {
-    const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY);
+    const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const data = await res.json();
     if (data.error) return;
     rawRows = (data.values||[]).slice(1).filter(r => r[6] && r[6].toString().trim() !== '');
