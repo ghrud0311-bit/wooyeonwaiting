@@ -453,16 +453,23 @@ async function syncSettings() {
       const gasIsFull = d.values[0] && d.values[0][0] === 'TRUE';
       const gasTM = parseInt(d.values[2] && d.values[2][0]) || 0;
       const gasTF = parseInt(d.values[3] && d.values[3][0]) || 0;
-      // 리셋 race condition 방어 (state-based + time-based):
-      // 1) 최근 2분 이내 리셋이고 GAS가 아직 0 아니면 무시
-      // 2) 로컬 0인데 GAS 비제로면 race로 간주 (5분 윈도우)
+      // A9의 _resetAt 미리 읽기 - race 방어 정밀화에 사용
+      let gasResetAtEarly = 0;
+      if (d.values[8] && d.values[8][0]) {
+        try { gasResetAtEarly = JSON.parse(d.values[8][0])._resetAt || 0; } catch(e) {}
+      }
+      // race 방어 (정밀화):
+      // - 우리가 방금 리셋했고 (recentReset, 60초 이내)
+      // - GAS가 아직 우리 리셋 반영 못 했고 (!gasReflectsOurReset)
+      // - 우리 로컬은 0인데 GAS는 비제로 → race로 간주, GAS 값 무시
+      // 그 외에는 GAS 값을 신뢰 (다른 브라우저 정당한 업데이트 포함)
       const _resetAt = parseInt(localStorage.getItem('lastResetAt') || '0');
       const _resetAge = Date.now() - _resetAt;
+      const gasReflectsOurReset = gasResetAtEarly >= _resetAt;
       const localIsZero = (parseInt(seats.tM)||0) === 0 && (parseInt(seats.tF)||0) === 0;
       const gasNotYetZero = gasTM !== 0 || gasTF !== 0;
-      const recentReset = _resetAt > 0 && _resetAge < 300000;
-      if (recentReset && localIsZero && gasNotYetZero) {
-        // 리셋 직후이지만 GAS가 아직 0 반영 전 → 로컬 0 유지
+      const recentReset = _resetAt > 0 && _resetAge < 60000;
+      if (recentReset && !gasReflectsOurReset && localIsZero && gasNotYetZero) {
         isFull = false;
       } else {
         isFull = gasIsFull;
@@ -478,18 +485,13 @@ async function syncSettings() {
           const gasResetAt = gasRaw._resetAt || 0;
           const localResetAt = parseInt(localStorage.getItem('lastResetAt') || '0');
           if (gasResetAt > localResetAt) {
+            // 다른 기기 리셋 감지: itemStates/itemRows만 클리어
+            // seats는 위에서 이미 GAS 값으로 동기화됨 (강제 0/0 X)
             itemStates = {};
             itemRows = {};
-            seats = { tM: 0, tF: 0 };
             localStorage.setItem('itemStates2', '{}');
             localStorage.setItem('itemRows', '{}');
-            localStorage.setItem('seats', JSON.stringify(seats));
             localStorage.setItem('lastResetAt', gasResetAt);
-            isFull = false;
-            const tMEl2 = document.getElementById('tM');
-            const tFEl2 = document.getElementById('tF');
-            if (tMEl2) tMEl2.value = 0;
-            if (tFEl2) tFEl2.value = 0;
           } else {
             const terminal = ['done','noshow','noreply','visitx'];
             const parseState = v => (typeof v==='string' && v.includes('|')) ? v.split('|')[0] : (v||'');
