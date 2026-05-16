@@ -572,9 +572,23 @@ async function submitForm() {
   formEl.style.display = 'none';
   document.body.style.overflow='';
   document.getElementById('completeOverlay').classList.add('active');
-  // fire-and-forget: GAS 응답 기다리지 않고 즉시 버튼 활성화
-  fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({name:'',gender:selectedGender,people:selectedPeople,phone,seat})}).catch(()=>{});
+  // 등록 페이로드 - sendBeacon 사용으로 페이지 언로드에도 전송 보장
+  const payload = JSON.stringify({name:'',gender:selectedGender,people:selectedPeople,phone,seat});
+  let sent = false;
+  try {
+    if (navigator.sendBeacon) {
+      const blob = new Blob([payload], {type:'text/plain'});
+      sent = navigator.sendBeacon(GAS_URL, blob);
+    }
+  } catch(e) { sent = false; }
+  if (!sent) {
+    // 폴백: keepalive fetch (브라우저가 페이지 닫혀도 전송 보장)
+    try {
+      fetch(GAS_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain'},body:payload}).catch(()=>{});
+    } catch(e) {
+      fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload}).catch(()=>{});
+    }
+  }
 }
 
 function goToMyTurn() {
