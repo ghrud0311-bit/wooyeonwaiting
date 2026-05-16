@@ -581,7 +581,7 @@ async function refreshAll() { await syncSettings(); await loadData(); }
 async function resetAll() {
   showPopup('영업 종료 / 초기화', '대기 목록 상태가 모두 초기화돼요.', [
     { label: '초기화', cls: 'danger', action: () => {
-      // 1) 로컬 상태 + UI 즉시 갱신 (GAS 응답 대기 X → 화면 바로 0/0)
+      // 1) 로컬 상태 + UI 즉시 갱신
       itemStates = {};
       itemRows = {};
       starred = [];
@@ -603,13 +603,17 @@ async function resetAll() {
       updateSeatUI('t', TABLE_MAX);
       updateOpStatusUI();
       try { renderList(); } catch(e) {}
-      // 2) GAS 호출은 fire-and-forget (응답 대기 X)
-      fetch(GAS_URL + '?type=setSeatDetail&tM=0&tF=0&bM=0&bF=0').catch(()=>{});
-      fetch(GAS_URL + '?type=setSeats&value=26').catch(()=>{});
-      fetch(GAS_URL + '?type=setFull&value=FALSE').catch(()=>{});
-      fetch(GAS_URL + '?type=clearSheet&resetAt=' + resetAt).catch(()=>{});
-      // 3) 5초 뒤 한 번 백그라운드 재동기화 (race 방어 로직이 이미 있음)
-      setTimeout(() => { syncSettings(); loadData(); }, 5000);
+      // 2) GAS 호출을 순차 await + keepalive로 모든 요청 송신 보장
+      //    (동시 호출 시 일부 dropped되던 버그 수정)
+      (async () => {
+        const opts = { method: 'GET', keepalive: true, cache: 'no-store' };
+        try { await fetch(GAS_URL + '?type=clearSheet&resetAt=' + resetAt, opts); } catch(e) {}
+        try { await fetch(GAS_URL + '?type=setSeatDetail&tM=0&tF=0&bM=0&bF=0', opts); } catch(e) {}
+        try { await fetch(GAS_URL + '?type=setSeats&value=26', opts); } catch(e) {}
+        try { await fetch(GAS_URL + '?type=setFull&value=FALSE', opts); } catch(e) {}
+        // 3) GAS 반영 확인용 동기화
+        setTimeout(() => { syncSettings(); loadData(); }, 800);
+      })();
     }},
     { label: '취소', cls: 'secondary', action: () => {} }
   ]);
