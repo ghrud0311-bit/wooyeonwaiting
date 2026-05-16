@@ -633,13 +633,30 @@ function setSeatDirect(id, val) {
   seats[id] = v;
   localStorage.setItem('seats', JSON.stringify(seats));
   updateSeatUI('t', TABLE_MAX);
-  fetch(GAS_URL + '?type=setSeatDetail&tM='+seats.tM+'&tF='+seats.tF+'&bM=0&bF=0');
   const tTotal = (parseInt(seats.tM)||0) + (parseInt(seats.tF)||0);
-  const remain = Math.max(TABLE_MAX - tTotal, 0);
   isFull = tTotal >= TABLE_MAX;
   updateOpStatusUI();
-  fetch(GAS_URL + '?type=setFull&value=' + (isFull ? 'TRUE' : 'FALSE'));
-  fetch(GAS_URL + '?type=setSeats&value=' + remain);
+  syncSeatsToGAS();  // debounce + 순차 + keepalive
+}
+
+// 자리수 변경을 GAS에 안정적으로 동기화하는 함수
+// - 300ms debounce: +/- 빠르게 눌러도 마지막 한 번만 호출
+// - 순차 await: 동시 호출 시 일부 dropped되는 race 방지
+// - keepalive: 페이지 이동/탭 전환에도 송신 보장
+let _seatSyncTimer = null;
+function syncSeatsToGAS() {
+  clearTimeout(_seatSyncTimer);
+  _seatSyncTimer = setTimeout(async () => {
+    const tM = parseInt(seats.tM)||0;
+    const tF = parseInt(seats.tF)||0;
+    const tTotal = tM + tF;
+    const remain = Math.max(TABLE_MAX - tTotal, 0);
+    const full = tTotal >= TABLE_MAX;
+    const opts = { method: 'GET', keepalive: true, cache: 'no-store' };
+    try { await fetch(GAS_URL + '?type=setSeatDetail&tM='+tM+'&tF='+tF+'&bM=0&bF=0', opts); } catch(e) {}
+    try { await fetch(GAS_URL + '?type=setSeats&value=' + remain, opts); } catch(e) {}
+    try { await fetch(GAS_URL + '?type=setFull&value=' + (full ? 'TRUE' : 'FALSE'), opts); } catch(e) {}
+  }, 300);
 }
 
 function updateSeat(id, delta) {
@@ -655,13 +672,10 @@ function updateSeat(id, delta) {
   seats[id] = val;
   localStorage.setItem('seats', JSON.stringify(seats));
   updateSeatUI('t', TABLE_MAX);
-  fetch(GAS_URL + '?type=setSeatDetail&tM='+seats.tM+'&tF='+seats.tF+'&bM=0&bF=0');
   const tTotal = (parseInt(seats.tM)||0) + (parseInt(seats.tF)||0);
-  const remain = Math.max(TABLE_MAX - tTotal, 0);
   isFull = tTotal >= TABLE_MAX;
   updateOpStatusUI();
-  fetch(GAS_URL + '?type=setFull&value=' + (isFull ? 'TRUE' : 'FALSE'));
-  fetch(GAS_URL + '?type=setSeats&value=' + remain);
+  syncSeatsToGAS();  // debounce + 순차 + keepalive로 GAS 동기화
 }
 
 function updateSeatUI(prefix, max) {
