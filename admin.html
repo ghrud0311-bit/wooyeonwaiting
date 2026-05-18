@@ -376,7 +376,7 @@ async function saveStates() {
     const ts = row && row[2] ? row[2] : '';
     gasPayload[k] = ts ? (itemStates[k] + '|' + ts) : itemStates[k];
   });
-  try { await fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify(gasPayload))); } catch(e) {}
+  try { await fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify(gasPayload)), { keepalive: true, cache: 'no-store' }); } catch(e) {}
 }
 function saveStarred() { localStorage.setItem('starred', JSON.stringify(starred)); }
 function saveHearted() { localStorage.setItem('hearted', JSON.stringify(hearted)); }
@@ -739,7 +739,7 @@ async function removeFromSheet(key) {
   const row = item.row;
   try {
     await fetch(GAS_URL, {
-      method: 'POST', mode: 'no-cors',
+      method: 'POST', mode: 'no-cors', keepalive: true,
       headers: {'Content-Type':'text/plain'},
       body: JSON.stringify({ type: 'delete', name: row[3], phone: row[6] })
     });
