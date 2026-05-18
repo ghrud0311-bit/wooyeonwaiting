@@ -814,8 +814,11 @@ function getLoyalBadge(phone) {
   const info = loyalMap[p];
   if (!info) return '';
   const visits = info.visits || 0;
-  const progress = visits % 3;
-  const isReady = progress === 0 && visits > 0;
+  const coupons = info.coupons || 0;
+  // pending = 발급 받아야 할 쿠폰 수. 발급 끝났으면 0
+  const pending = Math.floor(visits / 3) - coupons;
+  const progress = visits % 3;  // 0,1,2 표시용
+  const isReady = pending > 0;  // 발급 대기 중일 때만 '쿠폰' 배지
   const safe = p.replace(/'/g, "\\'");
   if (isReady) {
     return `<button type="button" class="loyal-badge ready" onclick="showLoyalInfo('${safe}')">🎁 쿠폰</button>`;
@@ -829,17 +832,18 @@ function showLoyalInfo(phone) {
   if (!info) return;
   const visits = info.visits || 0;
   const coupons = info.coupons || 0;
+  const pending = Math.floor(visits / 3) - coupons;
   const progress = visits % 3;
-  const isReady = progress === 0 && visits > 0;
+  const isReady = pending > 0;
   // 가입일/마지막방문 표시 가공
   const joinedAt = info.joinedAt ? String(info.joinedAt).split(' ')[0] : '—';
   const lastVisit = info.lastVisit ? String(info.lastVisit).split(' ')[0] : '아직 없음';
 
   let progressBox;
   if (isReady) {
-    progressBox = `<div class="loyal-info-progress" style="background:#ffe8c8;border-color:#e0a050;color:#804010"><strong>🎁 쿠폰 발급 대상!</strong><br>누적 ${visits}회 도달 — 16,000원 쿠폰 발급 가능</div>`;
+    progressBox = `<div class="loyal-info-progress" style="background:#ffe8c8;border-color:#e0a050;color:#804010"><strong>🎁 쿠폰 발급 대기 ${pending}장</strong><br>누적 ${visits}회 — 16,000원 쿠폰 ${pending}장 발급 가능</div>`;
   } else {
-    const need = 3 - progress;
+    const need = progress === 0 ? 3 : (3 - progress);
     progressBox = `<div class="loyal-info-progress">다음 쿠폰까지 <strong>${need}회</strong> 남았어요<br>(현재 진행 ${progress}/3)</div>`;
   }
 

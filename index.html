@@ -167,6 +167,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .loyalty-btn:disabled { background: #c9b487; cursor: default; }
 .loyalty-success { background: #e8f5e8; border: 1px solid #b5d8b5; border-radius: 12px; padding: 12px; margin: 0.5rem 0 1rem; text-align: center; font-size: 13px; color: #2d5a2d; font-weight: 500; }
 .loyalty-success small { display: block; font-size: 11px; font-weight: 400; color: #4a7a4a; margin-top: 4px; }
+.loyalty-info-only { background: #fff7e8; border: 1px solid #f5d792; border-radius: 12px; padding: 14px 14px; margin: 0.5rem 0 1rem; text-align: center; }
+.loyalty-info-only .loyalty-title { font-size: 14px; font-weight: 600; color: #8b5a00; margin-bottom: 6px; }
+.loyalty-info-only .loyalty-desc { font-size: 12.5px; color: #6b4400; line-height: 1.6; }
+.loyalty-info-only .loyalty-desc strong { color: #b86b00; font-weight: 600; }
+.loyalty-info-only.coupon-ready { background: linear-gradient(135deg, #fff4e0, #ffe8c8); border: 1.5px solid #e0a050; }
+.loyalty-info-only.coupon-ready .loyalty-title { color: #804010; }
+.loyalty-info-only.coupon-pending { background: #ffeed4; border-color: #f0b870; }
+.loyalty-info-only.coupon-pending .loyalty-title { color: #804010; }
+.loyalty-loading { background: #f5f5f5; border-radius: 12px; padding: 14px; margin: 0.5rem 0 1rem; text-align: center; font-size: 12px; color: #999; }
 </style>
 </head>
 <body>
@@ -360,22 +369,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="complete-icon">🎉</div>
     <p class="complete-title">등록이 완료되었습니다</p>
     <div id="loyaltyCardWrap">
-      <div class="loyalty-card" id="loyaltyCard">
-        <div class="loyalty-title">🎁 단골 등록하시겠어요?</div>
-        <div class="loyalty-desc">
-          단골 회원으로 등록하시면 <strong>웨이팅 후 입장 3회마다 16,000원 쿠폰</strong>을 드려요.
-        </div>
-        <div class="loyalty-privacy">
-          <div class="loyalty-privacy-title">개인정보 수집·이용 안내</div>
-          <ul class="loyalty-privacy-list">
-            <li>수집 항목: 전화번호</li>
-            <li>이용 목적: 단골 회원 관리 및 쿠폰 발급</li>
-            <li>보유 기간: 마지막 방문일로부터 1년<br>(미방문 시 자동 삭제, 단골 탈퇴 시 즉시 삭제)</li>
-          </ul>
-          <div class="loyalty-privacy-note">※ 동의를 거부하실 수 있으며, 거부 시 단골 혜택 적용이 어렵습니다.</div>
-        </div>
-        <button class="loyalty-btn" id="loyaltyBtn" onclick="registerLoyal()">동의하고 단골 등록하기</button>
-      </div>
+      <div class="loyalty-loading">단골 정보 확인 중...</div>
     </div>
     <button class="complete-go-btn" id="completeGoBtn" onclick="goToMyTurn()">순번 확인하러 가기</button>
   </div>
@@ -608,6 +602,8 @@ async function submitForm() {
   formEl.style.display = 'none';
   document.body.style.overflow='';
   document.getElementById('completeOverlay').classList.add('active');
+  // 단골 여부 조회 후 맞춤 카드 렌더링
+  checkLoyalForCompleteScreen(phone);
   // 등록 페이로드 - sendBeacon 사용으로 페이지 언로드에도 전송 보장
   const payload = JSON.stringify({name:'',gender:selectedGender,people:selectedPeople,phone,seat});
   let sent = false;
@@ -625,6 +621,84 @@ async function submitForm() {
       fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload}).catch(()=>{});
     }
   }
+}
+
+// 등록 완료 시점에 단골 시트 조회 후 맞춤 카드 렌더링
+async function checkLoyalForCompleteScreen(phone) {
+  let info = null;
+  try {
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('단골!A:E')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const d = await r.json();
+    if (d && d.values) {
+      for (let i = 1; i < d.values.length; i++) {
+        if (String(d.values[i][0]).trim() === String(phone).trim()) {
+          info = {
+            visits: parseInt(d.values[i][2]) || 0,
+            coupons: parseInt(d.values[i][4]) || 0
+          };
+          break;
+        }
+      }
+    }
+  } catch(e) {}
+  renderCompleteLoyaltyCard(info);
+}
+
+function renderCompleteLoyaltyCard(info) {
+  const wrap = document.getElementById('loyaltyCardWrap');
+  if (!wrap) return;
+
+  if (!info) {
+    // 비단골: 단골 등록 카드 (기존 UI)
+    wrap.innerHTML = `<div class="loyalty-card" id="loyaltyCard">
+        <div class="loyalty-title">🎁 단골 등록하시겠어요?</div>
+        <div class="loyalty-desc">
+          단골 회원으로 등록하시면 <strong>웨이팅 후 입장 3회마다 16,000원 쿠폰</strong>을 드려요.
+        </div>
+        <div class="loyalty-privacy">
+          <div class="loyalty-privacy-title">개인정보 수집·이용 안내</div>
+          <ul class="loyalty-privacy-list">
+            <li>수집 항목: 전화번호</li>
+            <li>이용 목적: 단골 회원 관리 및 쿠폰 발급</li>
+            <li>보유 기간: 마지막 방문일로부터 1년<br>(미방문 시 자동 삭제, 단골 탈퇴 시 즉시 삭제)</li>
+          </ul>
+          <div class="loyalty-privacy-note">※ 동의를 거부하실 수 있으며, 거부 시 단골 혜택 적용이 어렵습니다.</div>
+        </div>
+        <button class="loyalty-btn" id="loyaltyBtn" onclick="registerLoyal()">동의하고 단골 등록하기</button>
+      </div>`;
+    return;
+  }
+
+  // 단골: 진행도 기반 맞춤 메시지
+  const visits = info.visits;
+  const coupons = info.coupons;
+  const pending = Math.floor(visits / 3) - coupons;  // 미발급 쿠폰 수
+  const afterVisits = visits + 1;                     // 이번 방문 후 누적
+  const afterPending = Math.floor(afterVisits / 3) - coupons;
+
+  let cardClass, title, desc;
+  if (pending > 0) {
+    // 이미 발급 대기 중 (이전 방문이 3 배수)
+    cardClass = 'loyalty-info-only coupon-pending';
+    title = '🎁 쿠폰 발급 대기 중!';
+    desc = `이전 누적 <strong>${visits}회</strong> 방문하셨어요. 매장에서 <strong>16,000원 쿠폰 ${pending}장</strong>을 안내해드려요.`;
+  } else if (afterPending > 0) {
+    // 이번 방문이 쿠폰 도달
+    cardClass = 'loyalty-info-only coupon-ready';
+    title = '🎁 오늘이 쿠폰 발급일이에요!';
+    desc = `오늘 방문하시면 누적 <strong>${afterVisits}회</strong> 달성, <strong>16,000원 쿠폰</strong> 한 장을 받으실 수 있어요!`;
+  } else {
+    // 일반 진행
+    cardClass = 'loyalty-info-only';
+    const remainAfterThis = 3 - (afterVisits % 3);
+    title = `${afterVisits}번째 방문을 환영합니다!`;
+    desc = `<strong>${remainAfterThis}번</strong> 더 방문하시면 16,000원 쿠폰을 드려요. (이전 누적 ${visits}회)`;
+  }
+
+  wrap.innerHTML = `<div class="${cardClass}">
+    <div class="loyalty-title">${title}</div>
+    <div class="loyalty-desc">${desc}</div>
+  </div>`;
 }
 
 function registerLoyal() {
