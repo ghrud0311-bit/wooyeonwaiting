@@ -149,6 +149,18 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .complete-sub { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 1.2rem; }
 .complete-go-btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; margin-top: 0.5rem; }
 .complete-go-btn:hover { background: var(--accent2); }
+
+/* 단골 등록 카드 */
+.loyalty-card { background: #fff7e8; border: 1px solid #f5d792; border-radius: 12px; padding: 14px 12px; margin: 0.5rem 0 1rem; text-align: left; }
+.loyalty-title { font-size: 14px; font-weight: 600; color: #8b5a00; margin-bottom: 4px; }
+.loyalty-desc { font-size: 12px; color: #6b4400; line-height: 1.55; margin-bottom: 8px; }
+.loyalty-desc strong { color: #b86b00; font-weight: 600; }
+.loyalty-fine { display: block; font-size: 11px; color: #a08260; margin-top: 4px; }
+.loyalty-btn { width: 100%; padding: 10px; background: #d49a3b; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; }
+.loyalty-btn:hover { background: #b8832d; }
+.loyalty-btn:disabled { background: #c9b487; cursor: default; }
+.loyalty-success { background: #e8f5e8; border: 1px solid #b5d8b5; border-radius: 12px; padding: 12px; margin: 0.5rem 0 1rem; text-align: center; font-size: 13px; color: #2d5a2d; font-weight: 500; }
+.loyalty-success small { display: block; font-size: 11px; font-weight: 400; color: #4a7a4a; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -341,6 +353,16 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   <div class="complete-box">
     <div class="complete-icon">🎉</div>
     <p class="complete-title">등록이 완료되었습니다</p>
+    <div id="loyaltyCardWrap">
+      <div class="loyalty-card" id="loyaltyCard">
+        <div class="loyalty-title">🎁 단골 등록하시겠어요?</div>
+        <div class="loyalty-desc">
+          단골 회원으로 등록하시면 <strong>입장 3회마다 16,000원 쿠폰</strong>을 드려요.
+          <span class="loyalty-fine">※ 단골 등록에 동의하시면 전화번호가 단골 회원 정보로 저장됩니다.</span>
+        </div>
+        <button class="loyalty-btn" id="loyaltyBtn" onclick="registerLoyal()">단골 등록하기</button>
+      </div>
+    </div>
     <button class="complete-go-btn" id="completeGoBtn" onclick="goToMyTurn()">순번 확인하러 가기</button>
   </div>
 </div>
@@ -589,6 +611,32 @@ async function submitForm() {
       fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload}).catch(()=>{});
     }
   }
+}
+
+function registerLoyal() {
+  if (!pendingPhone) return;
+  const btn = document.getElementById('loyaltyBtn');
+  const wrap = document.getElementById('loyaltyCardWrap');
+  btn.disabled = true;
+  btn.textContent = '등록 중...';
+  const payload = JSON.stringify({type:'registerLoyal', phone: pendingPhone});
+  let sent = false;
+  try {
+    if (navigator.sendBeacon) {
+      const blob = new Blob([payload], {type:'text/plain'});
+      sent = navigator.sendBeacon(GAS_URL, blob);
+    }
+  } catch(e) { sent = false; }
+  if (!sent) {
+    try {
+      fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(()=>{});
+    } catch(e) {
+      try { fetch(GAS_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:payload}).catch(()=>{}); } catch(e2) {}
+    }
+  }
+  setTimeout(() => {
+    wrap.innerHTML = '<div class="loyalty-success">✅ 단골 등록 완료!<small>다음 방문부터 입장 횟수가 자동으로 쌓여요</small></div>';
+  }, 200);
 }
 
 function goToMyTurn() {
