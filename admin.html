@@ -107,6 +107,37 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .coupon-banner-meta { font-size: 11px; color: #a06010; margin-top: 1px; }
 .coupon-banner-btn { padding: 6px 10px; background: #d49a3b; color: #fff; border: none; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; flex-shrink: 0; }
 .coupon-banner-btn:active { background: #b8832d; }
+/* 단골 명단 모달 */
+.loyal-list-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 250; align-items: center; justify-content: center; padding: 1rem; }
+.loyal-list-overlay.active { display: flex; }
+.loyal-list-box { background: var(--surface); border-radius: 16px; width: 100%; max-width: 560px; max-height: 90vh; display: flex; flex-direction: column; }
+.loyal-list-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 8px; border-bottom: 1px solid var(--border); }
+.loyal-list-title { font-size: 16px; font-weight: 600; color: var(--text1); margin: 0; }
+.loyal-list-close { background: none; border: none; font-size: 18px; color: var(--text3); cursor: pointer; padding: 4px 8px; line-height: 1; }
+.loyal-list-controls { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.loyal-search { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; margin-bottom: 8px; box-sizing: border-box; }
+.loyal-sort-tabs { display: flex; gap: 4px; }
+.loyal-sort-tab { flex: 1; padding: 6px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; color: var(--text3); }
+.loyal-sort-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.loyal-list-body { flex: 1; overflow-y: auto; padding: 8px 0; }
+.loyal-list-empty { padding: 30px 16px; text-align: center; color: var(--text3); font-size: 13px; }
+.loyal-list-row { padding: 10px 14px; border-bottom: 1px solid #f3f0eb; display: flex; align-items: center; gap: 8px; }
+.loyal-list-row:last-child { border-bottom: none; }
+.loyal-list-row.ready { background: #fff8ec; }
+.loyal-row-info { flex: 1; min-width: 0; }
+.loyal-row-top { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.loyal-row-phone { font-size: 13px; font-weight: 500; color: var(--text1); }
+.loyal-row-badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 500; }
+.loyal-row-badge.ready { background: #ffe8c8; color: #804010; }
+.loyal-row-badge.progress { background: #fff4e0; color: #a06010; }
+.loyal-row-meta { font-size: 10px; color: var(--text3); line-height: 1.4; }
+.loyal-row-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.loyal-row-btn { padding: 5px 8px; border-radius: 6px; font-size: 10px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); white-space: nowrap; }
+.loyal-row-btn.issue { background: #d49a3b; border-color: #d49a3b; color: #fff; }
+.loyal-row-btn.delete { background: #fdeded; border-color: #f0c4c4; color: #c0503e; }
+.loyal-list-footer { padding: 10px 14px; border-top: 1px solid var(--border); text-align: center; }
+.loyal-list-count { font-size: 11px; color: var(--text3); }
+
 .action-btns { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 .action-btn { padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); }
 .action-btn.call { background: #eef6f1; border-color: #c8e0d0; color: var(--success); }
@@ -247,6 +278,30 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   </div>
 </div>
 
+<!-- 단골 명단 모달 -->
+<div class="loyal-list-overlay" id="loyalListOverlay">
+  <div class="loyal-list-box">
+    <div class="loyal-list-header">
+      <p class="loyal-list-title">🎁 단골 명단</p>
+      <button class="loyal-list-close" onclick="closeLoyalList()">✕</button>
+    </div>
+    <div class="loyal-list-controls">
+      <input type="text" id="loyalSearchInput" class="loyal-search" placeholder="전화번호 끝자리 검색" oninput="renderLoyalList()">
+      <div class="loyal-sort-tabs">
+        <button class="loyal-sort-tab active" data-sort="joined" onclick="setLoyalSort('joined')">가입일</button>
+        <button class="loyal-sort-tab" data-sort="visits" onclick="setLoyalSort('visits')">누적방문</button>
+        <button class="loyal-sort-tab" data-sort="pending" onclick="setLoyalSort('pending')">쿠폰 대기</button>
+      </div>
+    </div>
+    <div class="loyal-list-body" id="loyalListBody">
+      <div class="loyal-list-empty">단골 정보를 불러오는 중...</div>
+    </div>
+    <div class="loyal-list-footer">
+      <span class="loyal-list-count" id="loyalListCount">총 0명</span>
+    </div>
+  </div>
+</div>
+
 <div class="popup-overlay" id="popupOverlay">
   <div class="popup-box">
     <p class="popup-title" id="popupTitle"></p>
@@ -259,6 +314,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   <div class="admin-header">
     <p class="admin-title">관리자</p>
     <div class="header-btns">
+      <button class="open-index-btn" onclick="openLoyalList()">🎁 단골 명단</button>
       <button class="open-index-btn" onclick="openIndexPage()">등록 화면 열기</button>
       <button class="logout-btn" onclick="doLogout()">로그아웃</button>
     </div>
@@ -955,6 +1011,121 @@ function markCouponIssued(phone) {
     { label: '취소', cls: 'secondary', action: () => {} }
   ]);
 }
+
+// 단골 명단 모달 ----------------------------------------
+let loyalListSort = 'joined';  // joined | visits | pending
+
+function openLoyalList() {
+  document.getElementById('loyalListOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  // 모달 열 때 최신 데이터 한 번 동기화 후 렌더
+  syncLoyalList().then(() => renderLoyalList());
+}
+
+function closeLoyalList() {
+  document.getElementById('loyalListOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function setLoyalSort(sort) {
+  loyalListSort = sort;
+  document.querySelectorAll('.loyal-sort-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.sort === sort);
+  });
+  renderLoyalList();
+}
+
+function renderLoyalList() {
+  const body = document.getElementById('loyalListBody');
+  const countEl = document.getElementById('loyalListCount');
+  const searchEl = document.getElementById('loyalSearchInput');
+  if (!body) return;
+  const query = (searchEl ? searchEl.value : '').replace(/\D/g, '');
+
+  let entries = Object.keys(loyalMap).map(phone => {
+    const info = loyalMap[phone];
+    const visits = info.visits || 0;
+    const coupons = info.coupons || 0;
+    const pending = Math.floor(visits / 3) - coupons;
+    return {
+      phone: phone,
+      visits: visits,
+      coupons: coupons,
+      pending: pending,
+      joinedAt: info.joinedAt || '',
+      lastVisit: info.lastVisit || ''
+    };
+  });
+
+  if (query) {
+    entries = entries.filter(e => e.phone.replace(/\D/g, '').includes(query));
+  }
+
+  // 정렬
+  if (loyalListSort === 'joined') {
+    entries.sort((a, b) => (b.joinedAt || '').localeCompare(a.joinedAt || ''));
+  } else if (loyalListSort === 'visits') {
+    entries.sort((a, b) => b.visits - a.visits);
+  } else if (loyalListSort === 'pending') {
+    entries.sort((a, b) => (b.pending - a.pending) || (b.visits - a.visits));
+  }
+
+  countEl.textContent = '총 ' + entries.length + '명';
+
+  if (!entries.length) {
+    body.innerHTML = '<div class="loyal-list-empty">단골 회원이 없어요</div>';
+    return;
+  }
+
+  body.innerHTML = entries.map(e => {
+    const safe = e.phone.replace(/'/g, "\\'");
+    const progress = e.visits % 3;
+    const isReady = e.pending > 0;
+    const badge = isReady
+      ? '<span class="loyal-row-badge ready">🎁 ' + e.pending + '장</span>'
+      : '<span class="loyal-row-badge progress">' + progress + '/3</span>';
+    const joinedShort = e.joinedAt ? String(e.joinedAt).split(' ')[0] : '—';
+    const lastShort = e.lastVisit ? String(e.lastVisit).split(' ')[0] : '—';
+    const issueBtn = isReady
+      ? '<button class="loyal-row-btn issue" onclick="markCouponIssued(\'' + safe + '\')">발급</button>'
+      : '';
+    return '<div class="loyal-list-row' + (isReady ? ' ready' : '') + '">'
+      + '<div class="loyal-row-info" onclick="showLoyalInfo(\'' + safe + '\')" style="cursor:pointer">'
+      + '<div class="loyal-row-top"><span class="loyal-row-phone">' + e.phone + '</span>' + badge + '</div>'
+      + '<div class="loyal-row-meta">누적 ' + e.visits + '회 · 쿠폰 ' + e.coupons + '장 · 가입 ' + joinedShort + ' · 최근 ' + lastShort + '</div>'
+      + '</div>'
+      + '<div class="loyal-row-actions">'
+      + issueBtn
+      + '<button class="loyal-row-btn delete" onclick="deleteLoyalConfirm(\'' + safe + '\')">삭제</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function deleteLoyalConfirm(phone) {
+  showPopup('단골 삭제', phone + ' 회원을 단골 목록에서 삭제할까요?\n(누적 방문/쿠폰 기록도 함께 삭제됩니다)', [
+    { label: '삭제', cls: 'danger', action: () => {
+      sendLoyalRequest({ type: 'loyalRemove', phone: phone });
+      // 낙관적 업데이트
+      delete loyalMap[phone];
+      renderLoyalList();
+      renderCouponBanner();
+      renderList();
+    }},
+    { label: '취소', cls: 'secondary', action: () => {} }
+  ]);
+}
+
+// 모달 바깥 클릭으로 닫기
+document.addEventListener('DOMContentLoaded', function() {
+  const overlay = document.getElementById('loyalListOverlay');
+  if (overlay) {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closeLoyalList();
+    });
+  }
+});
+
 
 function getTimeStr(row) {
   const t = row[2]||'';

@@ -176,6 +176,33 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .loyalty-info-only.coupon-pending { background: #ffeed4; border-color: #f0b870; }
 .loyalty-info-only.coupon-pending .loyalty-title { color: #804010; }
 .loyalty-loading { background: #f5f5f5; border-radius: 12px; padding: 14px; margin: 0.5rem 0 1rem; text-align: center; font-size: 12px; color: #999; }
+/* 단골 회원 관리 footer + 모달 */
+.loyal-footer { text-align: center; margin-top: 1rem; padding: 0.5rem 0; }
+.loyal-footer-link { background: none; border: none; font-size: 11px; color: var(--text3); cursor: pointer; text-decoration: underline; font-family: 'Noto Sans KR', sans-serif; padding: 4px 8px; }
+.loyal-footer-link:active { color: var(--text2); }
+.optout-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-start; justify-content: center; padding: 5vh 1rem 1rem; overflow-y: auto; }
+.optout-overlay.active { display: flex; }
+.optout-box { background: var(--surface); border-radius: 16px; width: 100%; max-width: 420px; animation: popIn 0.3s ease; }
+.optout-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 8px; border-bottom: 1px solid var(--border); }
+.optout-title { font-size: 16px; font-weight: 600; margin: 0; color: var(--text1); }
+.optout-close { background: none; border: none; font-size: 18px; color: var(--text3); cursor: pointer; padding: 4px 8px; }
+.optout-body { padding: 14px 18px 18px; }
+.optout-desc { font-size: 13px; color: var(--text2); line-height: 1.5; margin: 0 0 12px; }
+.optout-input-row { display: flex; align-items: center; gap: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; margin-bottom: 10px; }
+.optout-prefix { font-size: 14px; color: var(--text2); padding-right: 4px; }
+.optout-input { flex: 1; border: none; background: transparent; padding: 10px 0; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; outline: none; }
+.optout-search-btn { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; }
+.optout-search-btn:active { background: var(--accent2); }
+.optout-info { background: #fff7e8; border: 1px solid #f5d792; border-radius: 10px; padding: 12px; margin-top: 14px; }
+.optout-info-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; color: #6b4400; }
+.optout-info-row .label { color: #a08260; }
+.optout-info-row .value { font-weight: 500; }
+.optout-delete-btn { width: 100%; padding: 10px; margin-top: 10px; background: #fdeded; color: #c0503e; border: 1px solid #f0c4c4; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
+.optout-delete-btn:active { background: #fad8d8; }
+.optout-notfound { text-align: center; padding: 20px 0; font-size: 13px; color: var(--text3); }
+.optout-success { text-align: center; padding: 24px 0; font-size: 14px; color: #2d5a2d; font-weight: 500; }
+.optout-success small { display: block; font-size: 11px; font-weight: 400; color: #4a7a4a; margin-top: 4px; }
+
 </style>
 </head>
 <body>
@@ -222,6 +249,28 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   </div>
   <div class="refresh-row"><button class="refresh-btn" onclick="loadData()">↻ 새로고침</button></div>
   <div class="errmsg" id="errmsg"></div>
+  <div class="loyal-footer">
+    <button class="loyal-footer-link" onclick="openOptOut()">단골 회원 관리</button>
+  </div>
+</div>
+
+<!-- 단골 회원 관리/탈퇴 모달 -->
+<div class="optout-overlay" id="optOutOverlay">
+  <div class="optout-box">
+    <div class="optout-header">
+      <p class="optout-title">단골 회원 관리</p>
+      <button class="optout-close" onclick="closeOptOut()">✕</button>
+    </div>
+    <div class="optout-body" id="optOutBody">
+      <p class="optout-desc">단골 회원으로 등록한 전화번호를 입력해주세요.</p>
+      <div class="optout-input-row">
+        <span class="optout-prefix">010-</span>
+        <input class="optout-input" id="optOutInput" type="tel" placeholder="1234-5678" maxlength="9" oninput="formatOptOutPhone()">
+      </div>
+      <button class="optout-search-btn" onclick="searchLoyalForOptOut()">조회하기</button>
+      <div id="optOutResult"></div>
+    </div>
+  </div>
 </div>
 
 <!-- Form overlay -->
@@ -743,6 +792,86 @@ function getCookie(name) {
   const v = document.cookie.split('; ').find(r => r.startsWith(name + '='));
   return v ? v.split('=')[1] : null;
 }
+
+// 단골 회원 관리/탈퇴 ----------------------------------------
+function openOptOut() {
+  document.getElementById('optOutOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('optOutInput').value = '';
+  document.getElementById('optOutResult').innerHTML = '';
+}
+function closeOptOut() {
+  document.getElementById('optOutOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+function formatOptOutPhone() {
+  const el = document.getElementById('optOutInput');
+  let val = el.value.replace(/\D/g, '');
+  if (val.length > 8) val = val.slice(0, 8);
+  el.value = val.length <= 4 ? val : val.slice(0, 4) + '-' + val.slice(4);
+}
+async function searchLoyalForOptOut() {
+  const inputVal = document.getElementById('optOutInput').value.replace(/\D/g, '');
+  const resultEl = document.getElementById('optOutResult');
+  if (inputVal.length !== 8) {
+    resultEl.innerHTML = '<div class="optout-notfound">전화번호 8자리를 정확히 입력해주세요.</div>';
+    return;
+  }
+  const phone = '010-' + inputVal.slice(0,4) + '-' + inputVal.slice(4);
+  resultEl.innerHTML = '<div class="optout-notfound">조회 중...</div>';
+  let info = null;
+  try {
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('단골!A:E')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const d = await r.json();
+    if (d && d.values) {
+      for (let i = 1; i < d.values.length; i++) {
+        if (String(d.values[i][0]).trim() === phone) {
+          info = {
+            joinedAt: d.values[i][1] || '',
+            visits: parseInt(d.values[i][2]) || 0,
+            lastVisit: d.values[i][3] || '',
+            coupons: parseInt(d.values[i][4]) || 0
+          };
+          break;
+        }
+      }
+    }
+  } catch(e) {}
+  if (!info) {
+    resultEl.innerHTML = '<div class="optout-notfound">단골 회원으로 등록되어 있지 않아요.<br><span style="font-size:11px;color:#bbb">' + phone + '</span></div>';
+    return;
+  }
+  const joinedShort = info.joinedAt ? String(info.joinedAt).split(' ')[0] : '—';
+  const lastShort = info.lastVisit ? String(info.lastVisit).split(' ')[0] : '아직 없음';
+  resultEl.innerHTML = '<div class="optout-info">'
+    + '<div class="optout-info-row"><span class="label">전화번호</span><span class="value">' + phone + '</span></div>'
+    + '<div class="optout-info-row"><span class="label">가입일</span><span class="value">' + joinedShort + '</span></div>'
+    + '<div class="optout-info-row"><span class="label">누적 방문</span><span class="value">' + info.visits + '회</span></div>'
+    + '<div class="optout-info-row"><span class="label">쿠폰 발급</span><span class="value">' + info.coupons + '장</span></div>'
+    + '<div class="optout-info-row"><span class="label">마지막 방문</span><span class="value">' + lastShort + '</span></div>'
+    + '</div>'
+    + '<button class="optout-delete-btn" onclick="confirmOptOut(\'' + phone + '\')">단골 탈퇴하기</button>';
+}
+function confirmOptOut(phone) {
+  if (!confirm(phone + ' 회원 정보를 정말 삭제하시겠어요?\n\n· 누적 방문/쿠폰 기록이 모두 삭제됩니다\n· 단골 혜택을 다시 받으려면 새로 등록하셔야 해요\n· 이 동작은 되돌릴 수 없습니다')) return;
+  const payload = JSON.stringify({type:'loyalRemove', phone: phone});
+  let sent = false;
+  try {
+    if (navigator.sendBeacon) {
+      sent = navigator.sendBeacon(GAS_URL, new Blob([payload], {type:'text/plain'}));
+    }
+  } catch(e) {}
+  if (!sent) {
+    try {
+      fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(()=>{});
+    } catch(e) {}
+  }
+  document.getElementById('optOutResult').innerHTML = '<div class="optout-success">✅ 단골 탈퇴가 완료되었습니다<small>그동안 이용해주셔서 감사합니다 :)</small></div>';
+}
+// 모달 바깥 클릭으로 닫기
+document.getElementById('optOutOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeOptOut();
+});
 
 loadData();
 setInterval(loadData,10000);
