@@ -115,7 +115,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .action-btn.coming { background: #888; border-color: #888; color: #fff; }
 .action-btn.done-label { background: #aaa; border-color: #aaa; color: #fff; cursor: default; }
 .action-btn.noshow-label { background: var(--danger); border-color: var(--danger); color: #fff; cursor: default; opacity: 0.7; }
-.action-btn.noreply-label { background: var(--warning); border-color: var(--warning); color: #fff; cursor: default; opacity: 0.7; }
+.action-btn.noreply-label { background: var(--warning); border-color: var(--warning); color: #fff; cursor: pointer; opacity: 0.85; }
+.action-btn.noreply-label:hover { opacity: 1; }
+.action-btn.noreply-label:active { transform: scale(0.97); }
 .action-btn.visitx-label { background: #555; border-color: #555; color: #fff; cursor: default; opacity: 0.7; }
 .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .stats-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
@@ -800,6 +802,36 @@ function clickComing(key) {
   ]);
 }
 
+// 미응답 상태에서 다시 클릭 시 재처리 (전화 못받았다가 다시 연락 온 경우 등)
+function clickNoreply(key) {
+  showPopup('미응답 재처리', '다시 연락이 닿으셨나요?', [
+    { label: '입장 처리', cls: 'primary', action: async () => {
+      itemStates[key] = 'done';
+      await saveStates();
+      removeFromSheet(key);  // 이미 삭제됐어도 idempotent
+      // 단골 카운트 +1 (clickComing 입장 처리와 동일)
+      const it = allItems.find(x => x.key === key);
+      if (it) {
+        const phone = (it.row[6] || '').toString().trim();
+        if (phone) {
+          if (loyalMap[phone]) {
+            loyalMap[phone].visits = (loyalMap[phone].visits || 0) + 1;
+            renderCouponBanner();
+          }
+          sendLoyalRequest({ type: 'loyalVisit', phone: phone });
+        }
+      }
+      renderList();
+    }},
+    { label: '방문 X', cls: 'danger', action: async () => {
+      itemStates[key] = 'visitx';
+      await saveStates();
+      renderList();
+    }},
+    { label: '취소', cls: 'secondary', action: () => {} },
+  ]);
+}
+
 function getSeatBadge(seat) {
   if (seat === '바자리') return '<span class="seat-badge dodgy">닷</span>';
   if (seat === '프리패스') return '<span class="seat-badge free">프</span>';
@@ -937,7 +969,7 @@ function getActionBtns(key, row) {
 
   if (state === 'done') return `<div class="action-btns"><button class="action-btn done-label">입장완료</button></div>`;
   if (state === 'noshow') return `<div class="action-btns"><button class="action-btn noshow-label">노쇼</button></div>`;
-  if (state === 'noreply') return `<div class="action-btns"><button class="action-btn noreply-label">미응답</button></div>`;
+  if (state === 'noreply') return `<div class="action-btns"><button class="action-btn noreply-label" onclick="clickNoreply('${safeKey}')" title="클릭하여 재처리">미응답</button></div>`;
   if (state === 'visitx') return `<div class="action-btns"><button class="action-btn visitx-label">방문X</button></div>`;
   if (state === 'coming') {
     return `<div class="action-btns">
