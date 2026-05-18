@@ -97,6 +97,16 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .loyal-info-grid .value.accent { color: #a06010; font-weight: 600; }
 .loyal-info-progress { background: #f7f3eb; border: 1px solid #e8dcc4; border-radius: 6px; padding: 8px 10px; margin-top: 10px; text-align: center; font-size: 12px; color: #6b4400; }
 .loyal-info-progress strong { color: #b86b00; font-size: 13px; }
+/* 쿠폰 발급 대기 배너 */
+.coupon-banner { background: linear-gradient(135deg, #fff4e0, #ffe8c8); border: 1.5px solid #e0a050; border-radius: 12px; padding: 12px 14px; }
+.coupon-banner-head { font-size: 13px; font-weight: 600; color: #804010; margin-bottom: 8px; }
+.coupon-banner-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid #f0d090; }
+.coupon-banner-item:first-of-type { border-top: none; }
+.coupon-banner-info { flex: 1; min-width: 0; }
+.coupon-banner-phone { font-size: 13px; font-weight: 500; color: #6b4400; }
+.coupon-banner-meta { font-size: 11px; color: #a06010; margin-top: 1px; }
+.coupon-banner-btn { padding: 6px 10px; background: #d49a3b; color: #fff; border: none; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; flex-shrink: 0; }
+.coupon-banner-btn:active { background: #b8832d; }
 .action-btns { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 .action-btn { padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); }
 .action-btn.call { background: #eef6f1; border-color: #c8e0d0; color: var(--success); }
@@ -312,6 +322,13 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
   </div>
 
+  <div class="section" id="couponBanner" style="display:none">
+    <div class="coupon-banner">
+      <div class="coupon-banner-head">🎁 단골 쿠폰 발급 대기</div>
+      <div id="couponBannerList"></div>
+    </div>
+  </div>
+
   <div class="section">
     <p class="section-label">대기 목록</p>
     <div class="waiting-card" id="waitingList">
@@ -442,6 +459,7 @@ async function syncLoyalList() {
     }
     loyalMap = newMap;
   } catch(e) { /* 시트 없으면 무시 */ }
+  try { renderCouponBanner(); } catch(e) {}
 }
 
 async function syncSettings() {
@@ -756,6 +774,16 @@ function clickComing(key) {
       itemStates[key] = 'done';
       await saveStates();
       removeFromSheet(key);
+      // 단골이면 카운트 +1
+      const it = allItems.find(x => x.key === key);
+      if (it) {
+        const phone = (it.row[6] || '').toString().trim();
+        if (phone && loyalMap[phone]) {
+          loyalMap[phone].visits = (loyalMap[phone].visits || 0) + 1;
+          sendLoyalRequest({ type: 'loyalVisit', phone: phone });
+          renderCouponBanner();
+        }
+      }
       renderList();
     }},
     { label: '노쇼', cls: 'danger', action: async () => {
@@ -822,6 +850,70 @@ function showLoyalInfo(phone) {
     ${progressBox}
   `;
   showPopup('🎁 단골 정보', html, [{ label: '닫기', cls: 'secondary', action: () => {} }], { html: true });
+}
+
+// 단골 GAS POST 공통 함수
+function sendLoyalRequest(payload) {
+  const body = JSON.stringify(payload);
+  let sent = false;
+  try {
+    if (navigator.sendBeacon) {
+      sent = navigator.sendBeacon(GAS_URL, new Blob([body], { type: 'text/plain' }));
+    }
+  } catch(e) { sent = false; }
+  if (!sent) {
+    try {
+      fetch(GAS_URL, { method: 'POST', mode: 'no-cors', keepalive: true, headers: { 'Content-Type': 'text/plain' }, body: body }).catch(()=>{});
+    } catch(e) {
+      try { fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: body }).catch(()=>{}); } catch(e2) {}
+    }
+  }
+}
+
+// 쿠폰 발급 대기 배너
+function renderCouponBanner() {
+  const banner = document.getElementById('couponBanner');
+  const list = document.getElementById('couponBannerList');
+  if (!banner || !list) return;
+  const pending = [];
+  Object.keys(loyalMap).forEach(function(phone) {
+    const info = loyalMap[phone];
+    const visits = info.visits || 0;
+    const coupons = info.coupons || 0;
+    const earned = Math.floor(visits / 3);
+    if (earned > coupons) {
+      pending.push({ phone: phone, visits: visits, coupons: coupons, need: earned - coupons });
+    }
+  });
+  if (!pending.length) {
+    banner.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+  banner.style.display = 'block';
+  list.innerHTML = pending.map(function(p) {
+    var safe = p.phone.replace(/'/g, "\\'");
+    return '<div class="coupon-banner-item">' +
+      '<div class="coupon-banner-info">' +
+      '<div class="coupon-banner-phone">' + p.phone + '</div>' +
+      '<div class="coupon-banner-meta">누적 ' + p.visits + '회 · 발급 대기 ' + p.need + '장</div>' +
+      '</div>' +
+      '<button class="coupon-banner-btn" onclick="markCouponIssued(\''+safe+'\')">발급 완료</button>' +
+      '</div>';
+  }).join('');
+}
+
+// 쿠폰 발급 완료
+function markCouponIssued(phone) {
+  showPopup('쿠폰 발급 완료?', phone + ' 손님에게 16,000원 쿠폰을 발급하셨나요?', [
+    { label: '예 (발급 완료)', cls: 'primary', action: () => {
+      sendLoyalRequest({ type: 'loyalCouponIssued', phone: phone });
+      if (loyalMap[phone]) loyalMap[phone].coupons = (loyalMap[phone].coupons || 0) + 1;
+      renderCouponBanner();
+      renderList();
+    }},
+    { label: '취소', cls: 'secondary', action: () => {} }
+  ]);
 }
 
 function getTimeStr(row) {
