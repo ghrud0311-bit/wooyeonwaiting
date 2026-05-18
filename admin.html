@@ -88,6 +88,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .seat-badge.table { background: #eef3fb; color: #2a5fa8; }
 .seat-badge.dodgy { background: #eef6f1; color: #2a7a4a; }
 .seat-badge.free { background: #fdf6e0; color: #8a6020; }
+.loyal-badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 500; flex-shrink: 0; background: #fff4e0; color: #a06010; border: 1px solid #f0d090; display: inline-flex; align-items: center; gap: 2px; }
+.loyal-badge.ready { background: #ffe8c8; color: #804010; border-color: #e0a050; font-weight: 600; }
 .action-btns { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 .action-btn { padding: 5px 7px; border-radius: 6px; font-size: 10px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); }
 .action-btn.call { background: #eef6f1; border-color: #c8e0d0; color: var(--success); }
@@ -333,6 +335,7 @@ let isFull = false;
 
 let itemStates = JSON.parse(localStorage.getItem('itemStates2') || '{}');
 let itemRows = JSON.parse(localStorage.getItem('itemRows') || '{}');
+let loyalMap = {};  // phone -> {visits, joinedAt, coupons}
 
 function getKey(row) { return row[6]||''; }
 
@@ -402,6 +405,30 @@ function getTodayKST() {
   const now = new Date();
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   return kst.toISOString().substring(0, 10);
+}
+
+// 단골 목록 동기화 (단골 시트 fetch → loyalMap 갱신)
+async function syncLoyalList() {
+  try {
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('단골!A:E')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const d = await r.json();
+    const newMap = {};
+    if (!d.error && d.values && d.values.length > 1) {
+      // 헤더 행 제외, A=전화번호, B=가입일시, C=누적방문, D=마지막방문일, E=쿠폰발급횟수
+      for (let i = 1; i < d.values.length; i++) {
+        const row = d.values[i];
+        const phone = (row[0] || '').toString().trim();
+        if (!phone) continue;
+        newMap[phone] = {
+          joinedAt: row[1] || '',
+          visits: parseInt(row[2]) || 0,
+          lastVisit: row[3] || '',
+          coupons: parseInt(row[4]) || 0
+        };
+      }
+    }
+    loyalMap = newMap;
+  } catch(e) { /* 시트 없으면 무시 */ }
 }
 
 async function syncSettings() {
@@ -499,11 +526,12 @@ async function syncSettings() {
 
 async function initAdmin() {
   await syncSettings();
+  await syncLoyalList();
   await loadData();
-  setInterval(async () => { await syncSettings(); await loadData(); }, 10000);
+  setInterval(async () => { await syncSettings(); await syncLoyalList(); await loadData(); }, 10000);
 }
 
-async function refreshAll() { await syncSettings(); await loadData(); }
+async function refreshAll() { await syncSettings(); await syncLoyalList(); await loadData(); }
 
 // 초기화 (영업 종료)
 async function resetAll() {
@@ -733,6 +761,21 @@ function getSeatBadge(seat) {
   return '<span class="seat-badge table">테</span>';
 }
 
+// 단골 배지: phone이 단골이면 🎁 N/3 표시. 누적방문 % 3 으로 진행도 계산
+function getLoyalBadge(phone) {
+  if (!phone) return '';
+  const p = String(phone).trim();
+  const info = loyalMap[p];
+  if (!info) return '';
+  const visits = info.visits || 0;
+  const progress = visits % 3;  // 0,1,2 (3 도달 시 0으로 돌아감)
+  const isReady = progress === 0 && visits > 0;  // 3, 6, 9, ... 직후
+  if (isReady) {
+    return `<span class="loyal-badge ready" title="쿠폰 발급 대상! 누적 ${visits}회">🎁 쿠폰</span>`;
+  }
+  return `<span class="loyal-badge" title="단골 · 누적 ${visits}회 · 쿠폰 ${info.coupons||0}장">🎁 ${progress}/3</span>`;
+}
+
 function getTimeStr(row) {
   const t = row[2]||'';
   if (!t) return '';
@@ -930,6 +973,7 @@ function renderList() {
         <div class="name-row">
           ${gender ? `<span class="gender-badge ${gClass}">${gender}</span>` : ''}
           ${getSeatBadge(seat)}
+          ${getLoyalBadge(row[6])}
         </div>
         <p class="waiting-meta">${row[5]?row[5]+'명 · ':''}${getTimeStr(row)}${row[6]?' · '+row[6]:''}</p>
       </div>
