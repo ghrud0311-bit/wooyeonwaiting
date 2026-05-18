@@ -774,14 +774,18 @@ function clickComing(key) {
       itemStates[key] = 'done';
       await saveStates();
       removeFromSheet(key);
-      // 단골이면 카운트 +1
+      // GAS로 입장 카운트 전송 (단골 여부는 GAS에서 판단 → not-loyal이면 무시)
       const it = allItems.find(x => x.key === key);
       if (it) {
         const phone = (it.row[6] || '').toString().trim();
-        if (phone && loyalMap[phone]) {
-          loyalMap[phone].visits = (loyalMap[phone].visits || 0) + 1;
+        if (phone) {
+          // 낙관적 업데이트: 단골인 경우만 즉시 +1 (배지 즉시 반영용)
+          if (loyalMap[phone]) {
+            loyalMap[phone].visits = (loyalMap[phone].visits || 0) + 1;
+            renderCouponBanner();
+          }
+          // GAS POST는 항상 보냄 (단골 아니면 GAS가 알아서 무시)
           sendLoyalRequest({ type: 'loyalVisit', phone: phone });
-          renderCouponBanner();
         }
       }
       renderList();
