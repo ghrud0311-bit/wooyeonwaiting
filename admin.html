@@ -414,6 +414,7 @@ let starred = JSON.parse(localStorage.getItem('starred') || '[]');
 let hearted = JSON.parse(localStorage.getItem('hearted') || '[]');
 let seats = JSON.parse(localStorage.getItem('seats') || '{"tM":0,"tF":0}');
 let isFull = false;
+let lastSeatEditAt = 0;  // 자리수 직접 수정 시각 (read 지연 클로버 방지)
 
 let itemStates = JSON.parse(localStorage.getItem('itemStates2') || '{}');
 let itemRows = JSON.parse(localStorage.getItem('itemRows') || '{}');
@@ -544,8 +545,15 @@ async function syncSettings() {
       const localIsZero = (parseInt(seats.tM)||0) === 0 && (parseInt(seats.tF)||0) === 0;
       const gasNotYetZero = gasTM !== 0 || gasTF !== 0;
       const recentReset = _resetAt > 0 && _resetAge < 60000;
+      // 방금 자리수를 직접 수정했으면(15초 이내) GAS read가 지연돼 옛 값이 와도 무시.
+      // 안 그러면 폴링이 로컬을 옛 값으로 되돌리고 → debounced write가 그 옛 값을 시트에 써버려
+      // "수정해도 시트에 반영 안 됨"이 발생한다.
+      const seatRecentlyEdited = lastSeatEditAt > 0 && (Date.now() - lastSeatEditAt) < 15000;
       if (recentReset && !gasReflectsOurReset && localIsZero && gasNotYetZero) {
         isFull = false;
+      } else if (seatRecentlyEdited) {
+        const _tt = (parseInt(seats.tM)||0) + (parseInt(seats.tF)||0);
+        isFull = _tt >= TABLE_MAX;
       } else {
         isFull = gasIsFull;
         seats.tM = gasTM;
@@ -673,6 +681,7 @@ async function resetAll() {
 }
 
 function setSeatDirect(id, val) {
+  lastSeatEditAt = Date.now();
   const mEl = document.getElementById('tM');
   const fEl = document.getElementById('tF');
   const m = parseInt(mEl.value)||0;
@@ -713,6 +722,7 @@ function syncSeatsToGAS() {
 }
 
 function updateSeat(id, delta) {
+  lastSeatEditAt = Date.now();
   const mEl = document.getElementById('tM');
   const fEl = document.getElementById('tF');
   const m = parseInt(mEl.value)||0;
