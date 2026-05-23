@@ -429,7 +429,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 const SHEET_ID = '1NmPb6wxX0usqeP-gd7cFQPgHecLQsCYcA3i3wcU3uwc';
 const API_KEY = 'AIzaSyDNs6DjFlPRHukWl572r1pMZV72F6ZtODI';
 const RANGE = '시트1!A:G';
-const SETTINGS_RANGE = '설정!A1:A4';
+const SETTINGS_RANGE = '설정!A1:A9';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
 const TOTAL_STEPS = 5;
 
@@ -500,9 +500,11 @@ document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==
 async function loadData() {
   showLoading();
   try {
+    let _resetAt = 0;
     const sr=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(SETTINGS_RANGE)+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const sd=await sr.json();
     if (!sd.error&&sd.values){
+      try { if (sd.values[8] && sd.values[8][0]) _resetAt = JSON.parse(sd.values[8][0])._resetAt || 0; } catch(e) {}
       const tM=parseInt(sd.values[2]&&sd.values[2][0])||0;
       const tF=parseInt(sd.values[3]&&sd.values[3][0])||0;
       const tTotal=tM+tF;
@@ -531,6 +533,16 @@ async function loadData() {
       return;
     }
     allRows=(data.values||[]).slice(1).filter(r=>r[6]&&r[6].toString().trim()!=='');
+    // 리셋 이후 스테일 데이터 방어: 마지막 초기화 시각보다 오래된 행은 무시
+    // (관리자 초기화가 모든 손님 화면에서도 즉시 반영되도록 A9 _resetAt 기준 필터)
+    if (_resetAt > 0) {
+      const _cut = _resetAt - 120000;
+      allRows = allRows.filter(r => {
+        if (!r[2]) return true;
+        const t = new Date(String(r[2]).replace(' ', 'T')).getTime();
+        return isNaN(t) ? true : t >= _cut;
+      });
+    }
     document.getElementById('total').textContent=allRows.length;
     updateStatus(allRows.length);
     const p=getParam('phone');
