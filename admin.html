@@ -433,7 +433,7 @@ async function saveStates() {
     const ts = row && row[2] ? row[2] : '';
     gasPayload[k] = ts ? (itemStates[k] + '|' + ts) : itemStates[k];
   });
-  try { await fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify(gasPayload)), { keepalive: true, cache: 'no-store' }); } catch(e) {}
+  try { await fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify(gasPayload)), { method: 'GET', mode: 'no-cors', keepalive: true, cache: 'no-store' }); } catch(e) {}
 }
 function saveStarred() { localStorage.setItem('starred', JSON.stringify(starred)); }
 function saveHearted() { localStorage.setItem('hearted', JSON.stringify(hearted)); }
@@ -665,7 +665,7 @@ async function resetAll() {
       // 2) GAS 호출을 순차 await + keepalive로 모든 요청 송신 보장
       //    (동시 호출 시 일부 dropped되던 버그 수정)
       (async () => {
-        const opts = { method: 'GET', keepalive: true, cache: 'no-store' };
+        const opts = { method: 'GET', mode: 'no-cors', keepalive: true, cache: 'no-store' };
         try { await fetch(GAS_URL + '?type=clearSheet&resetAt=' + resetAt, opts); } catch(e) {}
         // A9 _resetAt 직접 기록 (clearSheet 미반영 대비 → 다른 기기 리셋 감지 보장, 재배포 불필요)
         try { await fetch(GAS_URL + '?type=setItemStates&value=' + encodeURIComponent(JSON.stringify({_resetAt: resetAt})), opts); } catch(e) {}
@@ -714,7 +714,7 @@ function syncSeatsToGAS() {
     const tTotal = tM + tF;
     const remain = Math.max(TABLE_MAX - tTotal, 0);
     const full = tTotal >= TABLE_MAX;
-    const opts = { method: 'GET', keepalive: true, cache: 'no-store' };
+    const opts = { method: 'GET', mode: 'no-cors', keepalive: true, cache: 'no-store' };
     try { await fetch(GAS_URL + '?type=setSeatDetail&tM='+tM+'&tF='+tF+'&bM=0&bF=0', opts); } catch(e) {}
     try { await fetch(GAS_URL + '?type=setSeats&value=' + remain, opts); } catch(e) {}
     try { await fetch(GAS_URL + '?type=setFull&value=' + (full ? 'TRUE' : 'FALSE'), opts); } catch(e) {}

@@ -522,7 +522,7 @@ async function loadData() {
       // 만석(웨이팅 활성) 상태일 때만 방문 카운트 (세션당 1회)
       if (isFullMode && !getCookie('wooyeon_staff') && !sessionStorage.getItem('wv')) {
         sessionStorage.setItem('wv', '1');
-        fetch(GAS_URL + '?type=trackVisit');
+        fetch(GAS_URL + '?type=trackVisit', { method: 'GET', mode: 'no-cors', cache: 'no-store' }).catch(()=>{});
       }
     }
     const res=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(RANGE)+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
