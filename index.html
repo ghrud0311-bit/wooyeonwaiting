@@ -308,7 +308,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <div class="privacy-box">
             <p class="privacy-title">개인정보 수집·이용 안내</p>
             <p class="privacy-item">
-              · 수집항목: 성별, 인원, 연락처, 접수일시<br>
+              · 수집항목: 이름, 성별, 인원, 연락처, 접수일시<br>
               · 이용목적: 예약 접수, 본인 확인, 예약 안내 연락, 좌석 운영<br>
               · 보관기간: 접수일 익일 파기<br>
               · 동의를 거부할 권리가 있으며, 필수항목 미동의 시 예약이 제한될 수 있습니다.
@@ -325,6 +325,21 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           </div>
         </div>
 
+
+        <!-- Step 1: 이름 -->
+        <div class="slide">
+          <p class="slide-title">예약자 성함을<br>입력해주세요</p>
+          <p class="slide-sub">본인 확인에 사용돼요</p>
+          <p class="field-label">이름</p>
+          <div class="phone-wrap">
+            <input class="phone-input" id="fName" type="text" placeholder="홍길동" maxlength="20" style="padding-left:13px" oninput="checkStep(1)">
+          </div>
+          <div class="nav-row">
+            <button class="nav-prev" onclick="prevStep()">이전</button>
+            <span class="step-counter">2 / 5</span>
+            <button class="nav-next" id="next1" onclick="nextStep()" disabled>다음</button>
+          </div>
+        </div>
 
         <!-- Step 2: 성별 + 인원 -->
         <div class="slide">
@@ -344,8 +359,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           </div>
           <div class="nav-row">
             <button class="nav-prev" onclick="prevStep()">이전</button>
-            <span class="step-counter">2 / 5</span>
-            <button class="nav-next" id="next1" onclick="nextStep()" disabled>다음</button>
+            <span class="step-counter">3 / 5</span>
+            <button class="nav-next" id="next2" onclick="nextStep()" disabled>다음</button>
           </div>
         </div>
 
@@ -356,30 +371,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <p class="field-label">연락처</p>
           <div class="phone-wrap">
             <span class="phone-prefix">010-</span>
-            <input class="phone-input" id="fPhone" type="tel" placeholder="0000-0000" maxlength="9" oninput="formatPhone(); checkStep(2)">
+            <input class="phone-input" id="fPhone" type="tel" placeholder="0000-0000" maxlength="9" oninput="formatPhone(); checkStep(3)">
           </div>
           <p class="field-hint">📌 번호만 입력해주세요.</p>
-          <div class="nav-row">
-            <button class="nav-prev" onclick="prevStep()">이전</button>
-            <span class="step-counter">3 / 5</span>
-            <button class="nav-next" id="next2" onclick="nextStep()" disabled>다음</button>
-          </div>
-        </div>
-
-        <!-- Step 4: 바틀 -->
-        <div class="slide">
-          <p class="slide-title">바틀 구매 시<br>최우선으로 연락드려요 🥃</p>
-          <p class="slide-sub">바틀을 구매하시겠어요?</p>
-          <div class="choice-wrap">
-            <button class="choice-btn" id="bottleYes" onclick="selectChoice('bottle','yes')">
-              <div class="choice-label">네, 구매할게요</div>
-              <div class="choice-note">최우선으로 연락드릴게요</div>
-            </button>
-            <button class="choice-btn" id="bottleNo" onclick="selectChoice('bottle','no')">
-              <div class="choice-label">아니오, 기다릴게요</div>
-            </button>
-          </div>
-          <div class="bottle-note">⚠️ 3인 이상 시 20만원 이상 바틀을 구매하셔야 해요</div>
           <div class="nav-row">
             <button class="nav-prev" onclick="prevStep()">이전</button>
             <span class="step-counter">4 / 5</span>
@@ -436,7 +430,6 @@ const TOTAL_STEPS = 5;
 let currentStep = 0;
 let selectedGender = '';
 let selectedPeople = '';
-let bottleChoice = '';
 let barChoice = '';
 let allRows = [];
 let isFullMode = false;
@@ -555,12 +548,13 @@ async function loadData() {
 }
 
 function openForm() {
-  currentStep=0; selectedGender=''; selectedPeople=''; bottleChoice=''; barChoice='';
+  currentStep=0; selectedGender=''; selectedPeople=''; barChoice='';
+  document.getElementById('fName').value='';
   document.getElementById('fPhone').value='';
   document.getElementById('noticeAgree').checked=false;
   document.getElementById('privacyAgree').checked=false;
   ['g0','g1','g2','p1','p2','p3','p4'].forEach(id=>document.getElementById(id).classList.remove('selected'));
-  ['bottleYes','bottleNo','barYes','barNo'].forEach(id=>document.getElementById(id).classList.remove('selected'));
+  ['barYes','barNo'].forEach(id=>document.getElementById(id).classList.remove('selected'));
   document.getElementById('peopleGroup').className='people-group';
   const formEl = document.getElementById('formOverlay');
   formEl.style.display = '';
@@ -596,9 +590,9 @@ function updateSlide() {
 
 function canProceed() {
   if(currentStep===0) return document.getElementById('noticeAgree').checked && document.getElementById('privacyAgree').checked;
-  if(currentStep===1) return selectedGender!==''&&selectedPeople!=='';
-  if(currentStep===2) return document.getElementById('fPhone').value.replace(/\D/g,'').length===8;
-  if(currentStep===3) return bottleChoice!=='';
+  if(currentStep===1) return document.getElementById('fName').value.trim()!=='';
+  if(currentStep===2) return selectedGender!==''&&selectedPeople!=='';
+  if(currentStep===3) return document.getElementById('fPhone').value.replace(/\D/g,'').length===8;
   if(currentStep===4) return barChoice!=='';
   return true;
 }
@@ -616,27 +610,20 @@ function selectGender(g) {
   document.getElementById('g1').classList.toggle('selected',g==='여성');
   document.getElementById('g2').classList.toggle('selected',g==='혼성');
   document.getElementById('peopleGroup').className='people-group visible';
-  checkStep(1);
+  checkStep(2);
 }
 
 function selectPeople(p) {
   selectedPeople=p;
   for(let i=1;i<=4;i++) document.getElementById('p'+i).classList.toggle('selected',String(i)===p);
-  checkStep(1);
+  checkStep(2);
 }
 
 function selectChoice(type,val) {
-  if(type==='bottle'){
-    bottleChoice=val;
-    document.getElementById('bottleYes').className='choice-btn'+(val==='yes'?' selected':'');
-    document.getElementById('bottleNo').className='choice-btn'+(val==='no'?' selected':'');
-    checkStep(3);
-  } else {
-    barChoice=val;
-    document.getElementById('barYes').className='choice-btn'+(val==='yes'?' selected':'');
-    document.getElementById('barNo').className='choice-btn'+(val==='no'?' selected':'');
-    checkStep(4);
-  }
+  barChoice=val;
+  document.getElementById('barYes').className='choice-btn'+(val==='yes'?' selected':'');
+  document.getElementById('barNo').className='choice-btn'+(val==='no'?' selected':'');
+  checkStep(4);
 }
 
 function formatPhone() {
@@ -647,7 +634,6 @@ function formatPhone() {
 }
 
 function getSeat() {
-  if(bottleChoice==='yes') return '프리패스';
   if(barChoice==='yes') return '바자리';
   return '테이블석';
 }
@@ -667,7 +653,7 @@ async function submitForm() {
   // 단골 여부 조회 후 맞춤 카드 렌더링
   checkLoyalForCompleteScreen(phone);
   // 등록 페이로드 - sendBeacon 사용으로 페이지 언로드에도 전송 보장
-  const payload = JSON.stringify({name:'',gender:selectedGender,people:selectedPeople,phone,seat});
+  const payload = JSON.stringify({name:document.getElementById('fName').value.trim(),gender:selectedGender,people:selectedPeople,phone,seat});
   let sent = false;
   try {
     if (navigator.sendBeacon) {

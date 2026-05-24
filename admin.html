@@ -79,6 +79,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .waiting-num { font-size: 11px; color: var(--text3); min-width: 18px; flex-shrink: 0; }
 .waiting-info { flex: 1; min-width: 0; }
 .name-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.cust-name { font-size: 13px; font-weight: 600; color: var(--text); }
 .waiting-name { font-size: 13px; font-weight: 500; }
 .waiting-meta { font-size: 11px; color: var(--text3); margin-top: 1px; }
 .gender-badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; }
@@ -906,6 +907,7 @@ function clickNoreply(key) {
   ]);
 }
 
+function escHtml(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function getSeatBadge(seat) {
   if (seat === '바자리') return '<span class="seat-badge dodgy">닷</span>';
   if (seat === '프리패스') return '<span class="seat-badge free">프</span>';
@@ -1356,6 +1358,7 @@ function renderList() {
       <span class="waiting-num">${isGreyed ? '—' : displayNum}</span>
       <div class="waiting-info">
         <div class="name-row">
+          ${row[3] ? `<span class="cust-name">${escHtml(row[3])}</span>` : ''}
           ${gender ? `<span class="gender-badge ${gClass}">${gender}</span>` : ''}
           ${getSeatBadge(seat)}
           ${getLoyalBadge(row[6])}
