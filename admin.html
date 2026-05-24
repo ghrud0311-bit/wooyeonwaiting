@@ -501,7 +501,7 @@ function getTodayKST() {
 // 단골 목록 동기화 (단골 시트 fetch → loyalMap 갱신)
 async function syncLoyalList() {
   try {
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('단골!A:F')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('단골!A:G')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const d = await r.json();
     const newMap = {};
     if (!d.error && d.values && d.values.length > 1) {
@@ -515,7 +515,8 @@ async function syncLoyalList() {
           visits: parseInt(row[2]) || 0,
           lastVisit: row[3] || '',
           coupons: parseInt(row[4]) || 0,
-          name: row[5] || ''
+          name: row[5] || '',
+          gender: row[6] || ''
         };
       }
     }
@@ -1076,7 +1077,8 @@ function renderLoyalList() {
       pending: pending,
       joinedAt: info.joinedAt || '',
       lastVisit: info.lastVisit || '',
-      name: info.name || ''
+      name: info.name || '',
+      gender: info.gender || ''
     };
   });
 
@@ -1114,7 +1116,7 @@ function renderLoyalList() {
       : '';
     return '<div class="loyal-list-row' + (isReady ? ' ready' : '') + '">'
       + '<div class="loyal-row-info" onclick="showLoyalInfo(\'' + safe + '\')" style="cursor:pointer">'
-      + '<div class="loyal-row-top">' + (e.name ? '<span class="loyal-row-name">' + escHtml(e.name) + '</span>' : '') + '<span class="loyal-row-phone">' + e.phone + '</span>' + badge + '</div>'
+      + '<div class="loyal-row-top">' + (e.name ? '<span class="loyal-row-name">' + escHtml(e.name) + '</span>' : '') + (e.gender ? '<span class="gender-badge ' + (e.gender==='남성'?'male':e.gender==='여성'?'female':'') + '">' + (e.gender==='남성'?'남':e.gender==='여성'?'여':e.gender==='혼성'?'혼':escHtml(e.gender)) + '</span>' : '') + '<span class="loyal-row-phone">' + e.phone + '</span>' + badge + '</div>'
       + '<div class="loyal-row-meta">누적 ' + e.visits + '회 · 쿠폰 ' + e.coupons + '장 · 가입 ' + joinedShort + ' · 최근 ' + lastShort + '</div>'
       + '</div>'
       + '<div class="loyal-row-actions">'

@@ -709,12 +709,14 @@ function getSeat() {
 
 let pendingPhone = '';
 let pendingName = '';
+let pendingGender = '';
 
 async function submitForm() {
   const phone='010-'+document.getElementById('fPhone').value.trim();
   const seat=getSeat();
   pendingPhone = phone;
   pendingName = document.getElementById('fName').value.trim();
+  pendingGender = selectedGender;
   // formOverlay 완전히 숨기고 completeOverlay 표시
   const formEl = document.getElementById('formOverlay');
   formEl.classList.remove('active');
@@ -826,7 +828,7 @@ function registerLoyal() {
   const wrap = document.getElementById('loyaltyCardWrap');
   btn.disabled = true;
   btn.textContent = '등록 중...';
-  const payload = JSON.stringify({type:'registerLoyal', phone: pendingPhone, name: pendingName});
+  const payload = JSON.stringify({type:'registerLoyal', phone: pendingPhone, name: pendingName, gender: pendingGender});
   let sent = false;
   try {
     if (navigator.sendBeacon) {
