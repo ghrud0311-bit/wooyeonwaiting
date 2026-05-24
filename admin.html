@@ -28,6 +28,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .header-btns { display: flex; align-items: center; gap: 8px; }
 .open-index-btn { font-size: 11px; color: var(--surface); background: var(--accent); border: none; border-radius: 6px; cursor: pointer; padding: 6px 10px; }
 .logout-btn { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; }
+.dialer-btn.on { background: var(--success); border-color: var(--success); color: #fff; }
+.toast-box { position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(20px); background: rgba(30,30,30,0.92); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: all .25s; z-index: 9999; max-width: 86%; text-align: center; }
+.toast-box.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .section { margin-bottom: 1rem; }
 .section-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.6rem; }
 .seat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 8px; }
@@ -316,6 +319,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   <div class="admin-header">
     <p class="admin-title">관리자</p>
     <div class="header-btns">
+      <button class="open-index-btn dialer-btn" id="dialerBtn" onclick="toggleDialerPhone()">📱 발신폰</button>
       <button class="open-index-btn" onclick="openLoyalList()">🎁 단골 명단</button>
       <button class="open-index-btn" onclick="openIndexPage()">등록 화면 열기</button>
       <button class="logout-btn" onclick="doLogout()">로그아웃</button>
@@ -632,6 +636,7 @@ async function syncSettings() {
 }
 
 async function initAdmin() {
+  updateDialerBtn();
   await syncSettings();
   await syncLoyalList();
   await loadData();
@@ -799,7 +804,48 @@ function toggleHeart(key) {
   renderList();
 }
 
-function callGuest(phone) { window.location.href = 'tel:' + phone.replace(/[^0-9]/g, ''); }
+function callGuest(key) {
+  const item = allItems.find(it => it.key === key);
+  if (!item) return;
+  const phone = (item.row[6]||'').toString(), name = (item.row[3]||'').toString();
+  if (localStorage.getItem('isDialerPhone') === '1') {
+    window.location.href = 'tel:' + phone.replace(/[^0-9]/g, '');   // 발신폰: 바로 전화
+  } else {
+    sendCallRequest(name, phone);                                   // 그 외 기기: 가게폰으로 텔레그램 요청
+    toast('📞 가게폰으로 전화 요청을 보냈어요');
+  }
+}
+function sendCallRequest(name, phone) {
+  try {
+    fetch(GAS_URL + '?type=callRequest&name=' + encodeURIComponent(name) + '&phone=' + encodeURIComponent(phone),
+      { method: 'GET', mode: 'no-cors', keepalive: true, cache: 'no-store' }).catch(()=>{});
+  } catch(e) {}
+}
+function toggleDialerPhone() {
+  if (localStorage.getItem('isDialerPhone') === '1') {
+    localStorage.removeItem('isDialerPhone');
+    toast('이 기기 발신폰 지정을 해제했어요');
+  } else {
+    localStorage.setItem('isDialerPhone', '1');
+    toast('이 기기를 발신폰으로 지정했어요 — 전화 버튼이 바로 발신돼요');
+  }
+  updateDialerBtn();
+}
+function updateDialerBtn() {
+  const btn = document.getElementById('dialerBtn');
+  if (!btn) return;
+  const on = localStorage.getItem('isDialerPhone') === '1';
+  btn.classList.toggle('on', on);
+  btn.textContent = on ? '📱 발신폰 ✓' : '📱 발신폰';
+}
+function toast(msg) {
+  let t = document.getElementById('toastBox');
+  if (!t) { t = document.createElement('div'); t.id = 'toastBox'; t.className = 'toast-box'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
 
 function sendSMS(key) {
   const item = allItems.find(it => it.key === key);
@@ -1170,13 +1216,13 @@ function getActionBtns(key, row) {
   if (state === 'coming') {
     return `<div class="action-btns">
       <button class="action-btn" onclick="sendSMS('${safeKey}')">문자</button>
-      <button class="action-btn call" onclick="callGuest('${phone}')">전화</button>
+      <button class="action-btn call" onclick="callGuest('${safeKey}')">전화</button>
       <button class="action-btn coming" onclick="clickComing('${safeKey}')">오는 중</button>
     </div>`;
   }
   return `<div class="action-btns">
     <button class="action-btn" onclick="sendSMS('${safeKey}')">문자</button>
-    <button class="action-btn call" onclick="callGuest('${phone}')">전화</button>
+    <button class="action-btn call" onclick="callGuest('${safeKey}')">전화</button>
     <button class="action-btn confirm-o" onclick="clickO('${safeKey}')">O</button>
     <button class="action-btn confirm-x" onclick="clickX('${safeKey}')">X</button>
   </div>`;
