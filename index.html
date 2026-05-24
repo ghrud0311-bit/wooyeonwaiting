@@ -21,6 +21,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .header-title { font-size: 24px; font-weight: 400; }
 .status-banner { border-radius: 8px; padding: 0.8rem 1rem; margin: 0 0 0.8rem; display: flex; align-items: center; gap: 9px; font-size: 13px; }
 .status-banner.open { background: #eef6f1; border: 1px solid #c8e0d0; color: var(--success); }
+.open-countdown { display: inline-block; margin-top: 3px; font-size: 13px; font-weight: 700; color: #8a6020; }
 .status-banner.open-few { background: #fff8ec; border: 1px solid #f0d898; color: #8a6020; }
 .status-banner.waiting { background: #fdf8f2; border: 1px solid #e8ddd0; color: #8a6e4a; }
 .status-banner.full { background: #fdf0ee; border: 1px solid #e8c8c4; color: var(--danger); }
@@ -239,6 +240,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <input class="search-input" id="searchInput" type="tel" placeholder="전화번호 뒷 4자리">
     <button class="search-btn" onclick="searchByPhone()">조회</button>
   </div>
+  <div class="search-row" id="searchNameWrap" style="display:none;margin-top:8px">
+    <input class="search-input" id="searchName" type="text" placeholder="성함 입력">
+    <button class="search-btn" onclick="searchByPhone()">확인</button>
+  </div>
   <p class="search-result" id="searchResult"></p>
   <div class="notice-panel">
     <p class="notice-title">안내사항</p>
@@ -443,7 +448,40 @@ function showLoading() {
   document.getElementById('ahead').innerHTML=d;
 }
 
-function updateStatus(total) {
+let lastTotal = 0;
+function kstNow(){
+  const now=new Date();
+  return new Date(now.getTime()+now.getTimezoneOffset()*60000+9*3600000);
+}
+// 영업시간 외(마감 / 오픈대기 카운트다운) 배너. 처리했으면 true 반환
+function renderTimeBanner(){
+  const banner=document.getElementById('statusBanner');
+  const text=document.getElementById('statusText');
+  const btn=document.getElementById('registerBtn');
+  const k=kstNow();
+  const mins=k.getHours()*60+k.getMinutes();
+  if (mins>=90 && mins<1080){          // 01:30 ~ 18:00 마감
+    banner.className='status-banner closed';
+    text.textContent='마감했습니다.';
+    btn.style.display='none';
+    return true;
+  }
+  if (mins>=1080 && mins<1170){        // 18:00 ~ 19:30 오픈 대기 + 카운트다운
+    const totalSec=(1170-mins)*60 - k.getSeconds();
+    const hh=Math.floor(totalSec/3600), mm=Math.floor((totalSec%3600)/60), ss=totalSec%60;
+    banner.className='status-banner closed';
+    text.innerHTML='오후 7시 30분 오픈합니다.<br><span class="open-countdown">오픈까지 '+hh+'시간 '+mm+'분 '+ss+'초</span>';
+    btn.style.display='none';
+    return true;
+  }
+  return false;                        // 19:30 ~ 01:30 영업 → 기존 배너
+}
+function refreshBanner(){
+  if (renderTimeBanner()) return;
+  renderOperatingBanner(lastTotal);
+}
+function updateStatus(total){ lastTotal=total; refreshBanner(); }
+function renderOperatingBanner(total) {
   const banner=document.getElementById('statusBanner');
   const text=document.getElementById('statusText');
   const btn=document.getElementById('registerBtn');
@@ -472,23 +510,52 @@ function updateMyInfo(myPhone) {
   }
 }
 
+function showSearchResult(i){
+  const result=document.getElementById('searchResult');
+  result.style.color='#6e6b66';
+  result.textContent=(i+1)+'번째 대기 중 (앞에 '+i+'팀 남음)';
+  document.getElementById('mynum').textContent=(i+1)+'번';
+  document.getElementById('mypeople').textContent=(allRows[i][5]||'—')+'명';
+  document.getElementById('ahead').textContent=i;
+}
 function searchByPhone() {
   const input=document.getElementById('searchInput').value.trim();
   const result=document.getElementById('searchResult');
-  if (!input){result.textContent='전화번호 뒷 4자리를 입력해주세요.';return;}
-  const i=allRows.findIndex(r=>r[6]&&r[6].replace(/-/g,'').endsWith(input.replace(/-/g,'')));
-  if (i>=0){
-    result.style.color='#6e6b66';
-    result.textContent=(i+1)+'번째 대기 중 (앞에 '+i+'팀 남음)';
-    document.getElementById('mynum').textContent=(i+1)+'번';
-    document.getElementById('mypeople').textContent=(allRows[i][5]||'—')+'명';
-    document.getElementById('ahead').textContent=i;
-  } else {
+  const nameWrap=document.getElementById('searchNameWrap');
+  if (!input){nameWrap.style.display='none';result.style.color='#c0503e';result.textContent='전화번호 뒷 4자리를 입력해주세요.';return;}
+  const digits=input.replace(/-/g,'');
+  // 뒷 4자리 일치하는 미처리 대기 항목(입장완료/노쇼 등은 시트에서 삭제되어 자동 제외)
+  const matches=[];
+  allRows.forEach((r,idx)=>{ if(r[6]&&r[6].replace(/-/g,'').endsWith(digits)) matches.push(idx); });
+  if (matches.length===0){
+    nameWrap.style.display='none';
     result.style.color='#c0503e';
     result.textContent='해당 전화번호로 접수된 내역이 없어요.';
+    return;
   }
+  if (matches.length===1){
+    nameWrap.style.display='none';
+    showSearchResult(matches[0]);
+    return;
+  }
+  // 동명이인 방지: 같은 뒷자리 번호가 2건 이상이면 성함으로 구분
+  nameWrap.style.display='';
+  const nameVal=document.getElementById('searchName').value.trim();
+  if(!nameVal){
+    result.style.color='#c0503e';
+    result.textContent='동일한 번호가 있어요. 성함을 입력해주세요.';
+    return;
+  }
+  const named=matches.filter(idx=>String(allRows[idx][3]||'').trim()===nameVal);
+  if(named.length===0){
+    result.style.color='#c0503e';
+    result.textContent='해당 성함으로 접수된 내역이 없어요.';
+    return;
+  }
+  showSearchResult(named[0]);
 }
 document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchByPhone();});
+document.getElementById('searchName').addEventListener('keydown',e=>{if(e.key==='Enter')searchByPhone();});
 
 async function loadData() {
   showLoading();
@@ -639,11 +706,13 @@ function getSeat() {
 }
 
 let pendingPhone = '';
+let pendingName = '';
 
 async function submitForm() {
   const phone='010-'+document.getElementById('fPhone').value.trim();
   const seat=getSeat();
   pendingPhone = phone;
+  pendingName = document.getElementById('fName').value.trim();
   // formOverlay 완전히 숨기고 completeOverlay 표시
   const formEl = document.getElementById('formOverlay');
   formEl.classList.remove('active');
@@ -755,7 +824,7 @@ function registerLoyal() {
   const wrap = document.getElementById('loyaltyCardWrap');
   btn.disabled = true;
   btn.textContent = '등록 중...';
-  const payload = JSON.stringify({type:'registerLoyal', phone: pendingPhone});
+  const payload = JSON.stringify({type:'registerLoyal', phone: pendingPhone, name: pendingName});
   let sent = false;
   try {
     if (navigator.sendBeacon) {
@@ -874,6 +943,8 @@ document.getElementById('optOutOverlay').addEventListener('click', function(e) {
 
 loadData();
 setInterval(loadData,10000);
+refreshBanner();
+setInterval(refreshBanner,1000);
 // 방금 등록한 경우 GAS 반영 대기 후 재시도
 if (getParam('phone')) {
   setTimeout(loadData, 3000);

@@ -128,6 +128,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .loyal-row-info { flex: 1; min-width: 0; }
 .loyal-row-top { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
 .loyal-row-phone { font-size: 13px; font-weight: 500; color: var(--text1); }
+.loyal-row-name { font-size: 13px; font-weight: 700; color: var(--text); }
 .loyal-row-badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 500; }
 .loyal-row-badge.ready { background: #ffe8c8; color: #804010; }
 .loyal-row-badge.progress { background: #fff4e0; color: #a06010; }
@@ -500,7 +501,7 @@ function getTodayKST() {
 // 단골 목록 동기화 (단골 시트 fetch → loyalMap 갱신)
 async function syncLoyalList() {
   try {
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('단골!A:E')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('단골!A:F')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const d = await r.json();
     const newMap = {};
     if (!d.error && d.values && d.values.length > 1) {
@@ -513,7 +514,8 @@ async function syncLoyalList() {
           joinedAt: row[1] || '',
           visits: parseInt(row[2]) || 0,
           lastVisit: row[3] || '',
-          coupons: parseInt(row[4]) || 0
+          coupons: parseInt(row[4]) || 0,
+          name: row[5] || ''
         };
       }
     }
@@ -1073,12 +1075,13 @@ function renderLoyalList() {
       coupons: coupons,
       pending: pending,
       joinedAt: info.joinedAt || '',
-      lastVisit: info.lastVisit || ''
+      lastVisit: info.lastVisit || '',
+      name: info.name || ''
     };
   });
 
   if (query) {
-    entries = entries.filter(e => e.phone.replace(/\D/g, '').includes(query));
+    entries = entries.filter(e => e.phone.replace(/\D/g, '').includes(query) || (e.name && e.name.includes(query)));
   }
 
   // 정렬
@@ -1111,7 +1114,7 @@ function renderLoyalList() {
       : '';
     return '<div class="loyal-list-row' + (isReady ? ' ready' : '') + '">'
       + '<div class="loyal-row-info" onclick="showLoyalInfo(\'' + safe + '\')" style="cursor:pointer">'
-      + '<div class="loyal-row-top"><span class="loyal-row-phone">' + e.phone + '</span>' + badge + '</div>'
+      + '<div class="loyal-row-top">' + (e.name ? '<span class="loyal-row-name">' + escHtml(e.name) + '</span>' : '') + '<span class="loyal-row-phone">' + e.phone + '</span>' + badge + '</div>'
       + '<div class="loyal-row-meta">누적 ' + e.visits + '회 · 쿠폰 ' + e.coupons + '장 · 가입 ' + joinedShort + ' · 최근 ' + lastShort + '</div>'
       + '</div>'
       + '<div class="loyal-row-actions">'
