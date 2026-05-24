@@ -455,6 +455,7 @@ function kstNow(){
 }
 // 영업시간 외(마감 / 오픈대기 카운트다운) 배너. 처리했으면 true 반환
 function renderTimeBanner(){
+  if (getParam('test')==='1') return false;   // 테스트 모드: 마감/카운트다운 건너뛰기
   const banner=document.getElementById('statusBanner');
   const text=document.getElementById('statusText');
   const btn=document.getElementById('registerBtn');
@@ -485,6 +486,7 @@ function renderOperatingBanner(total) {
   const banner=document.getElementById('statusBanner');
   const text=document.getElementById('statusText');
   const btn=document.getElementById('registerBtn');
+  if (getParam('test')==='1') { banner.className='status-banner waiting'; text.textContent='테스트 모드 — 웨이팅 등록 가능'; btn.style.display='block'; return; }
   if (!isFullMode) {
     if (tableRemain>3){banner.className='status-banner open';text.textContent='현재 입장 가능합니다.';}
     else if (tableRemain>0){banner.className='status-banner open-few';text.textContent='현재 '+tableRemain+'명 입장 가능합니다.';}
