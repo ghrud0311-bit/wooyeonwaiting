@@ -211,37 +211,34 @@ function renderBoard(){
   document.getElementById('meta').textContent = '착석 '+list.length+'명 (남'+m+'/여'+f+')'+(over?' · 🔴'+over:'')+' · 누적 '+cumLeave+'명';
 }
 
-function npairsOf(pos){
-  var s2 = {}; Object.keys(pos).forEach(function(id){ s2[pos[id]] = id; });
-  var set = new Set();
-  Object.keys(pos).forEach(function(id){ NB[pos[id]].forEach(function(ns){ var o = s2[ns]; if (o) set.add([id,o].sort().join('|')); }); });
-  return set;
-}
 function doMove(){
-  const actives = Object.entries(occ).map(function(e){ return { id:e[1].id, gender:e[1].gender }; });
-  if (!actives.length) { alert('착석한 손님이 없어요.'); return; }
-  const M = actives.filter(a=>a.gender==='남성').length;
-  const F = actives.filter(a=>a.gender==='여성').length;
+  // 사람을 "현재 자리(from)"로 식별 → 같은 뒷자리 중복이어도 안 엉킴
+  const persons = Object.entries(occ).map(function(e){ return { from: parseInt(e[0]), id: e[1].id, gender: e[1].gender }; });
+  if (!persons.length) { alert('착석한 손님이 없어요.'); return; }
+  const M = persons.filter(p=>p.gender==='남성').length;
+  const F = persons.filter(p=>p.gender==='여성').length;
   const key = 'M'+M+'_F'+F;
   const sg = seatsByGender(key);
   if (!sg) { alert('이 인원 조합('+key+')은 배치표에 없어요. 인원/성별을 확인해주세요.'); return; }
-  const men = actives.filter(a=>a.gender==='남성').map(a=>a.id);
-  const women = actives.filter(a=>a.gender==='여성').map(a=>a.id);
-  const aset = new Set(actives.map(a=>a.id));
+  const males = persons.filter(p=>p.gender==='남성');
+  const females = persons.filter(p=>p.gender==='여성');
+  const aset = new Set(persons.map(p=>p.id));
   const apins = pins.filter(function(p){ return aset.has(p[0]) && aset.has(p[1]); });
 
-  function assignOnce(){ var sm=shuffle(sg.male), sf=shuffle(sg.female), pos={}; men.forEach(function(id,i){ pos[id]=sm[i]; }); women.forEach(function(id,i){ pos[id]=sf[i]; }); return pos; }
-  function scoreOf(pos){ var rep=0; npairsOf(pos).forEach(function(p){ if(neighborHist.has(p)) rep++; }); var v=0; apins.forEach(function(pr){ if(NB[pos[pr[0]]].indexOf(pos[pr[1]])<0) v++; }); return v*1000 + rep; }
+  function idSeat(pos, id){ for (var i=0;i<persons.length;i++){ if(persons[i].id===id) return pos[persons[i].from]; } return null; }
+  function assignOnce(){ var sm=shuffle(sg.male), sf=shuffle(sg.female), pos={}; males.forEach(function(p,i){ pos[p.from]=sm[i]; }); females.forEach(function(p,i){ pos[p.from]=sf[i]; }); return pos; }
+  function npairsOf(pos){ var seat2id={}; persons.forEach(function(p){ seat2id[pos[p.from]]=p.id; }); var set=new Set(); persons.forEach(function(p){ NB[pos[p.from]].forEach(function(s2){ var oid=seat2id[s2]; if(oid) set.add([p.id,oid].sort().join('|')); }); }); return set; }
+  function scoreOf(pos){ var rep=0; npairsOf(pos).forEach(function(pp){ if(neighborHist.has(pp)) rep++; }); var v=0; apins.forEach(function(pr){ var sa=idSeat(pos,pr[0]), sb=idSeat(pos,pr[1]); if(sa==null||sb==null||NB[sa].indexOf(sb)<0) v++; }); return v*1000 + rep; }
   var best=null, bs=Infinity;
   for (var k=0;k<800;k++){ var pos=assignOnce(); var sc=scoreOf(pos); if(sc<bs){ bs=sc; best=pos; } if(bs===0) break; }
-  var unmet = apins.filter(function(pr){ return NB[best[pr[0]]].indexOf(best[pr[1]])<0; }).length;
+  var unmet = apins.filter(function(pr){ var sa=idSeat(best,pr[0]), sb=idSeat(best,pr[1]); return sa==null||sb==null||NB[sa].indexOf(sb)<0; }).length;
 
-  var msg = actives.length+'명의 자리를 새로 배정할까요?\n(최대한 새로운 이웃과 앉도록 섞어요)';
+  var msg = persons.length+'명의 자리를 새로 배정할까요?\n(최대한 새로운 이웃과 앉도록 섞어요)';
   if (apins.length) msg += '\n같이 앉기 '+apins.length+'쌍 반영' + (unmet ? (' — 그중 '+unmet+'쌍은 자리 여건상 최대한 가깝게' ) : '');
   if (!confirm(msg)) return;
 
-  const assign = Object.keys(best).map(function(id){ return { id:id, seat:best[id] }; });
-  npairsOf(best).forEach(function(p){ neighborHist.add(p); });
+  const assign = persons.map(function(p){ return { from: p.from, to: best[p.from] }; });
+  npairsOf(best).forEach(function(pp){ neighborHist.add(pp); });
   saveMeta('A15', JSON.stringify(Array.from(neighborHist)));
   const payload = JSON.stringify({ type:'seatMove', assign: assign, src: 'auto' });
   try { fetch(GAS_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload }).catch(function(){}); } catch(e) {}
@@ -332,8 +329,8 @@ function saveMeta(cell, value){
 function manualPick(n){
   if (selA === null) { if (!occ[n]) { return; } selA = n; renderBoard(); return; }
   if (n === selA) { selA = null; renderBoard(); return; }
-  var assign = [{ id: occ[selA].id, seat: n }];
-  if (occ[n]) assign.push({ id: occ[n].id, seat: selA });
+  var assign = [{ from: selA, to: n }];
+  if (occ[n]) assign.push({ from: n, to: selA });
   var label = occ[n] ? (selA+'번 ↔ '+n+'번 교환') : (selA+'번 → '+n+'번 이동');
   if (!confirm(label + ' 할까요?')) return;
   var payload = JSON.stringify({ type:'seatMove', assign: assign, src: 'manual' });
