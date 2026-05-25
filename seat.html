@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>우연 — 자리 등록</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #f7f6f4; --surface: #ffffff; --surface2: #f2f1ef;
+  --border: #e8e6e2; --border2: #d8d6d2;
+  --text: #1a1916; --text2: #6e6b66; --text3: #a8a49e;
+  --accent: #1a1916; --danger: #c0503e; --success: #4a8c5c;
+  --male: #2a5fa8; --female: #b54a7a;
+}
+body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 0 1rem 3rem; }
+.wrap { width: 100%; max-width: 400px; }
+.header { padding: 2rem 0 1.2rem; text-align: center; }
+.header-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.18em; margin-bottom: 0.35rem; }
+.header-title { font-size: 19px; font-weight: 500; }
+
+.seat-badge-big { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.4rem; text-align: center; margin-bottom: 1rem; }
+.seat-badge-label { font-size: 12px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 6px; }
+.seat-badge-num { font-size: 52px; font-weight: 700; line-height: 1; color: var(--text); }
+.seat-badge-num small { font-size: 20px; font-weight: 500; color: var(--text2); margin-left: 2px; }
+
+.notice-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1rem; }
+.notice-item { display: flex; gap: 8px; font-size: 13px; color: var(--text2); line-height: 1.55; margin-bottom: 0.6rem; }
+.notice-item:last-child { margin-bottom: 0; }
+.notice-item span:first-child { flex-shrink: 0; }
+
+.agree-row { display: flex; align-items: center; gap: 9px; padding: 0.85rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1rem; cursor: pointer; font-size: 14px; }
+.agree-row input { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
+
+.field { margin-bottom: 1rem; opacity: 0.45; pointer-events: none; transition: opacity 0.2s; }
+.field.on { opacity: 1; pointer-events: auto; }
+.field-label { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; margin-bottom: 7px; }
+.phone-wrap { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.phone-prefix { padding: 14px 4px 14px 14px; font-size: 16px; color: var(--text3); white-space: nowrap; }
+.phone-input { flex: 1; padding: 14px 14px 14px 4px; background: transparent; border: none; font-size: 18px; letter-spacing: 0.12em; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; }
+.phone-wrap:focus-within { border-color: var(--border2); }
+.field-hint { font-size: 11px; color: var(--text3); margin-top: 6px; }
+
+.gender-row { display: flex; gap: 8px; }
+.gender-btn { flex: 1; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; font-size: 15px; color: var(--text2); font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: all 0.15s; }
+.gender-btn.sel-m { background: #eef3fb; border-color: var(--male); color: var(--male); font-weight: 500; }
+.gender-btn.sel-f { background: #fbeef4; border-color: var(--female); color: var(--female); font-weight: 500; }
+
+.submit-btn { width: 100%; padding: 15px; margin-top: 0.4rem; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: opacity 0.15s; }
+.submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.done-box { text-align: center; padding: 3rem 1rem; }
+.done-icon { font-size: 44px; margin-bottom: 1rem; }
+.done-title { font-size: 20px; font-weight: 700; margin-bottom: 0.5rem; }
+.done-seat { font-size: 15px; color: var(--text2); line-height: 1.6; }
+.done-seat b { color: var(--text); font-size: 17px; }
+
+.err-box { text-align: center; padding: 3.5rem 1rem; color: var(--text2); font-size: 15px; line-height: 1.6; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="header-sub">WOOYEON</div>
+    <div class="header-title">자리 등록</div>
+  </div>
+
+  <!-- 잘못된 QR -->
+  <div id="errView" class="err-box hidden">
+    올바른 자리 QR이 아니에요.<br>자리에 놓인 QR을 다시 스캔해주세요.
+  </div>
+
+  <!-- 등록 화면 -->
+  <div id="formView" class="hidden">
+    <div class="seat-badge-big">
+      <div class="seat-badge-label">현재 자리</div>
+      <div class="seat-badge-num"><span id="seatNumText">—</span><small>번</small></div>
+    </div>
+
+    <div class="notice-box">
+      <div class="notice-item"><span>🪑</span><span>입력하신 번호는 <b>자리 관리용</b>으로만 사용돼요.</span></div>
+      <div class="notice-item"><span>🔔</span><span>웨이팅이 있을 땐, 마지막 주문 후 <b>90분</b>이 지나면 추가 주문을 부탁드릴 수 있어요.</span></div>
+      <div class="notice-item"><span>↔️</span><span>자리 이동 안내가 오면, 안내된 번호로 옮겨주세요.</span></div>
+    </div>
+
+    <label class="agree-row">
+      <input type="checkbox" id="agree" onchange="refresh()">
+      <span>위 내용을 확인했어요.</span>
+    </label>
+
+    <div class="field" id="phoneField">
+      <div class="field-label">전화번호 뒷 4자리</div>
+      <div class="phone-wrap">
+        <span class="phone-prefix">010 - •••• -</span>
+        <input class="phone-input" id="last4" type="tel" inputmode="numeric" placeholder="0000" maxlength="4" oninput="onPhone()">
+      </div>
+      <div class="field-hint">📌 본인 식별용이에요. 끝 4자리만 입력해주세요.</div>
+    </div>
+
+    <div class="field" id="genderField">
+      <div class="field-label">성별</div>
+      <div class="gender-row">
+        <button class="gender-btn" id="gM" onclick="pickGender('남성')">남성</button>
+        <button class="gender-btn" id="gF" onclick="pickGender('여성')">여성</button>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitSeat()" disabled>등록하기</button>
+  </div>
+
+  <!-- 완료 화면 -->
+  <div id="doneView" class="done-box hidden">
+    <div class="done-icon">🎉</div>
+    <div class="done-title">등록되었어요</div>
+    <div class="done-seat"><b id="doneSeatText">—</b>번 자리에 편하게 앉아주세요!</div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
+
+let seatNum = 0;
+let gender = '';
+
+function getParam(k){ try { return new URLSearchParams(location.search).get(k)||''; } catch(e){ return ''; } }
+
+(function init(){
+  const n = parseInt(getParam('n'));
+  if (!n || n < 1 || n > 26) {
+    document.getElementById('errView').classList.remove('hidden');
+    return;
+  }
+  seatNum = n;
+  document.getElementById('seatNumText').textContent = n;
+  document.getElementById('formView').classList.remove('hidden');
+})();
+
+function onPhone(){
+  const el = document.getElementById('last4');
+  el.value = el.value.replace(/\D/g, '').slice(0, 4);
+  refresh();
+}
+
+function pickGender(g){
+  gender = g;
+  document.getElementById('gM').className = 'gender-btn' + (g==='남성' ? ' sel-m' : '');
+  document.getElementById('gF').className = 'gender-btn' + (g==='여성' ? ' sel-f' : '');
+  refresh();
+}
+
+function refresh(){
+  const agreed = document.getElementById('agree').checked;
+  document.getElementById('phoneField').classList.toggle('on', agreed);
+  document.getElementById('genderField').classList.toggle('on', agreed);
+  const last4 = document.getElementById('last4').value;
+  const ok = agreed && last4.length === 4 && gender !== '';
+  document.getElementById('submitBtn').disabled = !ok;
+}
+
+function submitSeat(){
+  const last4 = document.getElementById('last4').value;
+  if (last4.length !== 4 || !gender || !seatNum) return;
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitBtn').textContent = '등록 중...';
+
+  const payload = JSON.stringify({ type: 'seatRegister', id: last4, gender: gender, seat: seatNum });
+  let sent = false;
+  try {
+    if (navigator.sendBeacon) {
+      sent = navigator.sendBeacon(GAS_URL, new Blob([payload], { type: 'text/plain' }));
+    }
+  } catch(e) { sent = false; }
+  if (!sent) {
+    try { fetch(GAS_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body: payload }).catch(()=>{}); } catch(e) {}
+  }
+
+  document.getElementById('doneSeatText').textContent = seatNum;
+  document.getElementById('formView').classList.add('hidden');
+  document.getElementById('doneView').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
