@@ -44,7 +44,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .seat.sel { outline: 3px solid var(--accent); outline-offset: -1px; }
 .seat.dup { outline: 2px solid var(--danger); outline-offset: -1px; }
 .manual-hint { font-size: 12px; color: var(--accent); font-weight: 500; background: #eef0f5; border: 1px solid var(--border2); border-radius: 8px; padding: 8px 10px; margin-bottom: 0.8rem; }
-.seat .pinmark { position: absolute; top: 2px; right: 3px; font-size: 9px; }
+.seat .pinmark { position: absolute; top: -5px; right: -5px; min-width: 15px; height: 15px; line-height: 15px; padding: 0 3px; border-radius: 8px; color: #fff; font-size: 9px; font-weight: 700; text-align: center; }
 .m-order { width: 100%; margin-top: 0.8rem; padding: 12px; background: var(--success); color: #fff; border: none; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
 .seat.m { background: var(--maleBg); border-color: #c3d4ee; }
 .seat.m .id { color: var(--male); }
@@ -105,6 +105,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   </div>
   <div id="manualHint" class="manual-hint hidden">수동 이동 켜짐 — 옮길 손님 자리를 누른 뒤, 보낼 자리를 누르세요. (둘 다 손님이면 서로 교환)</div>
   <div id="pairHint" class="manual-hint hidden">같이 앉기 켜짐 — 함께 앉힐 두 손님 자리를 차례로 누르세요. 다시 누르면 해제. (다음 자리 이동부터 반영)</div>
+  <div id="shuffleInfo" class="hint" style="cursor:pointer;margin-bottom:0.7rem" onclick="showShuffleTimes()"></div>
 
   <div class="table-block">
     <div class="table-title">왼쪽 테이블 (1~12)</div>
@@ -199,7 +200,8 @@ let dupSet = new Set();
 let manualMode = false, selA = null;
 let pins = [];
 let neighborHist = new Set();
-let pairMode = false, pinSelA = null;
+let pairMode = false, pinSelA = null, pinSelB = null;
+let shuffleLog = [];
 let lastMetaEditAt = 0;
 
 async function loadSeats(){
@@ -229,21 +231,25 @@ async function loadSeats(){
   renderBoard();
 }
 
+function nowKSThhmm(){ var k = new Date(Date.now() + (new Date().getTimezoneOffset()*60000) + 9*3600000); return ('0'+k.getHours()).slice(-2)+':'+('0'+k.getMinutes()).slice(-2); }
+function showShuffleTimes(){ if(!shuffleLog.length){ alert('오늘 자리 이동 기록이 없어요.'); return; } alert('오늘 자리 이동 '+shuffleLog.length+'회\n'+shuffleLog.join(', ')); }
 async function loadMeta(){  // 핀/이웃이력은 시작 시 1회만 로드 (폴링 클로버 방지)
   try {
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A14:A15')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A14:A16')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const d = await r.json();
     const vv = (d && d.values) ? d.values : [];
     try { pins = (vv[0] && vv[0][0]) ? JSON.parse(vv[0][0]) : []; } catch(e){ pins = []; }
     neighborHist = new Set();
     try { if (vv[1] && vv[1][0]) JSON.parse(vv[1][0]).forEach(function(x){ neighborHist.add(x); }); } catch(e){}
+    try { shuffleLog = (vv[2] && vv[2][0]) ? JSON.parse(vv[2][0]) : []; } catch(e){ shuffleLog = []; }
   } catch(e) {}
 }
 function elapsedMin(s){ if(!s) return null; var t=new Date(String(s).replace(' ','T')).getTime(); if(isNaN(t)) return null; return Math.floor((Date.now()-t)/60000); }
 function hhmm(s){ s=String(s||''); var p=s.split(' '); return p[1] ? p[1].slice(0,5) : s; }
 
 function renderBoard(){
-  var pinnedSeats = new Set(); pins.forEach(function(pp){ pinnedSeats.add(pp[0]); pinnedSeats.add(pp[1]); });
+  var pinOf = {}; pins.forEach(function(pp,i){ pinOf[pp[0]] = i+1; pinOf[pp[1]] = i+1; });
+  var PINCOL = ['#e0533e','#2a7ac0','#4a8c5c','#b54a7a','#c98a1a','#7a5cc0','#1aa3a3','#9a6b2e'];
   Object.keys(ROWS).forEach(function(rid){
     const el = document.getElementById(rid);
     el.innerHTML = ROWS[rid].map(function(n){
@@ -252,9 +258,9 @@ function renderBoard(){
       const idTxt = o ? o.id : '빈자리';
       let tHtml = '';
       if (o) { const em = elapsedMin(o.lastOrder); if (em!=null) { if (em>=90) cls += ' overdue'; tHtml = '<span class="t">'+em+'분</span>'; } }
-      if ((manualMode && selA===n) || (pairMode && pinSelA===n)) cls += ' sel';
+      if ((manualMode && selA===n) || (pairMode && (pinSelA===n || pinSelB===n))) cls += ' sel';
       if (dupSet.has(n)) cls += ' dup';
-      var pinHtml = (o && pinnedSeats.has(n)) ? '<span class="pinmark">🔗</span>' : '';
+      var pinHtml = ''; if (o && pinOf[n]) { var pc = PINCOL[(pinOf[n]-1) % PINCOL.length]; pinHtml = '<span class="pinmark" style="background:'+pc+'">'+pinOf[n]+'</span>'; }
       return '<div class="seat '+cls+'" onclick="onSeatClick('+n+')">'+pinHtml+'<span class="n">'+n+'</span><span class="id">'+idTxt+'</span>'+tHtml+'</div>';
     }).join('');
   });
@@ -263,6 +269,7 @@ function renderBoard(){
   const f = list.filter(o=>o.gender==='여성').length;
   const over = list.filter(function(o){var e=elapsedMin(o.lastOrder);return e!=null&&e>=90;}).length;
   document.getElementById('meta').textContent = '착석 '+list.length+'명 (남'+m+'/여'+f+')'+(over?' · 🔴'+over:'')+' · 누적 '+cumLeave+'명';
+  var sInfo = document.getElementById('shuffleInfo'); if (sInfo) sInfo.textContent = shuffleLog.length ? ('🔀 오늘 자리 이동 '+shuffleLog.length+'회 · 마지막 '+shuffleLog[shuffleLog.length-1]+' (탭: 전체 시각)') : '🔀 오늘 자리 이동 없음';
 }
 
 function doMove(){
@@ -297,6 +304,8 @@ function doMove(){
   lastMetaEditAt = Date.now();
   saveMeta('A14', JSON.stringify(pins));
   saveMeta('A15', JSON.stringify(Array.from(neighborHist)));
+  shuffleLog.push(nowKSThhmm());
+  saveMeta('A16', JSON.stringify(shuffleLog));
   const payload = JSON.stringify({ type:'seatMove', assign: assign, src: 'auto' });
   try { fetch(GAS_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload }).catch(function(){}); } catch(e) {}
   alert('자리 배정 완료! 손님이 본인 자리 QR을 찍으면 새 자리를 안내받아요.');
@@ -373,12 +382,15 @@ function pairPick(n){
   if (pinSelA === null) { pinSelA = n; renderBoard(); return; }
   if (n === pinSelA) { pinSelA = null; renderBoard(); return; }
   var sa = pinSelA, sb = n;
-  var idx = pins.findIndex(function(p){ return (p[0]===sa&&p[1]===sb)||(p[0]===sb&&p[1]===sa); });
-  if (idx>=0) { pins.splice(idx,1); toast(sa+'번 · '+sb+'번 같이앉기 해제'); }
-  else { pins.push([sa,sb]); toast(sa+'번 · '+sb+'번 같이 앉기'); }
-  lastMetaEditAt = Date.now();
-  saveMeta('A14', JSON.stringify(pins));
-  pinSelA = null; renderBoard();
+  pinSelB = n; renderBoard();
+  setTimeout(function(){
+    var idx = pins.findIndex(function(p){ return (p[0]===sa&&p[1]===sb)||(p[0]===sb&&p[1]===sa); });
+    if (idx>=0) { pins.splice(idx,1); toast(sa+'번 · '+sb+'번 같이앉기 해제'); }
+    else { pins.push([sa,sb]); toast(sa+'번 · '+sb+'번 같이 앉기'); }
+    lastMetaEditAt = Date.now();
+    saveMeta('A14', JSON.stringify(pins));
+    pinSelA = null; pinSelB = null; renderBoard();
+  }, 350);
 }
 function saveMeta(cell, value){
   var payload = JSON.stringify({ type:'seatMeta', cell:cell, value:value });
