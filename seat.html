@@ -19,20 +19,16 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .header { padding: 2rem 0 1.2rem; text-align: center; }
 .header-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.18em; margin-bottom: 0.35rem; }
 .header-title { font-size: 19px; font-weight: 500; }
-
 .seat-badge-big { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.4rem; text-align: center; margin-bottom: 1rem; }
 .seat-badge-label { font-size: 12px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 6px; }
 .seat-badge-num { font-size: 52px; font-weight: 700; line-height: 1; }
 .seat-badge-num small { font-size: 20px; font-weight: 500; color: var(--text2); margin-left: 2px; }
-
 .notice-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1rem; }
 .notice-item { display: flex; gap: 8px; font-size: 13px; color: var(--text2); line-height: 1.55; margin-bottom: 0.6rem; }
 .notice-item:last-child { margin-bottom: 0; }
 .notice-item span:first-child { flex-shrink: 0; }
-
 .agree-row { display: flex; align-items: center; gap: 9px; padding: 0.85rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1rem; cursor: pointer; font-size: 14px; }
 .agree-row input { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
-
 .field { margin-bottom: 1rem; opacity: 0.45; pointer-events: none; transition: opacity 0.2s; }
 .field.on { opacity: 1; pointer-events: auto; }
 .field-label { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; margin-bottom: 7px; }
@@ -41,35 +37,29 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .phone-input { flex: 1; padding: 14px 14px 14px 4px; background: transparent; border: none; font-size: 18px; letter-spacing: 0.12em; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; }
 .phone-wrap:focus-within { border-color: var(--border2); }
 .field-hint { font-size: 11px; color: var(--text3); margin-top: 6px; }
-
 .gender-row { display: flex; gap: 8px; }
 .gender-btn { flex: 1; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; font-size: 15px; color: var(--text2); font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: all 0.15s; }
 .gender-btn.sel-m { background: #eef3fb; border-color: var(--male); color: var(--male); font-weight: 500; }
 .gender-btn.sel-f { background: #fbeef4; border-color: var(--female); color: var(--female); font-weight: 500; }
-
 .btn { width: 100%; padding: 15px; margin-top: 0.4rem; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: opacity 0.15s; }
 .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn.ghost { background: var(--surface); color: var(--text2); border: 1px solid var(--border2); }
 .btn-row { display: flex; gap: 8px; }
 .btn-row .btn { margin-top: 0; }
-
 .ask { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.6rem 1.2rem; text-align: center; margin-bottom: 1rem; }
 .ask-q { font-size: 18px; font-weight: 500; line-height: 1.5; }
 .ask-q b { font-size: 22px; font-weight: 700; }
-
 .result-box { text-align: center; padding: 2rem 1rem; }
 .result-label { font-size: 13px; color: var(--text2); margin-bottom: 0.6rem; }
 .result-num { font-size: 64px; font-weight: 700; line-height: 1; margin-bottom: 0.2rem; }
 .result-num small { font-size: 24px; font-weight: 500; color: var(--text2); }
 .result-dir { font-size: 17px; font-weight: 500; color: var(--success); background: #eef6f1; border: 1px solid #c8e0d0; border-radius: 10px; padding: 0.9rem; margin: 1.2rem 0 0.6rem; line-height: 1.5; }
 .result-from { font-size: 12px; color: var(--text3); }
-
 .done-box { text-align: center; padding: 3rem 1rem; }
 .done-icon { font-size: 44px; margin-bottom: 1rem; }
 .done-title { font-size: 20px; font-weight: 700; margin-bottom: 0.5rem; }
 .done-seat { font-size: 15px; color: var(--text2); line-height: 1.6; }
 .done-seat b { color: var(--text); font-size: 17px; }
-
 .err-box { text-align: center; padding: 3.5rem 1rem; color: var(--text2); font-size: 15px; line-height: 1.6; }
 .loading { text-align: center; padding: 3.5rem 1rem; color: var(--text3); font-size: 14px; }
 .hidden { display: none; }
@@ -81,14 +71,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="header-sub">WOOYEON</div>
     <div class="header-title" id="headerTitle">자리</div>
   </div>
-
   <div id="loadingView" class="loading">불러오는 중...</div>
+  <div id="errView" class="err-box hidden">올바른 자리 QR이 아니에요.<br>자리에 놓인 QR을 다시 스캔해주세요.</div>
 
-  <div id="errView" class="err-box hidden">
-    올바른 자리 QR이 아니에요.<br>자리에 놓인 QR을 다시 스캔해주세요.
-  </div>
-
-  <!-- 본인 확인 -->
   <div id="confirmView" class="hidden">
     <div class="seat-badge-big">
       <div class="seat-badge-label">현재 자리</div>
@@ -101,7 +86,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     </div>
   </div>
 
-  <!-- 아니오 → ID 입력 -->
   <div id="idView" class="hidden">
     <div class="field on" style="opacity:1">
       <div class="field-label">전화번호 뒷 4자리</div>
@@ -114,7 +98,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <button class="btn" id="idBtn" onclick="lookupId()" disabled>내 자리 보기</button>
   </div>
 
-  <!-- 새 자리 안내 -->
   <div id="resultView" class="hidden">
     <div class="result-box">
       <div class="result-label">이동하실 자리예요</div>
@@ -124,7 +107,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     </div>
   </div>
 
-  <!-- 신규 등록 -->
   <div id="regView" class="hidden">
     <div class="seat-badge-big">
       <div class="seat-badge-label">현재 자리</div>
@@ -154,4 +136,144 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <button class="gender-btn" id="gF" onclick="pickGender('여성')">여성</button>
       </div>
     </div>
-    <button class="btn" id="submitBtn" onclick="submitSeat()" disabled>등록하기</butto
+    <button class="btn" id="submitBtn" onclick="submitSeat()" disabled>등록하기</button>
+  </div>
+
+  <div id="doneView" class="done-box hidden">
+    <div class="done-icon">🎉</div>
+    <div class="done-title">등록되었어요</div>
+    <div class="done-seat"><b id="doneSeatText">—</b>번 자리에 편하게 앉아주세요!</div>
+  </div>
+</div>
+
+<script>
+const SHEET_ID = '1NmPb6wxX0usqeP-gd7cFQPgHecLQsCYcA3i3wcU3uwc';
+const API_KEY = 'AIzaSyDNs6DjFlPRHukWl572r1pMZV72F6ZtODI';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
+
+const COL = {1:0,2:1,4:2,6:3,8:4,10:5,12:6,13:7,14:8,16:9,18:10,20:11,22:12,24:13,26:14,3:1,5:2,7:3,9:4,11:5,15:8,17:9,19:10,21:11,23:12,25:13};
+const outerOrder=[1,2,4,6,8,10,12,13,14,16,18,20,22,24,26];
+const innerOrder=[3,5,7,9,11,15,17,19,21,23,25];
+const ROWT={}; outerOrder.forEach(function(n){ROWT[n]='outer';}); innerOrder.forEach(function(n){ROWT[n]='inner';});
+const TBL = function(n){ return n<=12 ? 'L' : 'R'; };
+function pad4(v){ return String(v==null?'':v).padStart(4,'0'); }
+function moveHint(cur,dest){
+  cur=+cur; dest=+dest;
+  if(cur===dest) return '같은 자리에 그대로 계시면 돼요';
+  var prefix = TBL(cur)!==TBL(dest) ? '옆 테이블입니다. ' : '';
+  var east = COL[dest] > COL[cur];
+  var lr = (ROWT[cur]==='outer') ? (east?'왼쪽':'오른쪽') : (east?'오른쪽':'왼쪽');
+  if(ROWT[cur]===ROWT[dest]){
+    var order = ROWT[cur]==='outer'?outerOrder:innerOrder;
+    var steps = Math.abs(order.indexOf(dest)-order.indexOf(cur));
+    return prefix + lr + '으로 ' + steps + '칸 이동하세요';
+  }
+  if(COL[cur]===COL[dest]) return prefix + '바로 맞은편 자리예요';
+  var order2 = ROWT[dest]==='outer'?outerOrder:innerOrder;
+  var steps2 = order2.filter(function(n){ return east ? (COL[n]>COL[cur]&&COL[n]<=COL[dest]) : (COL[n]<COL[cur]&&COL[n]>=COL[dest]); }).length;
+  return prefix + lr + '으로 ' + steps2 + '칸 이동 후 맞은편 줄이에요';
+}
+
+function getParam(k){ try { return new URLSearchParams(location.search).get(k)||''; } catch(e){ return ''; } }
+function show(id){ ['loadingView','errView','confirmView','idView','resultView','regView','doneView'].forEach(function(v){ document.getElementById(v).classList.toggle('hidden', v!==id); }); }
+
+var seatNum = 0;
+var gender = '';
+var activeRows = [];
+var pending = null;
+
+(function init(){
+  var n = parseInt(getParam('n'));
+  if (!n || n < 1 || n > 26) { show('errView'); return; }
+  seatNum = n;
+  loadContext();
+})();
+
+async function loadContext(){
+  show('loadingView');
+  try {
+    var r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:G')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    var d = await r.json();
+    activeRows = [];
+    if (d && d.values) {
+      for (var i=1;i<d.values.length;i++){
+        var row = d.values[i];
+        if (String(row[5]) !== 'active') continue;
+        activeRows.push({ id: pad4(row[0]), gender: String(row[1]||''), seat: parseInt(row[4])||0, prevSeat: parseInt(row[6])||0 });
+      }
+    }
+  } catch(e) { activeRows = []; }
+
+  var moved = activeRows.find(function(a){ return a.prevSeat === seatNum && a.seat !== seatNum; });
+  if (moved) {
+    pending = { id: moved.id, newSeat: moved.seat };
+    document.getElementById('cfSeat').textContent = seatNum;
+    document.getElementById('cfId').textContent = moved.id;
+    document.getElementById('headerTitle').textContent = '자리 이동';
+    show('confirmView');
+  } else {
+    document.getElementById('regSeat').textContent = seatNum;
+    document.getElementById('headerTitle').textContent = '자리 등록';
+    show('regView');
+  }
+}
+
+function confirmYes(){ if(pending) showResult(pending.newSeat); }
+function confirmNo(){ document.getElementById('headerTitle').textContent = '내 자리 찾기'; show('idView'); }
+function onIdInput(){
+  var el = document.getElementById('idLast4');
+  el.value = el.value.replace(/\D/g,'').slice(0,4);
+  document.getElementById('idBtn').disabled = el.value.length !== 4;
+}
+function lookupId(){
+  var id = pad4(document.getElementById('idLast4').value);
+  if (id.length !== 4) return;
+  var me = activeRows.find(function(a){ return a.id === id; });
+  if (me) { showResult(me.seat); }
+  else {
+    document.getElementById('regSeat').textContent = seatNum;
+    document.getElementById('headerTitle').textContent = '자리 등록';
+    show('regView');
+  }
+}
+function showResult(newSeat){
+  document.getElementById('rsNum').textContent = newSeat;
+  document.getElementById('rsDir').textContent = moveHint(seatNum, newSeat);
+  document.getElementById('rsFrom').textContent = '현재 ' + seatNum + '번 → ' + newSeat + '번';
+  document.getElementById('headerTitle').textContent = '이동 안내';
+  show('resultView');
+}
+
+function onPhone(){
+  var el = document.getElementById('last4');
+  el.value = el.value.replace(/\D/g,'').slice(0,4);
+  refreshReg();
+}
+function pickGender(g){
+  gender = g;
+  document.getElementById('gM').className = 'gender-btn' + (g==='남성' ? ' sel-m' : '');
+  document.getElementById('gF').className = 'gender-btn' + (g==='여성' ? ' sel-f' : '');
+  refreshReg();
+}
+function refreshReg(){
+  var agreed = document.getElementById('agree').checked;
+  document.getElementById('phoneField').classList.toggle('on', agreed);
+  document.getElementById('genderField').classList.toggle('on', agreed);
+  var last4 = document.getElementById('last4').value;
+  document.getElementById('submitBtn').disabled = !(agreed && last4.length === 4 && gender !== '');
+}
+function submitSeat(){
+  var last4 = document.getElementById('last4').value;
+  if (last4.length !== 4 || !gender || !seatNum) return;
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitBtn').textContent = '등록 중...';
+  var payload = JSON.stringify({ type:'seatRegister', id:last4, gender:gender, seat:seatNum });
+  var sent = false;
+  try { if (navigator.sendBeacon) sent = navigator.sendBeacon(GAS_URL, new Blob([payload], {type:'text/plain'})); } catch(e) { sent = false; }
+  if (!sent) { try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {} }
+  document.getElementById('doneSeatText').textContent = seatNum;
+  show('doneView');
+}
+</script>
+</body>
+</html>

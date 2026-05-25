@@ -106,7 +106,7 @@ async function loadSeats(){
         if (String(row[5]) !== 'active') continue;   // 상태
         const seat = parseInt(row[4]);               // 현재자리
         if (!seat) continue;
-        occ[seat] = { id: String(row[0]||''), gender: String(row[1]||'') };
+        occ[seat] = { id: String(row[0]||'').padStart(4,'0'), gender: String(row[1]||'') };
       }
     }
   } catch(e) { occ = {}; }
