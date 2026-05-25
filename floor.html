@@ -28,8 +28,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .table-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem; margin-bottom: 0.9rem; overflow-x: auto; }
 .seat-row { width: max-content; }
 .table-title { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 0.7rem; }
-.seat-row { display: flex; gap: 6px; margin-bottom: 6px; }
-.seat-row.inner { padding-left: calc(46px + 6px); } /* 안쪽줄을 마주봄 짝 아래로 정렬 */
+.seat-row { display: flex; gap: 6px; }
+.table-flow { display: flex; align-items: center; gap: 6px; width: max-content; }
+.rows { display: flex; flex-direction: column; gap: 6px; }
+.seat-row.off1 { padding-left: calc(46px + 6px); } /* 오른쪽 안쪽줄을 14번 아래로 정렬 */
 .seat { cursor: pointer; position: relative; width: 46px; height: 58px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
 .seat .n { font-size: 11px; color: var(--text3); line-height: 1; }
 .seat .id { font-size: 13px; font-weight: 700; line-height: 1.2; margin-top: 2px; }
@@ -65,7 +67,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .m-leave { width: 100%; margin-top: 10px; padding: 10px; background: none; border: none; color: var(--danger); font-family: inherit; font-size: 13px; cursor: pointer; }
 @media (max-width: 680px){
   .seat-row { gap: 4px; }
-  .seat-row.inner { padding-left: calc(38px + 4px); }
+  .seat-row.off1 { padding-left: calc(38px + 4px); }
   .seat { width: 38px; height: 48px; }
   .seat .n { font-size: 9px; }
   .seat .id { font-size: 11px; }
@@ -92,13 +94,23 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
   <div class="table-block">
     <div class="table-title">왼쪽 테이블 (1~12)</div>
-    <div class="seat-row" id="L_outer"></div>
-    <div class="seat-row inner" id="L_inner"></div>
+    <div class="table-flow">
+      <div class="seat-row" id="L_cap"></div>
+      <div class="rows">
+        <div class="seat-row" id="L_outer"></div>
+        <div class="seat-row" id="L_inner"></div>
+      </div>
+    </div>
   </div>
   <div class="table-block">
     <div class="table-title">오른쪽 테이블 (13~26)</div>
-    <div class="seat-row" id="R_outer"></div>
-    <div class="seat-row inner" id="R_inner"></div>
+    <div class="table-flow">
+      <div class="rows">
+        <div class="seat-row" id="R_outer"></div>
+        <div class="seat-row off1" id="R_inner"></div>
+      </div>
+      <div class="seat-row" id="R_cap"></div>
+    </div>
   </div>
   <div class="hint">남자=파랑 / 여자=분홍. 칸 안 숫자는 자리번호, 큰 글씨는 손님 뒷4자리. (칸을 누르면 수동 등록/수정)</div>
 </div>
@@ -129,10 +141,12 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcH
 
 // 자리번호 매핑 (서→동)
 const ROWS = {
-  L_outer: [1,2,4,6,8,10,12],
+  L_cap: [1],
+  L_outer: [2,4,6,8,10,12],
   L_inner: [3,5,7,9,11],
-  R_outer: [13,14,16,18,20,22,24,26],
-  R_inner: [15,17,19,21,23,25]
+  R_outer: [13,14,16,18,20,22,24],
+  R_inner: [15,17,19,21,23,25],
+  R_cap: [26]
 };
 // SEATING_DATA[key].lo/li/ro/ri 순서에 대응하는 자리번호
 const NUM = { lo:[1,2,4,6,8,10,12], li:[3,5,7,9,11], ro:[13,14,16,18,20,22,24,26], ri:[15,17,19,21,23,25] };
