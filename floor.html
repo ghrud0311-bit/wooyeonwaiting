@@ -198,6 +198,7 @@ let manualMode = false, selA = null;
 let pins = [];
 let neighborHist = new Set();
 let pairMode = false, pinSelA = null;
+let lastMetaEditAt = 0;
 
 async function loadSeats(){
   try {
@@ -223,9 +224,11 @@ async function loadSeats(){
     const d2 = await r2.json();
     const vv = (d2 && d2.values) ? d2.values : [];
     cumLeave = (vv[0] && vv[0][0]) ? (parseInt(vv[0][0])||0) : 0;
-    try { pins = (vv[1] && vv[1][0]) ? JSON.parse(vv[1][0]) : []; } catch(ep) { pins = []; }
-    neighborHist = new Set();
-    try { if (vv[2] && vv[2][0]) JSON.parse(vv[2][0]).forEach(function(x){ neighborHist.add(x); }); } catch(en) {}
+    if (Date.now() - lastMetaEditAt > 15000) {  // 로컬 편집 직후엔 폴링이 덮어쓰지 않게 보호
+      try { pins = (vv[1] && vv[1][0]) ? JSON.parse(vv[1][0]) : []; } catch(ep) { pins = []; }
+      neighborHist = new Set();
+      try { if (vv[2] && vv[2][0]) JSON.parse(vv[2][0]).forEach(function(x){ neighborHist.add(x); }); } catch(en) {}
+    }
   } catch(e) {}
   renderBoard();
 }
@@ -234,7 +237,7 @@ function elapsedMin(s){ if(!s) return null; var t=new Date(String(s).replace(' '
 function hhmm(s){ s=String(s||''); var p=s.split(' '); return p[1] ? p[1].slice(0,5) : s; }
 
 function renderBoard(){
-  var pinnedIds = new Set(); pins.forEach(function(pp){ pinnedIds.add(pp[0]); pinnedIds.add(pp[1]); });
+  var pinnedSeats = new Set(); pins.forEach(function(pp){ pinnedSeats.add(pp[0]); pinnedSeats.add(pp[1]); });
   Object.keys(ROWS).forEach(function(rid){
     const el = document.getElementById(rid);
     el.innerHTML = ROWS[rid].map(function(n){
@@ -245,7 +248,7 @@ function renderBoard(){
       if (o) { const em = elapsedMin(o.lastOrder); if (em!=null) { if (em>=90) cls += ' overdue'; tHtml = '<span class="t">'+em+'분</span>'; } }
       if ((manualMode && selA===n) || (pairMode && pinSelA===n)) cls += ' sel';
       if (dupSet.has(n)) cls += ' dup';
-      var pinHtml = (o && pinnedIds.has(o.id)) ? '<span class="pinmark">🔗</span>' : '';
+      var pinHtml = (o && pinnedSeats.has(n)) ? '<span class="pinmark">🔗</span>' : '';
       return '<div class="seat '+cls+'" onclick="onSeatClick('+n+')">'+pinHtml+'<span class="n">'+n+'</span><span class="id">'+idTxt+'</span>'+tHtml+'</div>';
     }).join('');
   });
@@ -267,23 +270,26 @@ function doMove(){
   if (!sg) { alert('이 인원 조합('+key+')은 배치표에 없어요. 인원/성별을 확인해주세요.'); return; }
   const males = persons.filter(p=>p.gender==='남성');
   const females = persons.filter(p=>p.gender==='여성');
-  const aset = new Set(persons.map(p=>p.id));
-  const apins = pins.filter(function(p){ return aset.has(p[0]) && aset.has(p[1]); });
+  const occSeats = new Set(persons.map(p=>p.from));
+  const apins = pins.filter(function(p){ return occSeats.has(p[0]) && occSeats.has(p[1]); });
 
-  function idSeat(pos, id){ for (var i=0;i<persons.length;i++){ if(persons[i].id===id) return pos[persons[i].from]; } return null; }
   function assignOnce(){ var sm=shuffle(sg.male), sf=shuffle(sg.female), pos={}; males.forEach(function(p,i){ pos[p.from]=sm[i]; }); females.forEach(function(p,i){ pos[p.from]=sf[i]; }); return pos; }
   function npairsOf(pos){ var seat2id={}; persons.forEach(function(p){ seat2id[pos[p.from]]=p.id; }); var set=new Set(); persons.forEach(function(p){ NB[pos[p.from]].forEach(function(s2){ var oid=seat2id[s2]; if(oid) set.add([p.id,oid].sort().join('|')); }); }); return set; }
-  function scoreOf(pos){ var rep=0; npairsOf(pos).forEach(function(pp){ if(neighborHist.has(pp)) rep++; }); var v=0; apins.forEach(function(pr){ var sa=idSeat(pos,pr[0]), sb=idSeat(pos,pr[1]); if(sa==null||sb==null||NB[sa].indexOf(sb)<0) v++; }); return v*1000 + rep; }
+  function scoreOf(pos){ var rep=0; npairsOf(pos).forEach(function(pp){ if(neighborHist.has(pp)) rep++; }); var v=0; apins.forEach(function(pr){ if(NB[pos[pr[0]]].indexOf(pos[pr[1]])<0) v++; }); return v*1000 + rep; }
   var best=null, bs=Infinity;
   for (var k=0;k<800;k++){ var pos=assignOnce(); var sc=scoreOf(pos); if(sc<bs){ bs=sc; best=pos; } if(bs===0) break; }
-  var unmet = apins.filter(function(pr){ var sa=idSeat(best,pr[0]), sb=idSeat(best,pr[1]); return sa==null||sb==null||NB[sa].indexOf(sb)<0; }).length;
+  var unmet = apins.filter(function(pr){ return NB[best[pr[0]]].indexOf(best[pr[1]])<0; }).length;
 
   var msg = persons.length+'명의 자리를 새로 배정할까요?\n(최대한 새로운 이웃과 앉도록 섞어요)';
   if (apins.length) msg += '\n같이 앉기 '+apins.length+'쌍 반영' + (unmet ? (' — 그중 '+unmet+'쌍은 자리 여건상 최대한 가깝게' ) : '');
   if (!confirm(msg)) return;
 
   const assign = persons.map(function(p){ return { from: p.from, to: best[p.from] }; });
+  // 핀을 새 자리로 따라가게 remap (이동된 자리만; 바 자리 등은 그대로)
+  pins = pins.map(function(pr){ return [ (best[pr[0]]!=null?best[pr[0]]:pr[0]), (best[pr[1]]!=null?best[pr[1]]:pr[1]) ]; });
   npairsOf(best).forEach(function(pp){ neighborHist.add(pp); });
+  lastMetaEditAt = Date.now();
+  saveMeta('A14', JSON.stringify(pins));
   saveMeta('A15', JSON.stringify(Array.from(neighborHist)));
   const payload = JSON.stringify({ type:'seatMove', assign: assign, src: 'auto' });
   try { fetch(GAS_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload }).catch(function(){}); } catch(e) {}
@@ -360,10 +366,11 @@ function pairPick(n){
   if (!occ[n]) { return; }
   if (pinSelA === null) { pinSelA = n; renderBoard(); return; }
   if (n === pinSelA) { pinSelA = null; renderBoard(); return; }
-  var a = occ[pinSelA].id, b = occ[n].id;
-  var idx = pins.findIndex(function(p){ return (p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a); });
-  if (idx>=0) { pins.splice(idx,1); toast('같이 앉기 해제: '+a+' · '+b); }
-  else { pins.push([a,b]); toast('같이 앉기 묶음: '+a+' · '+b); }
+  var sa = pinSelA, sb = n;
+  var idx = pins.findIndex(function(p){ return (p[0]===sa&&p[1]===sb)||(p[0]===sb&&p[1]===sa); });
+  if (idx>=0) { pins.splice(idx,1); toast(sa+'번 · '+sb+'번 같이앉기 해제'); }
+  else { pins.push([sa,sb]); toast(sa+'번 · '+sb+'번 같이 앉기'); }
+  lastMetaEditAt = Date.now();
   saveMeta('A14', JSON.stringify(pins));
   pinSelA = null; renderBoard();
 }
@@ -378,6 +385,10 @@ function manualPick(n){
   if (occ[n]) assign.push({ from: n, to: selA });
   var label = occ[n] ? (selA+'번 ↔ '+n+'번 교환') : (selA+'번 → '+n+'번 이동');
   if (!confirm(label + ' 할까요?')) return;
+  var moveMap = {}; assign.forEach(function(a){ moveMap[a.from] = a.to; });
+  var changed = false;
+  pins = pins.map(function(pr){ var n0 = moveMap.hasOwnProperty(pr[0])?moveMap[pr[0]]:pr[0]; var n1 = moveMap.hasOwnProperty(pr[1])?moveMap[pr[1]]:pr[1]; if(n0!==pr[0]||n1!==pr[1]) changed=true; return [n0,n1]; });
+  if (changed) { lastMetaEditAt = Date.now(); saveMeta('A14', JSON.stringify(pins)); }
   var payload = JSON.stringify({ type:'seatMove', assign: assign, src: 'manual' });
   try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {}
   selA = null; setTimeout(loadSeats, 1200);
