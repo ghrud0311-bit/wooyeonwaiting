@@ -185,7 +185,7 @@ var pending = null;
 
 (function init(){
   var n = parseInt(getParam('n'));
-  if (!n || n < 1 || n > 26) { show('errView'); return; }
+  if (!n || n < 1 || n > 32) { show("errView"); return; }
   seatNum = n;
   loadContext();
 })();

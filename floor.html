@@ -65,6 +65,12 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .m-btns { display: flex; gap: 8px; margin-top: 1.2rem; }
 .m-btns .btn { margin-top: 0; }
 .m-leave { width: 100%; margin-top: 10px; padding: 10px; background: none; border: none; color: var(--danger); font-family: inherit; font-size: 13px; cursor: pointer; }
+.floor-login { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+.floor-login .lbox { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem 1.6rem; width: 100%; max-width: 300px; text-align: center; }
+.floor-login h2 { font-size: 17px; font-weight: 700; margin-bottom: 1rem; }
+.floor-login input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; text-align: center; letter-spacing: 0.2em; outline: none; margin-bottom: 10px; font-family: inherit; }
+.floor-login button { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-family: inherit; cursor: pointer; }
+.floor-login .err { color: var(--danger); font-size: 12px; margin-top: 8px; min-height: 14px; }
 @media (max-width: 680px){
   .seat-row { gap: 4px; }
   .seat-row.off1 { padding-left: calc(38px + 4px); }
@@ -78,6 +84,14 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 </style>
 </head>
 <body>
+<div class="floor-login" id="floorLogin">
+  <div class="lbox">
+    <h2>자리 관리 로그인</h2>
+    <input type="password" id="floorPw" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doFloorLogin()">
+    <button onclick="doFloorLogin()">로그인</button>
+    <div class="err" id="floorErr"></div>
+  </div>
+</div>
 <div class="wrap">
   <div class="top">
     <h1>우연 — 자리 관리</h1>
@@ -111,6 +125,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
       </div>
       <div class="seat-row" id="R_cap"></div>
     </div>
+  </div>
+  <div class="table-block">
+    <div class="table-title">바 자리 (27~32)</div>
+    <div class="seat-row" id="B_bar"></div>
   </div>
   <div class="hint">남자=파랑 / 여자=분홍. 칸 안 숫자는 자리번호, 큰 글씨는 손님 뒷4자리. (칸을 누르면 수동 등록/수정)</div>
 </div>
@@ -146,7 +164,8 @@ const ROWS = {
   L_inner: [3,5,7,9,11],
   R_outer: [13,14,16,18,20,22,24],
   R_inner: [15,17,19,21,23,25],
-  R_cap: [26]
+  R_cap: [26],
+  B_bar: [27,28,29,30,31,32]
 };
 // SEATING_DATA[key].lo/li/ro/ri 순서에 대응하는 자리번호
 const NUM = { lo:[1,2,4,6,8,10,12], li:[3,5,7,9,11], ro:[13,14,16,18,20,22,24,26], ri:[15,17,19,21,23,25] };
@@ -239,7 +258,7 @@ function renderBoard(){
 
 function doMove(){
   // 사람을 "현재 자리(from)"로 식별 → 같은 뒷자리 중복이어도 안 엉킴
-  const persons = Object.entries(occ).map(function(e){ return { from: parseInt(e[0]), id: e[1].id, gender: e[1].gender }; });
+  const persons = Object.entries(occ).filter(function(e){ return parseInt(e[0]) <= 26; }).map(function(e){ return { from: parseInt(e[0]), id: e[1].id, gender: e[1].gender }; });
   if (!persons.length) { alert('착석한 손님이 없어요.'); return; }
   const M = persons.filter(p=>p.gender==='남성').length;
   const F = persons.filter(p=>p.gender==='여성').length;
@@ -364,8 +383,17 @@ function manualPick(n){
   selA = null; setTimeout(loadSeats, 1200);
 }
 
-loadSeats();
-setInterval(loadSeats, 8000);
+const FLOOR_PW = '1128';
+function doFloorLogin(){
+  if (document.getElementById('floorPw').value === FLOOR_PW) {
+    localStorage.setItem('floorAuth','1');
+    document.getElementById('floorLogin').style.display = 'none';
+    startFloor();
+  } else { document.getElementById('floorErr').textContent = '비밀번호가 틀렸어요.'; }
+}
+var _floorStarted = false;
+function startFloor(){ if (_floorStarted) return; _floorStarted = true; loadSeats(); setInterval(loadSeats, 8000); }
+if (localStorage.getItem('floorAuth') === '1') { document.getElementById('floorLogin').style.display = 'none'; startFloor(); }
 </script>
 </body>
 </html>
