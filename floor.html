@@ -16,6 +16,7 @@
 }
 body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); padding: 1rem 1rem 4rem; }
 .wrap { max-width: 760px; margin: 0 auto; }
+.hidden { display: none !important; }
 .top { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0 1rem; }
 .top h1 { font-size: 17px; font-weight: 700; }
 .top .meta { font-size: 12px; color: var(--text2); }
@@ -24,7 +25,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 .btn:active { transform: scale(0.98); }
 
-.table-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem; margin-bottom: 0.9rem; }
+.table-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem; margin-bottom: 0.9rem; overflow-x: auto; }
+.seat-row { width: max-content; }
 .table-title { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 0.7rem; }
 .seat-row { display: flex; gap: 6px; margin-bottom: 6px; }
 .seat-row.inner { padding-left: calc(46px + 6px); } /* 안쪽줄을 마주봄 짝 아래로 정렬 */
@@ -61,6 +63,16 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .m-btns { display: flex; gap: 8px; margin-top: 1.2rem; }
 .m-btns .btn { margin-top: 0; }
 .m-leave { width: 100%; margin-top: 10px; padding: 10px; background: none; border: none; color: var(--danger); font-family: inherit; font-size: 13px; cursor: pointer; }
+@media (max-width: 680px){
+  .seat-row { gap: 4px; }
+  .seat-row.inner { padding-left: calc(38px + 4px); }
+  .seat { width: 38px; height: 48px; }
+  .seat .n { font-size: 9px; }
+  .seat .id { font-size: 11px; }
+  .seat .t { font-size: 8px; }
+  .top h1 { font-size: 16px; }
+  .bar .btn { font-size: 12px; padding: 10px 6px; }
+}
 </style>
 </head>
 <body>
