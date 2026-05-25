@@ -36,6 +36,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .seat.overdue .t { color: var(--danger); font-weight: 700; }
 .m-hist { font-size: 12px; color: var(--text2); line-height: 1.7; background: var(--surface2); border-radius: 8px; padding: 8px 10px; margin: 0.4rem 0 0.2rem; }
 .m-hist .h-row b { color: var(--text); }
+.btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.seat.sel { outline: 3px solid var(--accent); outline-offset: -1px; }
+.seat.dup { outline: 2px solid var(--danger); outline-offset: -1px; }
+.manual-hint { font-size: 12px; color: var(--accent); font-weight: 500; background: #eef0f5; border: 1px solid var(--border2); border-radius: 8px; padding: 8px 10px; margin-bottom: 0.8rem; }
 .m-order { width: 100%; margin-top: 0.8rem; padding: 12px; background: var(--success); color: #fff; border: none; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
 .seat.m { background: var(--maleBg); border-color: #c3d4ee; }
 .seat.m .id { color: var(--male); }
@@ -66,8 +70,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   </div>
   <div class="bar">
     <button class="btn" onclick="loadSeats()">↻ 새로고침</button>
+    <button class="btn" id="manualBtn" onclick="toggleManual()">✋ 수동 이동</button>
     <button class="btn primary" onclick="doMove()">🔀 자리 이동</button>
   </div>
+  <div id="manualHint" class="manual-hint hidden">수동 이동 켜짐 — 옮길 손님 자리를 누른 뒤, 보낼 자리를 누르세요. (둘 다 손님이면 서로 교환)</div>
 
   <div class="table-block">
     <div class="table-title">왼쪽 테이블 (1~12)</div>
@@ -133,12 +139,15 @@ function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.fl
 
 let occ = {};
 let cumLeave = 0;
+let dupSet = new Set();
+let manualMode = false, selA = null;
 
 async function loadSeats(){
   try {
     const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:H')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const d = await r.json();
     occ = {};
+    var seatCount = {};
     if (d && d.values) {
       for (let i=1;i<d.values.length;i++){
         const row = d.values[i];
@@ -146,10 +155,12 @@ async function loadSeats(){
         const seat = parseInt(row[4]);
         if (!seat) continue;
         let hist = []; try { hist = JSON.parse(row[7]||'[]'); } catch(eh) { hist = []; }
+        seatCount[seat] = (seatCount[seat]||0) + 1;
         occ[seat] = { id: String(row[0]||'').padStart(4,'0'), gender: String(row[1]||''), enter: String(row[2]||''), lastOrder: String(row[3]||''), history: hist };
       }
     }
-  } catch(e) { occ = {}; }
+    dupSet = new Set(Object.keys(seatCount).filter(function(k){return seatCount[k]>1;}).map(Number));
+  } catch(e) { occ = {}; dupSet = new Set(); }
   try {
     const r2 = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A13')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const d2 = await r2.json();
@@ -170,7 +181,9 @@ function renderBoard(){
       const idTxt = o ? o.id : '빈자리';
       let tHtml = '';
       if (o) { const em = elapsedMin(o.lastOrder); if (em!=null) { if (em>=90) cls += ' overdue'; tHtml = '<span class="t">'+em+'분</span>'; } }
-      return '<div class="seat '+cls+'" onclick="openSeatModal('+n+')"><span class="n">'+n+'</span><span class="id">'+idTxt+'</span>'+tHtml+'</div>';
+      if (manualMode && selA===n) cls += ' sel';
+      if (dupSet.has(n)) cls += ' dup';
+      return '<div class="seat '+cls+'" onclick="onSeatClick('+n+')"><span class="n">'+n+'</span><span class="id">'+idTxt+'</span>'+tHtml+'</div>';
     }).join('');
   });
   const list = Object.values(occ);
@@ -252,6 +265,25 @@ function orderDone(){
   var payload = JSON.stringify({ type:'seatOrder', seat:mSeatNum });
   try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {}
   closeModal(); setTimeout(loadSeats, 1200);
+}
+
+function toggleManual(){
+  manualMode = !manualMode; selA = null;
+  document.getElementById('manualBtn').classList.toggle('active', manualMode);
+  document.getElementById('manualHint').classList.toggle('hidden', !manualMode);
+  renderBoard();
+}
+function onSeatClick(n){ if (manualMode) manualPick(n); else openSeatModal(n); }
+function manualPick(n){
+  if (selA === null) { if (!occ[n]) { return; } selA = n; renderBoard(); return; }
+  if (n === selA) { selA = null; renderBoard(); return; }
+  var assign = [{ id: occ[selA].id, seat: n }];
+  if (occ[n]) assign.push({ id: occ[n].id, seat: selA });
+  var label = occ[n] ? (selA+'번 ↔ '+n+'번 교환') : (selA+'번 → '+n+'번 이동');
+  if (!confirm(label + ' 할까요?')) return;
+  var payload = JSON.stringify({ type:'seatMove', assign: assign });
+  try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {}
+  selA = null; setTimeout(loadSeats, 1200);
 }
 
 loadSeats();
