@@ -211,7 +211,7 @@ function doMove(){
 
   if (!confirm(actives.length+'명의 자리를 새로 섞어 배정할까요?\n(손님은 본인 자리 QR을 찍으면 새 자리를 안내받아요)')) return;
 
-  const payload = JSON.stringify({ type:'seatMove', assign: assign });
+  const payload = JSON.stringify({ type:'seatMove', assign: assign, src: 'auto' });
   try { fetch(GAS_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload }).catch(()=>{}); } catch(e) {}
   alert('자리 이동을 배정했어요. 손님들이 QR을 찍으면 새 자리가 안내됩니다.');
   setTimeout(loadSeats, 1500);
@@ -231,7 +231,7 @@ function openSeatModal(n){
     document.getElementById('mLeave').classList.remove('hidden');
     mo.classList.remove('hidden');
     const hist = (o.history && o.history.length) ? o.history : [{ s: n, t: o.enter }];
-    mh.innerHTML = '<b>자리 이력</b><br>' + hist.map(function(e,idx){ return '<div class="h-row"><b>'+e.s+'번</b> · '+hhmm(e.t)+' '+(idx===0?'입장':'이동')+'</div>'; }).join('');
+    mh.innerHTML = '<b>자리 이력</b><br>' + hist.map(function(e,idx){ var lbl = idx===0 ? '입장' : (e.by==='manual' ? '수동 이동' : (e.by==='auto' ? '자동 이동' : '이동')); return '<div class="h-row"><b>'+e.s+'번</b> · '+hhmm(e.t)+' '+lbl+'</div>'; }).join('');
     const em = elapsedMin(o.lastOrder);
     if (em!=null) mh.innerHTML += '<div class="h-row" style="margin-top:4px;color:'+(em>=90?'var(--danger)':'var(--text3)')+'">마지막 주문 후 '+em+'분 경과</div>';
     mh.classList.remove('hidden');
@@ -281,7 +281,7 @@ function manualPick(n){
   if (occ[n]) assign.push({ id: occ[n].id, seat: selA });
   var label = occ[n] ? (selA+'번 ↔ '+n+'번 교환') : (selA+'번 → '+n+'번 이동');
   if (!confirm(label + ' 할까요?')) return;
-  var payload = JSON.stringify({ type:'seatMove', assign: assign });
+  var payload = JSON.stringify({ type:'seatMove', assign: assign, src: 'manual' });
   try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {}
   selA = null; setTimeout(loadSeats, 1200);
 }
