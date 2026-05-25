@@ -204,12 +204,12 @@ async function loadContext(){
     }
   } catch(e) { activeRows = []; }
 
-  var moved = activeRows.find(function(a){ return a.prevSeat === seatNum && a.seat !== seatNum; });
+  var moved = activeRows.find(function(a){ return a.prevSeat === seatNum; });
   if (moved) {
     pending = { id: moved.id, newSeat: moved.seat };
     document.getElementById('cfSeat').textContent = seatNum;
     document.getElementById('cfId').textContent = moved.id;
-    document.getElementById('headerTitle').textContent = '자리 이동';
+    document.getElementById('headerTitle').textContent = '자리 확인';
     show('confirmView');
   } else {
     document.getElementById('regSeat').textContent = seatNum;

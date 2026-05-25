@@ -28,7 +28,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .table-title { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 0.7rem; }
 .seat-row { display: flex; gap: 6px; margin-bottom: 6px; }
 .seat-row.inner { padding-left: calc(46px + 6px); } /* 안쪽줄을 마주봄 짝 아래로 정렬 */
-.seat { width: 46px; height: 50px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+.seat { cursor: pointer; width: 46px; height: 50px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
 .seat .n { font-size: 11px; color: var(--text3); line-height: 1; }
 .seat .id { font-size: 13px; font-weight: 700; line-height: 1.2; margin-top: 2px; }
 .seat.m { background: var(--maleBg); border-color: #c3d4ee; }
@@ -37,6 +37,19 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .seat.f .id { color: var(--female); }
 .seat.empty .id { color: var(--text3); font-weight: 400; font-size: 11px; }
 .hint { font-size: 12px; color: var(--text3); margin-top: 4px; }
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
+.modal-bg.on { display: flex; }
+.modal-card { background: var(--surface); border-radius: 14px; padding: 1.4rem; width: 100%; max-width: 320px; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 0.8rem; }
+.m-label { font-size: 11px; color: var(--text3); margin: 0.7rem 0 6px; }
+.m-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 18px; letter-spacing: 0.1em; font-family: inherit; outline: none; }
+.m-gender { display: flex; gap: 8px; }
+.m-gbtn { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font-family: inherit; font-size: 15px; color: var(--text2); cursor: pointer; }
+.m-gbtn.sel-m { background: var(--maleBg); border-color: var(--male); color: var(--male); font-weight: 500; }
+.m-gbtn.sel-f { background: var(--femaleBg); border-color: var(--female); color: var(--female); font-weight: 500; }
+.m-btns { display: flex; gap: 8px; margin-top: 1.2rem; }
+.m-btns .btn { margin-top: 0; }
+.m-leave { width: 100%; margin-top: 10px; padding: 10px; background: none; border: none; color: var(--danger); font-family: inherit; font-size: 13px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -60,7 +73,24 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="seat-row" id="R_outer"></div>
     <div class="seat-row inner" id="R_inner"></div>
   </div>
-  <div class="hint">남자=파랑 / 여자=분홍. 칸 안 숫자는 자리번호, 큰 글씨는 손님 뒷4자리.</div>
+  <div class="hint">남자=파랑 / 여자=분홍. 칸 안 숫자는 자리번호, 큰 글씨는 손님 뒷4자리. (칸을 누르면 수동 등록/수정)</div>
+</div>
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal-card">
+    <div class="modal-title"><span id="mSeat">—</span>번 자리</div>
+    <div class="m-label">전화번호 뒷 4자리</div>
+    <input class="m-input" id="mId" type="tel" inputmode="numeric" maxlength="4" placeholder="0000">
+    <div class="m-label">성별</div>
+    <div class="m-gender">
+      <button class="m-gbtn" id="mgM" onclick="mPick('남성')">남성</button>
+      <button class="m-gbtn" id="mgF" onclick="mPick('여성')">여성</button>
+    </div>
+    <div class="m-btns">
+      <button class="btn" onclick="closeModal()">닫기</button>
+      <button class="btn primary" onclick="registerManual()">등록 / 수정</button>
+    </div>
+    <button class="m-leave hidden" id="mLeave" onclick="leaveManual()">이 자리 비우기 (퇴장)</button>
+  </div>
 </div>
 
 <script>
@@ -120,7 +150,7 @@ function renderBoard(){
       const o = occ[n];
       const cls = o ? (o.gender==='남성'?'m':o.gender==='여성'?'f':'') : 'empty';
       const idTxt = o ? o.id : '빈자리';
-      return '<div class="seat '+cls+'"><span class="n">'+n+'</span><span class="id">'+idTxt+'</span></div>';
+      return '<div class="seat '+cls+'" onclick="openSeatModal('+n+')"><span class="n">'+n+'</span><span class="id">'+idTxt+'</span></div>';
     }).join('');
   });
   const list = Object.values(occ);
@@ -151,6 +181,38 @@ function doMove(){
   try { fetch(GAS_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload }).catch(()=>{}); } catch(e) {}
   alert('자리 이동을 배정했어요. 손님들이 QR을 찍으면 새 자리가 안내됩니다.');
   setTimeout(loadSeats, 1500);
+}
+
+var mSeatNum = 0, mGender = '';
+function openSeatModal(n){
+  mSeatNum = n; mGender = '';
+  document.getElementById('mSeat').textContent = n;
+  var o = occ[n];
+  document.getElementById('mId').value = o ? o.id : '';
+  document.getElementById('mgM').className = 'm-gbtn';
+  document.getElementById('mgF').className = 'm-gbtn';
+  if (o) { mPick(o.gender); document.getElementById('mLeave').classList.remove('hidden'); }
+  else { document.getElementById('mLeave').classList.add('hidden'); }
+  document.getElementById('modalBg').classList.add('on');
+}
+function closeModal(){ document.getElementById('modalBg').classList.remove('on'); }
+function mPick(g){
+  mGender = g;
+  document.getElementById('mgM').className = 'm-gbtn' + (g==='남성'?' sel-m':'');
+  document.getElementById('mgF').className = 'm-gbtn' + (g==='여성'?' sel-f':'');
+}
+function registerManual(){
+  var id = document.getElementById('mId').value.replace(/\D/g,'').slice(0,4);
+  if (id.length !== 4 || !mGender) { alert('뒷 4자리와 성별을 입력해주세요.'); return; }
+  var payload = JSON.stringify({ type:'seatRegister', id:id, gender:mGender, seat:mSeatNum });
+  try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {}
+  closeModal(); setTimeout(loadSeats, 1200);
+}
+function leaveManual(){
+  if (!confirm(mSeatNum + '번 자리를 비울까요? (퇴장 처리, 누적 +1)')) return;
+  var payload = JSON.stringify({ type:'seatLeave', seat:mSeatNum });
+  try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {}
+  closeModal(); setTimeout(loadSeats, 1200);
 }
 
 loadSeats();
