@@ -28,9 +28,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .table-title { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 0.7rem; }
 .seat-row { display: flex; gap: 6px; margin-bottom: 6px; }
 .seat-row.inner { padding-left: calc(46px + 6px); } /* 안쪽줄을 마주봄 짝 아래로 정렬 */
-.seat { cursor: pointer; width: 46px; height: 50px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+.seat { cursor: pointer; width: 46px; height: 58px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
 .seat .n { font-size: 11px; color: var(--text3); line-height: 1; }
 .seat .id { font-size: 13px; font-weight: 700; line-height: 1.2; margin-top: 2px; }
+.seat .t { font-size: 9px; color: var(--text3); margin-top: 1px; line-height: 1; }
+.seat.overdue { background: #fdecea !important; border-color: #e8a89e !important; }
+.seat.overdue .t { color: var(--danger); font-weight: 700; }
+.m-hist { font-size: 12px; color: var(--text2); line-height: 1.7; background: var(--surface2); border-radius: 8px; padding: 8px 10px; margin: 0.4rem 0 0.2rem; }
+.m-hist .h-row b { color: var(--text); }
+.m-order { width: 100%; margin-top: 0.8rem; padding: 12px; background: var(--success); color: #fff; border: none; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
 .seat.m { background: var(--maleBg); border-color: #c3d4ee; }
 .seat.m .id { color: var(--male); }
 .seat.f { background: var(--femaleBg); border-color: #eecada; }
@@ -85,6 +91,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
       <button class="m-gbtn" id="mgM" onclick="mPick('남성')">남성</button>
       <button class="m-gbtn" id="mgF" onclick="mPick('여성')">여성</button>
     </div>
+    <div class="m-hist hidden" id="mHist"></div>
+    <button class="m-order hidden" id="mOrder" onclick="orderDone()">✓ 추가주문 완료 (90분 리셋)</button>
     <div class="m-btns">
       <button class="btn" onclick="closeModal()">닫기</button>
       <button class="btn primary" onclick="registerManual()">등록 / 수정</button>
@@ -123,40 +131,53 @@ function seatsByGender(key){
 }
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
-let occ = {}; // 자리번호 -> {id, gender}
+let occ = {};
+let cumLeave = 0;
 
 async function loadSeats(){
   try {
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:G')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:H')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const d = await r.json();
     occ = {};
     if (d && d.values) {
       for (let i=1;i<d.values.length;i++){
         const row = d.values[i];
-        if (String(row[5]) !== 'active') continue;   // 상태
-        const seat = parseInt(row[4]);               // 현재자리
+        if (String(row[5]) !== 'active') continue;
+        const seat = parseInt(row[4]);
         if (!seat) continue;
-        occ[seat] = { id: String(row[0]||'').padStart(4,'0'), gender: String(row[1]||'') };
+        let hist = []; try { hist = JSON.parse(row[7]||'[]'); } catch(eh) { hist = []; }
+        occ[seat] = { id: String(row[0]||'').padStart(4,'0'), gender: String(row[1]||''), enter: String(row[2]||''), lastOrder: String(row[3]||''), history: hist };
       }
     }
   } catch(e) { occ = {}; }
+  try {
+    const r2 = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A13')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const d2 = await r2.json();
+    cumLeave = (d2 && d2.values && d2.values[0] && d2.values[0][0]) ? (parseInt(d2.values[0][0])||0) : 0;
+  } catch(e) {}
   renderBoard();
 }
+
+function elapsedMin(s){ if(!s) return null; var t=new Date(String(s).replace(' ','T')).getTime(); if(isNaN(t)) return null; return Math.floor((Date.now()-t)/60000); }
+function hhmm(s){ s=String(s||''); var p=s.split(' '); return p[1] ? p[1].slice(0,5) : s; }
 
 function renderBoard(){
   Object.keys(ROWS).forEach(function(rid){
     const el = document.getElementById(rid);
     el.innerHTML = ROWS[rid].map(function(n){
       const o = occ[n];
-      const cls = o ? (o.gender==='남성'?'m':o.gender==='여성'?'f':'') : 'empty';
+      let cls = o ? (o.gender==='남성'?'m':o.gender==='여성'?'f':'') : 'empty';
       const idTxt = o ? o.id : '빈자리';
-      return '<div class="seat '+cls+'" onclick="openSeatModal('+n+')"><span class="n">'+n+'</span><span class="id">'+idTxt+'</span></div>';
+      let tHtml = '';
+      if (o) { const em = elapsedMin(o.lastOrder); if (em!=null) { if (em>=90) cls += ' overdue'; tHtml = '<span class="t">'+em+'분</span>'; } }
+      return '<div class="seat '+cls+'" onclick="openSeatModal('+n+')"><span class="n">'+n+'</span><span class="id">'+idTxt+'</span>'+tHtml+'</div>';
     }).join('');
   });
   const list = Object.values(occ);
   const m = list.filter(o=>o.gender==='남성').length;
   const f = list.filter(o=>o.gender==='여성').length;
-  document.getElementById('meta').textContent = '착석 '+list.length+'명 (남'+m+'/여'+f+')';
+  const over = list.filter(function(o){var e=elapsedMin(o.lastOrder);return e!=null&&e>=90;}).length;
+  document.getElementById('meta').textContent = '착석 '+list.length+'명 (남'+m+'/여'+f+')'+(over?' · 🔴'+over:'')+' · 누적 '+cumLeave+'명';
 }
 
 function doMove(){
@@ -191,8 +212,21 @@ function openSeatModal(n){
   document.getElementById('mId').value = o ? o.id : '';
   document.getElementById('mgM').className = 'm-gbtn';
   document.getElementById('mgF').className = 'm-gbtn';
-  if (o) { mPick(o.gender); document.getElementById('mLeave').classList.remove('hidden'); }
-  else { document.getElementById('mLeave').classList.add('hidden'); }
+  const mh = document.getElementById('mHist'), mo = document.getElementById('mOrder');
+  if (o) {
+    mPick(o.gender);
+    document.getElementById('mLeave').classList.remove('hidden');
+    mo.classList.remove('hidden');
+    const hist = (o.history && o.history.length) ? o.history : [{ s: n, t: o.enter }];
+    mh.innerHTML = '<b>자리 이력</b><br>' + hist.map(function(e,idx){ return '<div class="h-row"><b>'+e.s+'번</b> · '+hhmm(e.t)+' '+(idx===0?'입장':'이동')+'</div>'; }).join('');
+    const em = elapsedMin(o.lastOrder);
+    if (em!=null) mh.innerHTML += '<div class="h-row" style="margin-top:4px;color:'+(em>=90?'var(--danger)':'var(--text3)')+'">마지막 주문 후 '+em+'분 경과</div>';
+    mh.classList.remove('hidden');
+  } else {
+    document.getElementById('mLeave').classList.add('hidden');
+    mo.classList.add('hidden');
+    mh.classList.add('hidden');
+  }
   document.getElementById('modalBg').classList.add('on');
 }
 function closeModal(){ document.getElementById('modalBg').classList.remove('on'); }
@@ -211,6 +245,11 @@ function registerManual(){
 function leaveManual(){
   if (!confirm(mSeatNum + '번 자리를 비울까요? (퇴장 처리, 누적 +1)')) return;
   var payload = JSON.stringify({ type:'seatLeave', seat:mSeatNum });
+  try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {}
+  closeModal(); setTimeout(loadSeats, 1200);
+}
+function orderDone(){
+  var payload = JSON.stringify({ type:'seatOrder', seat:mSeatNum });
   try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {}
   closeModal(); setTimeout(loadSeats, 1200);
 }
