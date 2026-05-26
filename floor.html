@@ -232,7 +232,7 @@ async function loadSeats(){
 }
 
 function nowKSThhmm(){ var k = new Date(Date.now() + (new Date().getTimezoneOffset()*60000) + 9*3600000); return ('0'+k.getHours()).slice(-2)+':'+('0'+k.getMinutes()).slice(-2); }
-function showShuffleTimes(){ if(!shuffleLog.length){ alert('오늘 자리 이동 기록이 없어요.'); return; } alert('오늘 자리 이동 '+shuffleLog.length+'회\n'+shuffleLog.join(', ')); }
+function showShuffleTimes(){ if(!shuffleLog.length){ alert('이번 영업 자리 이동 기록이 없어요.'); return; } alert('이번 영업 자리 이동 '+shuffleLog.length+'회\n'+shuffleLog.join(', ')); }
 async function loadMeta(){  // 핀/이웃이력은 시작 시 1회만 로드 (폴링 클로버 방지)
   try {
     const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A14:A16')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
@@ -268,8 +268,8 @@ function renderBoard(){
   const m = list.filter(o=>o.gender==='남성').length;
   const f = list.filter(o=>o.gender==='여성').length;
   const over = list.filter(function(o){var e=elapsedMin(o.lastOrder);return e!=null&&e>=90;}).length;
-  document.getElementById('meta').textContent = '착석 '+list.length+'명 (남'+m+'/여'+f+')'+(over?' · 🔴'+over:'')+' · 누적 '+cumLeave+'명';
-  var sInfo = document.getElementById('shuffleInfo'); if (sInfo) sInfo.textContent = shuffleLog.length ? ('🔀 오늘 자리 이동 '+shuffleLog.length+'회 · 마지막 '+shuffleLog[shuffleLog.length-1]+' (탭: 전체 시각)') : '🔀 오늘 자리 이동 없음';
+  document.getElementById('meta').textContent = '착석 '+list.length+'명 (남'+m+'/여'+f+')'+(over?' · 🔴'+over:'')+' · 영업누적 '+cumLeave+'명';
+  var sInfo = document.getElementById('shuffleInfo'); if (sInfo) sInfo.textContent = shuffleLog.length ? ('🔀 이번 영업 자리 이동 '+shuffleLog.length+'회 · 마지막 '+shuffleLog[shuffleLog.length-1]+' (탭: 전체 시각)') : '🔀 이번 영업 자리 이동 없음';
 }
 
 function doMove(){
