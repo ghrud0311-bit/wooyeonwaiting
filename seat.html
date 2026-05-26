@@ -16,7 +16,9 @@
 }
 body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 0 1rem 3rem; }
 .wrap { width: 100%; max-width: 400px; }
-.header { padding: 2rem 0 1.2rem; text-align: center; }
+.header { padding: 2rem 0 1.2rem; text-align: center; position: relative; }
+.topbtn-order { position: absolute; right: 0; top: 1.9rem; background: var(--success); color: #fff; border: none; padding: 9px 13px; border-radius: 8px; font-size: 13px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; line-height: 1; }
+.topbtn-order:active { transform: scale(0.97); }
 .header-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.18em; margin-bottom: 0.35rem; }
 .header-title { font-size: 19px; font-weight: 500; }
 .seat-badge-big { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.4rem; text-align: center; margin-bottom: 1rem; }
@@ -66,6 +68,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 <body>
 <div class="wrap">
   <div class="header">
+    <button class="topbtn-order hidden" id="topOrderBtn" onclick="goTossOriginal()">주문 →</button>
     <div class="header-sub">WOOYEON</div>
     <div class="header-title" id="headerTitle">자리</div>
   </div>
@@ -199,15 +202,18 @@ function moveHint(cur,dest){
 function getParam(k){ try { return new URLSearchParams(location.search).get(k)||''; } catch(e){ return ''; } }
 function show(id){ ['loadingView','errView','resultView','regView','doneView','stayView'].forEach(function(v){ document.getElementById(v).classList.toggle('hidden', v!==id); }); }
 function goToss(){ var url = TOSS_URL[seatNum]; if(url) location.href = url; }
+function goTossOriginal(){ var url = TOSS_URL[originalSeatNum]; if(url) location.href = url; }
+function showTopOrder(on){ document.getElementById('topOrderBtn').classList.toggle('hidden', !on); }
 function tossJumpSoon(delayMs){ setTimeout(goToss, delayMs || 1400); }
 
 var seatNum = 0;
+var originalSeatNum = 0;
 var gender = '';
 
 (function init(){
   var n = parseInt(getParam('n'));
   if (!n || n < 1 || n > 32) { show("errView"); return; }
-  seatNum = n;
+  seatNum = n; originalSeatNum = n;
   loadContext();
 })();
 
@@ -215,7 +221,8 @@ async function loadContext(){
   show('loadingView');
   // 설정 모드 + 좌석 데이터 병렬 조회
   var mode = 'normal', shuffleStartedAt = 0;
-  var activeAtSeat = null;     // 이 자리에 현재 active인 손님 (있다면)
+  var activeAtSeat = null;     // 이 자리(N)에 현재 active인 손님 (옛 손님)
+  var arriverHere = null;      // pending=N 인 손님 (새로 도착한 손님)
   try {
     var r1 = fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A17:A18')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     var r2 = fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:I')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
@@ -229,14 +236,13 @@ async function loadContext(){
       for (var i=1;i<d2.values.length;i++){
         var row = d2.values[i];
         if (String(row[5]) !== 'active') continue;
-        if (parseInt(row[4]) === seatNum) {
-          activeAtSeat = {
-            id: pad4(row[0]),
-            gender: String(row[1]||''),
-            seat: parseInt(row[4]),
-            pending: row[8] ? parseInt(row[8]) : null
-          };
-          break;
+        var rowSeat = parseInt(row[4]);
+        var rowPending = row[8] ? parseInt(row[8]) : null;
+        if (rowSeat === seatNum && !activeAtSeat) {
+          activeAtSeat = { id: pad4(row[0]), gender: String(row[1]||''), seat: rowSeat, pending: rowPending };
+        }
+        if (rowPending === seatNum && rowSeat !== seatNum && !arriverHere) {
+          arriverHere = { id: pad4(row[0]), gender: String(row[1]||''), seat: rowSeat, pending: rowPending };
         }
       }
     }
@@ -245,29 +251,42 @@ async function loadContext(){
   var expired = !shuffleStartedAt || (Date.now() - shuffleStartedAt) > SHUFFLE_TTL_MS;
   var inShuffle = (mode === 'shuffle') && !expired;
 
-  if (inShuffle && activeAtSeat) {
-    // 이 자리 손님의 예정자리 안내
-    if (activeAtSeat.pending && activeAtSeat.pending !== seatNum) {
-      showMoveResult(activeAtSeat.pending);
-    } else {
-      // 예정자리 없거나 같은 자리 → 안 옮김
-      document.getElementById('stayNum').textContent = seatNum;
-      document.getElementById('headerTitle').textContent = '자리 이동';
-      show('stayView');
+  if (inShuffle) {
+    // (1) 옛 손님이 자기 자리 QR 찍은 경우: 안내 + 우상단 안전망 노출
+    if (activeAtSeat) {
+      showTopOrder(true);
+      if (activeAtSeat.pending && activeAtSeat.pending !== seatNum) {
+        showMoveResult(activeAtSeat.pending);
+      } else {
+        document.getElementById('stayNum').textContent = seatNum;
+        document.getElementById('headerTitle').textContent = '자리 이동';
+        show('stayView');
+      }
+      return;
     }
+    // (2) 새 손님이 도착한 경우 (pending=N): 자동 토스 점프
+    if (arriverHere) {
+      document.getElementById('loadingView').textContent = '도착 확인 — 주문 페이지로 이동 중...';
+      goTossOriginal();
+      return;
+    }
+    // (3) 셔플 중인데 active도 pending도 없음 → 빈 자리, 새 손님 등록 유도
+    // (등록 후엔 좌석에 추가되고 셔플과 무관하게 토스 점프)
+    showTopOrder(false);
+    document.getElementById('regSeat').textContent = seatNum;
+    document.getElementById('headerTitle').textContent = '자리 등록';
+    show('regView');
     return;
   }
 
-  // normal 모드
+  // ===== normal 모드 =====
+  showTopOrder(false);
   if (activeAtSeat) {
-    // 이미 등록된 자리 → 추가주문이라 가정, 토스로 즉시 점프
     show('loadingView');
     document.getElementById('loadingView').textContent = '주문 페이지로 이동 중...';
     goToss();
     return;
   }
-
-  // 새 손님 등록
   document.getElementById('regSeat').textContent = seatNum;
   document.getElementById('headerTitle').textContent = '자리 등록';
   show('regView');
