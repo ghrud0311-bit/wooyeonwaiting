@@ -44,12 +44,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .btn { width: 100%; padding: 15px; margin-top: 0.4rem; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: opacity 0.15s; }
 .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn.ghost { background: var(--surface); color: var(--text2); border: 1px solid var(--border2); }
+.btn.success { background: var(--success); }
 .btn-row { display: flex; gap: 8px; }
 .btn-row .btn { margin-top: 0; }
-.ask { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.6rem 1.2rem; text-align: center; margin-bottom: 1rem; }
-.ask-q { font-size: 18px; font-weight: 500; line-height: 1.5; }
-.ask-q b { font-size: 22px; font-weight: 700; }
-.result-box { text-align: center; padding: 2rem 1rem; }
+.result-box { text-align: center; padding: 1.6rem 1rem; }
 .result-label { font-size: 13px; color: var(--text2); margin-bottom: 0.6rem; }
 .result-num { font-size: 64px; font-weight: 700; line-height: 1; margin-bottom: 0.2rem; }
 .result-num small { font-size: 24px; font-weight: 500; color: var(--text2); }
@@ -58,7 +56,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .done-box { text-align: center; padding: 3rem 1rem; }
 .done-icon { font-size: 44px; margin-bottom: 1rem; }
 .done-title { font-size: 20px; font-weight: 700; margin-bottom: 0.5rem; }
-.done-seat { font-size: 15px; color: var(--text2); line-height: 1.6; }
+.done-seat { font-size: 15px; color: var(--text2); line-height: 1.6; margin-bottom: 1.4rem; }
 .done-seat b { color: var(--text); font-size: 17px; }
 .err-box { text-align: center; padding: 3.5rem 1rem; color: var(--text2); font-size: 15px; line-height: 1.6; }
 .loading { text-align: center; padding: 3.5rem 1rem; color: var(--text3); font-size: 14px; }
@@ -74,31 +72,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   <div id="loadingView" class="loading">불러오는 중...</div>
   <div id="errView" class="err-box hidden">올바른 자리 QR이 아니에요.<br>자리에 놓인 QR을 다시 스캔해주세요.</div>
 
-  <div id="confirmView" class="hidden">
-    <div class="seat-badge-big">
-      <div class="seat-badge-label">현재 자리</div>
-      <div class="seat-badge-num"><span id="cfSeat">—</span><small>번</small></div>
-    </div>
-    <div class="ask"><div class="ask-q"><b id="cfId">—</b>님이 맞으신가요?</div></div>
-    <div class="btn-row">
-      <button class="btn ghost" onclick="confirmNo()">아니오</button>
-      <button class="btn" onclick="confirmYes()">네, 맞아요</button>
-    </div>
-  </div>
-
-  <div id="idView" class="hidden">
-    <div class="field on" style="opacity:1">
-      <div class="field-label">전화번호 뒷 4자리</div>
-      <div class="phone-wrap">
-        <span class="phone-prefix">010 - •••• -</span>
-        <input class="phone-input" id="idLast4" type="tel" inputmode="numeric" placeholder="0000" maxlength="4" oninput="onIdInput()">
-      </div>
-      <div class="field-hint">📌 등록하신 끝 4자리를 입력해주세요.</div>
-    </div>
-    <button class="btn" id="idBtn" onclick="lookupId()" disabled>내 자리 보기</button>
-    <div id="idMsg" class="field-hint" style="color:var(--danger);text-align:center;margin-top:10px"></div>
-  </div>
-
   <div id="resultView" class="hidden">
     <div class="result-box">
       <div class="result-label">이동하실 자리예요</div>
@@ -106,6 +79,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
       <div class="result-dir" id="rsDir">—</div>
       <div class="result-from" id="rsFrom">—</div>
     </div>
+    <button class="btn success" id="rsOrderBtn" onclick="goToss()">주문하러 가기 →</button>
   </div>
 
   <div id="regView" class="hidden">
@@ -144,6 +118,14 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="done-icon">🎉</div>
     <div class="done-title">등록되었어요</div>
     <div class="done-seat"><b id="doneSeatText">—</b>번 자리에 편하게 앉아주세요!</div>
+    <button class="btn success" onclick="goToss()">주문하러 가기 →</button>
+  </div>
+
+  <div id="stayView" class="done-box hidden">
+    <div class="done-icon">😌</div>
+    <div class="done-title">그대로 계시면 돼요</div>
+    <div class="done-seat">이번엔 자리를 옮기지 않아요. 계속 <b id="stayNum">—</b>번 자리에서 편하게!</div>
+    <button class="btn success" onclick="goToss()">주문하러 가기 →</button>
   </div>
 </div>
 
@@ -151,6 +133,43 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 const SHEET_ID = '1NmPb6wxX0usqeP-gd7cFQPgHecLQsCYcA3i3wcU3uwc';
 const API_KEY = 'AIzaSyDNs6DjFlPRHukWl572r1pMZV72F6ZtODI';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
+const SHUFFLE_TTL_MS = 3 * 60 * 1000; // 3분 자동 만료 안전망
+
+// 자리 → 토스 주문 URL (영구 단축링크)
+const TOSS_URL = {
+  1: 'https://toss.place/_t/qryGTWrrh2eg',
+  2: 'https://toss.place/_t/qryGTWrrhqAq',
+  3: 'https://toss.place/_t/qryGTWrrhMm3',
+  4: 'https://toss.place/_t/qryGTWrrhKZi',
+  5: 'https://toss.place/_t/qryGTWrrhI4t',
+  6: 'https://toss.place/_t/qryGTWrrhl9U',
+  7: 'https://toss.place/_t/qryGTWrrhvTR',
+  8: 'https://toss.place/_t/qryGTWrrh2iC',
+  9: 'https://toss.place/_t/qryGTWrrhqVS',
+  10: 'https://toss.place/_t/qryGTWrrhMoF',
+  11: 'https://toss.place/_t/qryGTWrrhKDZ',
+  12: 'https://toss.place/_t/qryGTWrrhIjs',
+  13: 'https://toss.place/_t/qryGTWrrhlWo',
+  14: 'https://toss.place/_t/qrXP3gkUV33T',
+  15: 'https://toss.place/_t/qrXP3gkUVV20',
+  16: 'https://toss.place/_t/qrXP3gkUVksI',
+  17: 'https://toss.place/_t/qrXP3gkUVEeE',
+  18: 'https://toss.place/_t/qrXP3gkUVcAd',
+  19: 'https://toss.place/_t/qrXP3gkUVSox',
+  20: 'https://toss.place/_t/qrXP3gkUVq5P',
+  21: 'https://toss.place/_t/qrXP3gkUV34m',
+  22: 'https://toss.place/_t/qrXP3gkUVV99',
+  23: 'https://toss.place/_t/qrXP3gkUVkTV',
+  24: 'https://toss.place/_t/qrXP3gkUVEij',
+  25: 'https://toss.place/_t/qrXP3gkUVcXh',
+  26: 'https://toss.place/_t/qrXP3gkUVS0w',
+  27: 'https://toss.place/_t/qryGTWrrhvUr',
+  28: 'https://toss.place/_t/qryGTWrrh2aX',
+  29: 'https://toss.place/_t/qryGTWrrhqXc',
+  30: 'https://toss.place/_t/qrXP3gkUVqDN',
+  31: 'https://toss.place/_t/qrXP3gkUV3jg',
+  32: 'https://toss.place/_t/qrXP3gkUVVWv'
+};
 
 const COL = {1:0,2:1,4:2,6:3,8:4,10:5,12:6,13:7,14:8,16:9,18:10,20:11,22:12,24:13,26:14,3:1,5:2,7:3,9:4,11:5,15:8,17:9,19:10,21:11,23:12,25:13};
 const outerOrder=[1,2,4,6,8,10,12,13,14,16,18,20,22,24,26];
@@ -161,6 +180,8 @@ function pad4(v){ return String(v==null?'':v).padStart(4,'0'); }
 function moveHint(cur,dest){
   cur=+cur; dest=+dest;
   if(cur===dest) return '같은 자리에 그대로 계시면 돼요';
+  // 바자리(27-32) 이동은 별도 안내
+  if(cur>=27 || dest>=27) return '바 자리 ' + dest + '번으로 이동하세요';
   var prefix = TBL(cur)!==TBL(dest) ? '옆 테이블입니다. ' : '';
   var east = COL[dest] > COL[cur];
   var lr = (ROWT[cur]==='outer') ? (east?'왼쪽':'오른쪽') : (east?'오른쪽':'왼쪽');
@@ -176,12 +197,12 @@ function moveHint(cur,dest){
 }
 
 function getParam(k){ try { return new URLSearchParams(location.search).get(k)||''; } catch(e){ return ''; } }
-function show(id){ ['loadingView','errView','confirmView','idView','resultView','regView','doneView'].forEach(function(v){ document.getElementById(v).classList.toggle('hidden', v!==id); }); }
+function show(id){ ['loadingView','errView','resultView','regView','doneView','stayView'].forEach(function(v){ document.getElementById(v).classList.toggle('hidden', v!==id); }); }
+function goToss(){ var url = TOSS_URL[seatNum]; if(url) location.href = url; }
+function tossJumpSoon(delayMs){ setTimeout(goToss, delayMs || 1400); }
 
 var seatNum = 0;
 var gender = '';
-var activeRows = [];
-var pending = null;
 
 (function init(){
   var n = parseInt(getParam('n'));
@@ -192,55 +213,74 @@ var pending = null;
 
 async function loadContext(){
   show('loadingView');
+  // 설정 모드 + 좌석 데이터 병렬 조회
+  var mode = 'normal', shuffleStartedAt = 0;
+  var activeAtSeat = null;     // 이 자리에 현재 active인 손님 (있다면)
   try {
-    var r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:G')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
-    var d = await r.json();
-    activeRows = [];
-    if (d && d.values) {
-      for (var i=1;i<d.values.length;i++){
-        var row = d.values[i];
+    var r1 = fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A17:A18')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    var r2 = fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:I')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    var d1 = await (await r1).json();
+    var d2 = await (await r2).json();
+    if (d1 && d1.values) {
+      mode = (d1.values[0] && d1.values[0][0]) ? String(d1.values[0][0]) : 'normal';
+      shuffleStartedAt = (d1.values[1] && d1.values[1][0]) ? parseInt(d1.values[1][0]) : 0;
+    }
+    if (d2 && d2.values) {
+      for (var i=1;i<d2.values.length;i++){
+        var row = d2.values[i];
         if (String(row[5]) !== 'active') continue;
-        activeRows.push({ id: pad4(row[0]), gender: String(row[1]||''), seat: parseInt(row[4])||0, prevSeat: parseInt(row[6])||0 });
+        if (parseInt(row[4]) === seatNum) {
+          activeAtSeat = {
+            id: pad4(row[0]),
+            gender: String(row[1]||''),
+            seat: parseInt(row[4]),
+            pending: row[8] ? parseInt(row[8]) : null
+          };
+          break;
+        }
       }
     }
-  } catch(e) { activeRows = []; }
+  } catch(e) {}
 
-  var moved = activeRows.find(function(a){ return a.prevSeat === seatNum; });
-  if (moved) {
-    pending = { id: moved.id, newSeat: moved.seat };
-    document.getElementById('cfSeat').textContent = seatNum;
-    document.getElementById('cfId').textContent = moved.id;
-    document.getElementById('headerTitle').textContent = '자리 확인';
-    show('confirmView');
-  } else {
-    document.getElementById('regSeat').textContent = seatNum;
-    document.getElementById('headerTitle').textContent = '자리 등록';
-    show('regView');
+  var expired = !shuffleStartedAt || (Date.now() - shuffleStartedAt) > SHUFFLE_TTL_MS;
+  var inShuffle = (mode === 'shuffle') && !expired;
+
+  if (inShuffle && activeAtSeat) {
+    // 이 자리 손님의 예정자리 안내
+    if (activeAtSeat.pending && activeAtSeat.pending !== seatNum) {
+      showMoveResult(activeAtSeat.pending);
+    } else {
+      // 예정자리 없거나 같은 자리 → 안 옮김
+      document.getElementById('stayNum').textContent = seatNum;
+      document.getElementById('headerTitle').textContent = '자리 이동';
+      show('stayView');
+    }
+    return;
   }
-}
 
-function confirmYes(){ if(pending) showResult(pending.newSeat); }
-function confirmNo(){ document.getElementById('headerTitle').textContent = '내 자리 찾기'; show('idView'); }
-function onIdInput(){
-  var el = document.getElementById('idLast4');
-  el.value = el.value.replace(/\D/g,'').slice(0,4);
-  document.getElementById('idBtn').disabled = el.value.length !== 4;
-}
-function lookupId(){
-  var id = pad4(document.getElementById('idLast4').value);
-  if (id.length !== 4) return;
-  var matches = activeRows.filter(function(a){ return a.id === id; });
-  if (matches.length > 1) { document.getElementById('idMsg').textContent = '같은 번호가 여러 분 계세요. 직원에게 문의해주세요.'; return; }
-  if (matches.length === 1) { showResult(matches[0].seat); return; }
+  // normal 모드
+  if (activeAtSeat) {
+    // 이미 등록된 자리 → 추가주문이라 가정, 토스로 즉시 점프
+    show('loadingView');
+    document.getElementById('loadingView').textContent = '주문 페이지로 이동 중...';
+    goToss();
+    return;
+  }
+
+  // 새 손님 등록
   document.getElementById('regSeat').textContent = seatNum;
   document.getElementById('headerTitle').textContent = '자리 등록';
   show('regView');
 }
-function showResult(newSeat){
+
+function showMoveResult(newSeat){
   document.getElementById('rsNum').textContent = newSeat;
   document.getElementById('rsDir').textContent = moveHint(seatNum, newSeat);
   document.getElementById('rsFrom').textContent = '현재 ' + seatNum + '번 → ' + newSeat + '번';
   document.getElementById('headerTitle').textContent = '이동 안내';
+  // 새 자리의 토스 URL로 점프하도록 seatNum 갱신 (주문하러 가기 누르면 새 자리 기준)
+  // (주문 페이지는 새 자리에서 시작되어야 함)
+  seatNum = newSeat;
   show('resultView');
 }
 
@@ -272,7 +312,10 @@ function submitSeat(){
   try { if (navigator.sendBeacon) sent = navigator.sendBeacon(GAS_URL, new Blob([payload], {type:'text/plain'})); } catch(e) { sent = false; }
   if (!sent) { try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {} }
   document.getElementById('doneSeatText').textContent = seatNum;
+  document.getElementById('headerTitle').textContent = '등록 완료';
   show('doneView');
+  // 1.5초 후 자동 토스 점프 (사용자가 직접 버튼 눌러도 됨)
+  tossJumpSoon(1500);
 }
 </script>
 </body>
