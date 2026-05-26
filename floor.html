@@ -71,13 +71,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .floor-login input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; text-align: center; letter-spacing: 0.2em; outline: none; margin-bottom: 10px; font-family: inherit; }
 .floor-login button { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-family: inherit; cursor: pointer; }
 .floor-login .err { color: var(--danger); font-size: 12px; margin-top: 8px; min-height: 14px; }
-.shuffle-banner { background: #fff4e5; border: 1px solid #f0c97f; border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 0.9rem; }
-.sb-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.sb-label { font-size: 14px; font-weight: 700; color: #8c5b1a; }
-.sb-time { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: #8c5b1a; }
-.sb-hint { font-size: 12px; color: var(--text2); margin-bottom: 0.7rem; line-height: 1.5; }
-.sb-btns { display: flex; gap: 8px; }
-.sb-btns .btn { flex: 1; padding: 10px; margin: 0; }
 @media (max-width: 680px){
   .seat-row { gap: 4px; }
   .seat-row.off1 { padding-left: calc(38px + 4px); }
@@ -112,14 +105,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   </div>
   <div id="manualHint" class="manual-hint hidden">수동 이동 켜짐 — 옮길 손님 자리를 누른 뒤, 보낼 자리를 누르세요. (둘 다 손님이면 서로 교환)</div>
   <div id="pairHint" class="manual-hint hidden">같이 앉기 켜짐 — 함께 앉힐 두 손님 자리를 차례로 누르세요. 다시 누르면 해제. (다음 자리 이동부터 반영)</div>
-  <div id="shuffleBanner" class="shuffle-banner hidden">
-    <div class="sb-row"><span class="sb-label">🔀 자리 이동 중</span><span class="sb-time" id="sbTime">3:00</span></div>
-    <div class="sb-hint">손님에게 자리 QR을 다시 스캔하라고 안내하세요. 시간이 다 되면 자동으로 확정됩니다.</div>
-    <div class="sb-btns">
-      <button class="btn" onclick="cancelShuffleNow()">취소</button>
-      <button class="btn primary" onclick="finishShuffle()">✓ 이동 완료</button>
-    </div>
-  </div>
   <div id="shuffleInfo" class="hint" style="cursor:pointer;margin-bottom:0.7rem" onclick="showShuffleTimes()"></div>
 
   <div class="table-block">
@@ -239,19 +224,9 @@ async function loadSeats(){
     dupSet = new Set(Object.keys(seatCount).filter(function(k){return seatCount[k]>1;}).map(Number));
   } catch(e) { occ = {}; dupSet = new Set(); }
   try {
-    const r2 = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A13:A18')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const r2 = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A13')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const d2 = await r2.json();
-    const vv2 = (d2 && d2.values) ? d2.values : [];
-    cumLeave = (vv2[0] && vv2[0][0]) ? (parseInt(vv2[0][0])||0) : 0;
-    // 셔플 모드 상태 동기화 (다른 기기/새로고침 대응)
-    var smode = (vv2[4] && vv2[4][0]) ? String(vv2[4][0]) : 'normal'; // A17
-    var sat = (vv2[5] && vv2[5][0]) ? parseInt(vv2[5][0]) : 0;        // A18
-    var sExpired = !sat || (Date.now() - sat) > SHUFFLE_TTL_MS;
-    if (smode === 'shuffle' && !sExpired) {
-      if (!shuffleTimerId) { shuffleStartedAt = sat; startShuffleTimer(); }
-    } else {
-      if (shuffleTimerId) stopShuffleTimer();
-    }
+    cumLeave = (d2 && d2.values && d2.values[0] && d2.values[0][0]) ? (parseInt(d2.values[0][0])||0) : 0;
   } catch(e) {}
   renderBoard();
 }
@@ -331,58 +306,10 @@ function doMove(){
   saveMeta('A15', JSON.stringify(Array.from(neighborHist)));
   shuffleLog.push(nowKSThhmm());
   saveMeta('A16', JSON.stringify(shuffleLog));
-  // 셔플 시작 — 예정자리만 적재 + 모드 'shuffle' (실제 자리 이동은 confirmShuffle에서)
-  const payload = JSON.stringify({ type:'setPendingSeats', assign: assign });
+  // 자리 즉시 이동 + 각 손님 안내필요 ON (GAS seatMove에서 자동 처리)
+  const payload = JSON.stringify({ type:'seatMove', assign: assign, src: 'auto' });
   try { fetch(GAS_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload }).catch(function(){}); } catch(e) {}
-  // 셔플 모드 UI 시작
-  shuffleStartedAt = Date.now();
-  startShuffleTimer();
-  alert('자리 배정 완료!\n손님에게 본인 자리 QR을 다시 스캔해달라고 안내하세요.\n3분 후 자동 확정됩니다.');
-}
-
-// ===== 셔플 모드 타이머 =====
-var shuffleStartedAt = 0;
-var shuffleTimerId = null;
-var SHUFFLE_TTL_MS = 3 * 60 * 1000;
-function startShuffleTimer(){
-  document.getElementById('shuffleBanner').classList.remove('hidden');
-  if (shuffleTimerId) clearInterval(shuffleTimerId);
-  tickShuffleTimer();
-  shuffleTimerId = setInterval(tickShuffleTimer, 1000);
-}
-function tickShuffleTimer(){
-  if (!shuffleStartedAt) { stopShuffleTimer(); return; }
-  var rem = SHUFFLE_TTL_MS - (Date.now() - shuffleStartedAt);
-  if (rem <= 0) {
-    stopShuffleTimer();
-    finishShuffle(true);
-    return;
-  }
-  var m = Math.floor(rem/60000);
-  var s = Math.floor((rem%60000)/1000);
-  document.getElementById('sbTime').textContent = m + ':' + (s<10?'0':'') + s;
-}
-function stopShuffleTimer(){
-  if (shuffleTimerId) { clearInterval(shuffleTimerId); shuffleTimerId = null; }
-  document.getElementById('shuffleBanner').classList.add('hidden');
-  shuffleStartedAt = 0;
-}
-function finishShuffle(isAuto){
-  if (!isAuto && !confirm('자리 이동을 확정할까요?')) return;
-  stopShuffleTimer();
-  var payload = JSON.stringify({ type:'confirmShuffle' });
-  try { fetch(GAS_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload }).catch(function(){}); } catch(e) {}
-  if (isAuto) {
-    // 자동 확정 시 안내만 (alert는 깜빡 띄움)
-    var el = document.getElementById('meta'); if(el){ el.textContent = '⏱ 시간 만료 — 자동 확정됨'; }
-  }
-  setTimeout(loadSeats, 1500);
-}
-function cancelShuffleNow(){
-  if (!confirm('자리 이동을 취소할까요? (예정 자리만 비우고 현재 자리는 그대로)')) return;
-  stopShuffleTimer();
-  var payload = JSON.stringify({ type:'cancelShuffle' });
-  try { fetch(GAS_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload }).catch(function(){}); } catch(e) {}
+  alert('자리 배정 완료!\n손님이 본인 자리 QR을 다시 찍으면 새 자리 안내가 보여요.');
   setTimeout(loadSeats, 1500);
 }
 

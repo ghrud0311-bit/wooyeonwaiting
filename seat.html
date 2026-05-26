@@ -16,9 +16,7 @@
 }
 body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 0 1rem 3rem; }
 .wrap { width: 100%; max-width: 400px; }
-.header { padding: 2rem 0 1.2rem; text-align: center; position: relative; }
-.topbtn-order { position: absolute; right: 0; top: 1.9rem; background: var(--success); color: #fff; border: none; padding: 9px 13px; border-radius: 8px; font-size: 13px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; line-height: 1; }
-.topbtn-order:active { transform: scale(0.97); }
+.header { padding: 2rem 0 1.2rem; text-align: center; }
 .header-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.18em; margin-bottom: 0.35rem; }
 .header-title { font-size: 19px; font-weight: 500; }
 .seat-badge-big { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.4rem; text-align: center; margin-bottom: 1rem; }
@@ -45,16 +43,13 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .gender-btn.sel-f { background: #fbeef4; border-color: var(--female); color: var(--female); font-weight: 500; }
 .btn { width: 100%; padding: 15px; margin-top: 0.4rem; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: opacity 0.15s; }
 .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.btn.ghost { background: var(--surface); color: var(--text2); border: 1px solid var(--border2); }
 .btn.success { background: var(--success); }
-.btn-row { display: flex; gap: 8px; }
-.btn-row .btn { margin-top: 0; }
-.result-box { text-align: center; padding: 1.6rem 1rem; }
-.result-label { font-size: 13px; color: var(--text2); margin-bottom: 0.6rem; }
-.result-num { font-size: 64px; font-weight: 700; line-height: 1; margin-bottom: 0.2rem; }
-.result-num small { font-size: 24px; font-weight: 500; color: var(--text2); }
-.result-dir { font-size: 17px; font-weight: 500; color: var(--success); background: #eef6f1; border: 1px solid #c8e0d0; border-radius: 10px; padding: 0.9rem; margin: 1.2rem 0 0.6rem; line-height: 1.5; }
-.result-from { font-size: 12px; color: var(--text3); }
+.move-box { text-align: center; padding: 1.6rem 1rem; }
+.move-label { font-size: 13px; color: var(--text2); margin-bottom: 0.6rem; }
+.move-num { font-size: 64px; font-weight: 700; line-height: 1; margin-bottom: 0.2rem; }
+.move-num small { font-size: 24px; font-weight: 500; color: var(--text2); }
+.move-dir { font-size: 17px; font-weight: 500; color: var(--success); background: #eef6f1; border: 1px solid #c8e0d0; border-radius: 10px; padding: 0.9rem; margin: 1.2rem 0 0.6rem; line-height: 1.5; }
+.move-from { font-size: 12px; color: var(--text3); }
 .done-box { text-align: center; padding: 3rem 1rem; }
 .done-icon { font-size: 44px; margin-bottom: 1rem; }
 .done-title { font-size: 20px; font-weight: 700; margin-bottom: 0.5rem; }
@@ -68,21 +63,19 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 <body>
 <div class="wrap">
   <div class="header">
-    <button class="topbtn-order hidden" id="topOrderBtn" onclick="goTossOriginal()">주문 →</button>
     <div class="header-sub">WOOYEON</div>
     <div class="header-title" id="headerTitle">자리</div>
   </div>
   <div id="loadingView" class="loading">불러오는 중...</div>
   <div id="errView" class="err-box hidden">올바른 자리 QR이 아니에요.<br>자리에 놓인 QR을 다시 스캔해주세요.</div>
 
-  <div id="resultView" class="hidden">
-    <div class="result-box">
-      <div class="result-label">이동하실 자리예요</div>
-      <div class="result-num"><span id="rsNum">—</span><small>번</small></div>
-      <div class="result-dir" id="rsDir">—</div>
-      <div class="result-from" id="rsFrom">—</div>
+  <div id="moveView" class="hidden">
+    <div class="move-box">
+      <div class="move-label">새 자리로 이동해주세요</div>
+      <div class="move-num"><span id="mvNum">—</span><small>번</small></div>
+      <div class="move-dir" id="mvDir">—</div>
+      <div class="move-from" id="mvFrom">—</div>
     </div>
-    <button class="btn success" id="rsOrderBtn" onclick="goToss()">주문하러 가기 →</button>
   </div>
 
   <div id="regView" class="hidden">
@@ -123,20 +116,12 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="done-seat"><b id="doneSeatText">—</b>번 자리에 편하게 앉아주세요!</div>
     <button class="btn success" onclick="goToss()">주문하러 가기 →</button>
   </div>
-
-  <div id="stayView" class="done-box hidden">
-    <div class="done-icon">😌</div>
-    <div class="done-title">그대로 계시면 돼요</div>
-    <div class="done-seat">이번엔 자리를 옮기지 않아요. 계속 <b id="stayNum">—</b>번 자리에서 편하게!</div>
-    <button class="btn success" onclick="goToss()">주문하러 가기 →</button>
-  </div>
 </div>
 
 <script>
 const SHEET_ID = '1NmPb6wxX0usqeP-gd7cFQPgHecLQsCYcA3i3wcU3uwc';
 const API_KEY = 'AIzaSyDNs6DjFlPRHukWl572r1pMZV72F6ZtODI';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
-const SHUFFLE_TTL_MS = 3 * 60 * 1000; // 3분 자동 만료 안전망
 
 // 자리 → 토스 주문 URL (영구 단축링크)
 const TOSS_URL = {
@@ -183,7 +168,6 @@ function pad4(v){ return String(v==null?'':v).padStart(4,'0'); }
 function moveHint(cur,dest){
   cur=+cur; dest=+dest;
   if(cur===dest) return '같은 자리에 그대로 계시면 돼요';
-  // 바자리(27-32) 이동은 별도 안내
   if(cur>=27 || dest>=27) return '바 자리 ' + dest + '번으로 이동하세요';
   var prefix = TBL(cur)!==TBL(dest) ? '옆 테이블입니다. ' : '';
   var east = COL[dest] > COL[cur];
@@ -198,109 +182,72 @@ function moveHint(cur,dest){
   var steps2 = order2.filter(function(n){ return east ? (COL[n]>COL[cur]&&COL[n]<=COL[dest]) : (COL[n]<COL[cur]&&COL[n]>=COL[dest]); }).length;
   return prefix + lr + '으로 ' + steps2 + '칸 이동 후 맞은편 줄이에요';
 }
-
 function getParam(k){ try { return new URLSearchParams(location.search).get(k)||''; } catch(e){ return ''; } }
-function show(id){ ['loadingView','errView','resultView','regView','doneView','stayView'].forEach(function(v){ document.getElementById(v).classList.toggle('hidden', v!==id); }); }
+function show(id){ ['loadingView','errView','moveView','regView','doneView'].forEach(function(v){ document.getElementById(v).classList.toggle('hidden', v!==id); }); }
 function goToss(){ var url = TOSS_URL[seatNum]; if(url) location.href = url; }
-function goTossOriginal(){ var url = TOSS_URL[originalSeatNum]; if(url) location.href = url; }
-function showTopOrder(on){ document.getElementById('topOrderBtn').classList.toggle('hidden', !on); }
-function tossJumpSoon(delayMs){ setTimeout(goToss, delayMs || 1400); }
+function clearGuide(){ // 이 자리(N) 큐알 1회 스캔 처리 → 옛/새 손님 둘 다 안내필요 OFF
+  var payload = JSON.stringify({ type:'clearGuide', seat: seatNum });
+  try { if (navigator.sendBeacon) navigator.sendBeacon(GAS_URL, new Blob([payload], {type:'text/plain'})); } catch(e) {}
+}
 
 var seatNum = 0;
-var originalSeatNum = 0;
 var gender = '';
 
 (function init(){
   var n = parseInt(getParam('n'));
   if (!n || n < 1 || n > 32) { show("errView"); return; }
-  seatNum = n; originalSeatNum = n;
+  seatNum = n;
   loadContext();
 })();
 
 async function loadContext(){
   show('loadingView');
-  // 설정 모드 + 좌석 데이터 병렬 조회
-  var mode = 'normal', shuffleStartedAt = 0;
-  var activeAtSeat = null;     // 이 자리(N)에 현재 active인 손님 (옛 손님)
-  var arriverHere = null;      // pending=N 인 손님 (새로 도착한 손님)
+  var oldHere = null;       // 직전자리=N + 안내필요=TRUE 손님 (옛 자리에서 일어나야 할 손님)
+  var activeHere = null;    // 현재자리=N + active 손님 (이 자리에 앉을/앉은 사람)
   try {
-    var r1 = fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A17:A18')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
-    var r2 = fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:I')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
-    var d1 = await (await r1).json();
-    var d2 = await (await r2).json();
-    if (d1 && d1.values) {
-      mode = (d1.values[0] && d1.values[0][0]) ? String(d1.values[0][0]) : 'normal';
-      shuffleStartedAt = (d1.values[1] && d1.values[1][0]) ? parseInt(d1.values[1][0]) : 0;
-    }
-    if (d2 && d2.values) {
-      for (var i=1;i<d2.values.length;i++){
-        var row = d2.values[i];
+    var r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:I')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    var d = await r.json();
+    if (d && d.values) {
+      for (var i=1;i<d.values.length;i++){
+        var row = d.values[i];
         if (String(row[5]) !== 'active') continue;
         var rowSeat = parseInt(row[4]);
-        var rowPending = row[8] ? parseInt(row[8]) : null;
-        if (rowSeat === seatNum && !activeAtSeat) {
-          activeAtSeat = { id: pad4(row[0]), gender: String(row[1]||''), seat: rowSeat, pending: rowPending };
+        var rowPrev = parseInt(row[6]);
+        var rowGuide = String(row[8]||'').toUpperCase() === 'TRUE';
+        if (rowPrev === seatNum && rowSeat !== seatNum && rowGuide && !oldHere) {
+          oldHere = { id: pad4(row[0]), newSeat: rowSeat };
         }
-        if (rowPending === seatNum && rowSeat !== seatNum && !arriverHere) {
-          arriverHere = { id: pad4(row[0]), gender: String(row[1]||''), seat: rowSeat, pending: rowPending };
+        if (rowSeat === seatNum && !activeHere) {
+          activeHere = { id: pad4(row[0]) };
         }
       }
     }
   } catch(e) {}
 
-  var expired = !shuffleStartedAt || (Date.now() - shuffleStartedAt) > SHUFFLE_TTL_MS;
-  var inShuffle = (mode === 'shuffle') && !expired;
-
-  if (inShuffle) {
-    // (1) 옛 손님이 자기 자리 QR 찍은 경우: 안내 + 우상단 안전망 노출
-    if (activeAtSeat) {
-      showTopOrder(true);
-      if (activeAtSeat.pending && activeAtSeat.pending !== seatNum) {
-        showMoveResult(activeAtSeat.pending);
-      } else {
-        document.getElementById('stayNum').textContent = seatNum;
-        document.getElementById('headerTitle').textContent = '자리 이동';
-        show('stayView');
-      }
-      return;
-    }
-    // (2) 새 손님이 도착한 경우 (pending=N): 자동 토스 점프
-    if (arriverHere) {
-      document.getElementById('loadingView').textContent = '도착 확인 — 주문 페이지로 이동 중...';
-      goTossOriginal();
-      return;
-    }
-    // (3) 셔플 중인데 active도 pending도 없음 → 빈 자리, 새 손님 등록 유도
-    // (등록 후엔 좌석에 추가되고 셔플과 무관하게 토스 점프)
-    showTopOrder(false);
-    document.getElementById('regSeat').textContent = seatNum;
-    document.getElementById('headerTitle').textContent = '자리 등록';
-    show('regView');
+  // (1) 옛 자리 큐알 첫 스캔: 안내 + 1회 후 OFF
+  if (oldHere) {
+    document.getElementById('mvNum').textContent = oldHere.newSeat;
+    document.getElementById('mvDir').textContent = moveHint(seatNum, oldHere.newSeat);
+    document.getElementById('mvFrom').textContent = '현재 ' + seatNum + '번 → ' + oldHere.newSeat + '번';
+    document.getElementById('headerTitle').textContent = '자리 이동 안내';
+    show('moveView');
+    clearGuide();
     return;
   }
 
-  // ===== normal 모드 =====
-  showTopOrder(false);
-  if (activeAtSeat) {
+  // (2) 이 자리에 active 손님 있음 → 토스 직행 (추가주문 또는 이미 이동 완료)
+  if (activeHere) {
     show('loadingView');
     document.getElementById('loadingView').textContent = '주문 페이지로 이동 중...';
+    clearGuide();   // 안내필요 잔존 시 OFF
     goToss();
     return;
   }
+
+  // (3) 빈 자리 → 새 손님 등록
   document.getElementById('regSeat').textContent = seatNum;
   document.getElementById('headerTitle').textContent = '자리 등록';
   show('regView');
-}
-
-function showMoveResult(newSeat){
-  document.getElementById('rsNum').textContent = newSeat;
-  document.getElementById('rsDir').textContent = moveHint(seatNum, newSeat);
-  document.getElementById('rsFrom').textContent = '현재 ' + seatNum + '번 → ' + newSeat + '번';
-  document.getElementById('headerTitle').textContent = '이동 안내';
-  // 새 자리의 토스 URL로 점프하도록 seatNum 갱신 (주문하러 가기 누르면 새 자리 기준)
-  // (주문 페이지는 새 자리에서 시작되어야 함)
-  seatNum = newSeat;
-  show('resultView');
 }
 
 function onPhone(){
@@ -333,8 +280,7 @@ function submitSeat(){
   document.getElementById('doneSeatText').textContent = seatNum;
   document.getElementById('headerTitle').textContent = '등록 완료';
   show('doneView');
-  // 1.5초 후 자동 토스 점프 (사용자가 직접 버튼 눌러도 됨)
-  tossJumpSoon(1500);
+  setTimeout(goToss, 1500);
 }
 </script>
 </body>
