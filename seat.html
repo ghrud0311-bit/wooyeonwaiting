@@ -44,6 +44,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .btn { width: 100%; padding: 15px; margin-top: 0.4rem; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: opacity 0.15s; }
 .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn.success { background: var(--success); }
+.btn.ghost { background: var(--surface); color: var(--text2); border: 1px solid var(--border2); }
 .move-box { text-align: center; padding: 1.6rem 1rem; }
 .move-label { font-size: 13px; color: var(--text2); margin-bottom: 0.6rem; }
 .move-num { font-size: 64px; font-weight: 700; line-height: 1; margin-bottom: 0.2rem; }
@@ -58,12 +59,18 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .err-box { text-align: center; padding: 3.5rem 1rem; color: var(--text2); font-size: 15px; line-height: 1.6; }
 .loading { text-align: center; padding: 3.5rem 1rem; color: var(--text3); font-size: 14px; }
 .hidden { display: none; }
-.btn.ghost { background: var(--surface); color: var(--text2); border: 1px solid var(--border2); }
-.pair-link { display: block; text-align: center; margin-top: 0.8rem; font-size: 13px; color: var(--text2); cursor: pointer; padding: 8px; }
-.pair-link u { color: var(--accent); }
-.pair-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: flex-start; justify-content: center; z-index: 100; padding: 1.5rem 1rem; overflow-y: auto; }
-.pair-modal-bg.on { display: flex; }
-.pair-modal { background: var(--surface); border-radius: 14px; padding: 1.4rem 1.2rem; width: 100%; max-width: 380px; }
+.menu-box { padding: 0.4rem 0; }
+.menu-seat { text-align: center; font-size: 13px; color: var(--text2); margin-bottom: 1.2rem; }
+.menu-seat b { font-size: 20px; color: var(--text); font-weight: 700; }
+.menu-order { width: 100%; padding: 20px; background: var(--success); color: #fff; border: none; border-radius: 12px; font-size: 17px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; margin-bottom: 1.4rem; }
+.menu-opt { display: block; width: 100%; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; text-align: left; font-size: 14px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; cursor: pointer; margin-bottom: 8px; }
+.menu-opt:active { background: var(--surface2); }
+.menu-opt .arrow { float: right; color: var(--text3); }
+.info-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.1rem; margin-bottom: 1rem; white-space: pre-wrap; font-size: 14px; color: var(--text); line-height: 1.7; }
+.info-empty { color: var(--text3); font-style: italic; }
+.pair-modal-bg, .info-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: flex-start; justify-content: center; z-index: 100; padding: 1.5rem 1rem; overflow-y: auto; }
+.pair-modal-bg.on, .info-modal-bg.on { display: flex; }
+.pair-modal, .info-modal { background: var(--surface); border-radius: 14px; padding: 1.4rem 1.2rem; width: 100%; max-width: 380px; }
 .pm-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
 .pm-sub { font-size: 12px; color: var(--text2); margin-bottom: 1rem; line-height: 1.5; }
 .pm-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 0.6rem; }
@@ -74,6 +81,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .pm-cell.sel { background: var(--accent); color: #fff; border-color: var(--accent); }
 .pm-btns { display: flex; gap: 8px; margin-top: 1rem; }
 .pm-btns .btn { margin: 0; }
+.im-content { white-space: pre-wrap; font-size: 14px; color: var(--text); line-height: 1.7; margin-bottom: 1rem; }
 </style>
 </head>
 <body>
@@ -92,6 +100,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
       <div class="move-dir" id="mvDir">—</div>
       <div class="move-from" id="mvFrom">—</div>
     </div>
+  </div>
+
+  <div id="noticeView" class="hidden">
+    <div class="seat-badge-big">
+      <div class="seat-badge-label">현재 자리</div>
+      <div class="seat-badge-num"><span id="ntSeat">—</span><small>번</small></div>
+    </div>
+    <div class="info-box" id="ntInfo">불러오는 중...</div>
+    <button class="btn" onclick="noticeNext()">확인했어요</button>
   </div>
 
   <div id="regView" class="hidden">
@@ -131,7 +148,13 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="done-title">등록되었어요</div>
     <div class="done-seat"><b id="doneSeatText">—</b>번 자리에 편하게 앉아주세요!</div>
     <button class="btn success" onclick="goToss()">주문하러 가기 →</button>
-    <a class="pair-link" onclick="openPair()">같이 앉고싶은 분 있나요? <u>신청하기</u></a>
+  </div>
+
+  <div id="menuView" class="hidden menu-box">
+    <div class="menu-seat"><b id="mnSeat">—</b>번 자리</div>
+    <button class="menu-order" onclick="goToss()">🍷 주문하러 가기 →</button>
+    <button class="menu-opt" onclick="openPair()">👫 같이 앉고싶은 분 신청 <span class="arrow">›</span></button>
+    <button class="menu-opt" onclick="openInfo()">📌 안내사항 다시 보기 <span class="arrow">›</span></button>
   </div>
 </div>
 
@@ -147,6 +170,14 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
       <button class="btn ghost" onclick="closePair()">닫기</button>
       <button class="btn" id="pmSubmit" onclick="submitPair()" disabled>신청하기</button>
     </div>
+  </div>
+</div>
+
+<div class="info-modal-bg" id="infoBg" onclick="if(event.target===this)closeInfo()">
+  <div class="info-modal">
+    <div class="pm-title">우연 안내</div>
+    <div class="im-content" id="imContent">불러오는 중...</div>
+    <button class="btn" onclick="closeInfo()">닫기</button>
   </div>
 </div>
 
@@ -215,15 +246,16 @@ function moveHint(cur,dest){
   return prefix + lr + '으로 ' + steps2 + '칸 이동 후 맞은편 줄이에요';
 }
 function getParam(k){ try { return new URLSearchParams(location.search).get(k)||''; } catch(e){ return ''; } }
-function show(id){ ['loadingView','errView','moveView','regView','doneView'].forEach(function(v){ document.getElementById(v).classList.toggle('hidden', v!==id); }); }
+function show(id){ ['loadingView','errView','moveView','noticeView','regView','doneView','menuView'].forEach(function(v){ document.getElementById(v).classList.toggle('hidden', v!==id); }); }
 function goToss(){ var url = TOSS_URL[seatNum]; if(url) location.href = url; }
-function clearGuide(){ // 이 자리(N) 큐알 1회 스캔 처리 → 옛/새 손님 둘 다 안내필요 OFF
+function clearGuide(){
   var payload = JSON.stringify({ type:'clearGuide', seat: seatNum });
   try { if (navigator.sendBeacon) navigator.sendBeacon(GAS_URL, new Blob([payload], {type:'text/plain'})); } catch(e) {}
 }
 
 var seatNum = 0;
 var gender = '';
+var noticeText = '';  // 설정!A19에서 로드
 
 (function init(){
   var n = parseInt(getParam('n'));
@@ -234,14 +266,16 @@ var gender = '';
 
 async function loadContext(){
   show('loadingView');
-  var oldHere = null;       // 직전자리=N + 안내필요=TRUE 손님 (옛 자리에서 일어나야 할 손님)
-  var activeHere = null;    // 현재자리=N + active 손님 (이 자리에 앉을/앉은 사람)
+  var oldHere = null;
+  var activeHere = null;
   try {
-    var r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:I')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
-    var d = await r.json();
-    if (d && d.values) {
-      for (var i=1;i<d.values.length;i++){
-        var row = d.values[i];
+    var r1 = fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:I')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    var r2 = fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A19')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    var d1 = await (await r1).json();
+    var d2 = await (await r2).json();
+    if (d1 && d1.values) {
+      for (var i=1;i<d1.values.length;i++){
+        var row = d1.values[i];
         if (String(row[5]) !== 'active') continue;
         var rowSeat = parseInt(row[4]);
         var rowPrev = parseInt(row[6]);
@@ -254,9 +288,10 @@ async function loadContext(){
         }
       }
     }
+    noticeText = (d2 && d2.values && d2.values[0] && d2.values[0][0]) ? String(d2.values[0][0]) : '';
   } catch(e) {}
 
-  // (1) 옛 자리 큐알 첫 스캔: 안내 + 1회 후 OFF
+  // (1) 옛 자리 큐알 첫 스캔
   if (oldHere) {
     document.getElementById('mvNum').textContent = oldHere.newSeat;
     document.getElementById('mvDir').textContent = moveHint(seatNum, oldHere.newSeat);
@@ -267,20 +302,33 @@ async function loadContext(){
     return;
   }
 
-  // (2) 이 자리에 active 손님 있음 → 토스 직행 (추가주문 또는 이미 이동 완료)
+  // (2) 이미 등록된 자리 → 메뉴 분기 (주문 / 신청 / 안내)
   if (activeHere) {
-    show('loadingView');
-    document.getElementById('loadingView').textContent = '주문 페이지로 이동 중...';
-    clearGuide();   // 안내필요 잔존 시 OFF
-    goToss();
+    clearGuide();
+    document.getElementById('mnSeat').textContent = seatNum;
+    document.getElementById('headerTitle').textContent = '메뉴';
+    show('menuView');
     return;
   }
 
-  // (3) 빈 자리 → 새 손님 등록
+  // (3) 빈 자리 → 안내사항 페이지 (안내 텍스트 있으면) → 등록 폼
+  if (noticeText && noticeText.trim()) {
+    document.getElementById('ntSeat').textContent = seatNum;
+    document.getElementById('ntInfo').textContent = noticeText;
+    document.getElementById('headerTitle').textContent = '안내사항';
+    show('noticeView');
+  } else {
+    // 안내 텍스트 없으면 바로 등록 폼
+    goToReg();
+  }
+}
+
+function goToReg(){
   document.getElementById('regSeat').textContent = seatNum;
   document.getElementById('headerTitle').textContent = '자리 등록';
   show('regView');
 }
+function noticeNext(){ goToReg(); }
 
 function onPhone(){
   var el = document.getElementById('last4');
@@ -312,7 +360,7 @@ function submitSeat(){
   document.getElementById('doneSeatText').textContent = seatNum;
   document.getElementById('headerTitle').textContent = '등록 완료';
   show('doneView');
-  // 자동 점프 제거 — 손님이 신청 모달 열 시간 줌
+  setTimeout(goToss, 1500);
 }
 
 // ===== 같이 앉기 신청 모달 =====
@@ -349,6 +397,13 @@ function submitPair(){
   closePair();
   alert(pmSel + '번 자리 신청 완료!\n상대도 같은 신청을 하면 다음 자리섞기 때 같이 앉게 돼요.');
 }
+
+// ===== 안내사항 모달 =====
+function openInfo(){
+  document.getElementById('imContent').textContent = (noticeText && noticeText.trim()) ? noticeText : '안내사항이 아직 등록되지 않았어요.';
+  document.getElementById('infoBg').classList.add('on');
+}
+function closeInfo(){ document.getElementById('infoBg').classList.remove('on'); }
 </script>
 </body>
 </html>
