@@ -280,8 +280,19 @@ function moveHint(cur,dest){
     return prefix + lr + '으로 ' + steps + '칸 이동하세요';
   }
   if(COL[cur]===COL[dest]) return prefix + '바로 맞은편 자리예요';
-  var order2 = ROWT[dest]==='outer'?outerOrder:innerOrder;
-  var steps2 = order2.filter(function(n){ return east ? (COL[n]>COL[cur]&&COL[n]<=COL[dest]) : (COL[n]<COL[cur]&&COL[n]>=COL[dest]); }).length;
+  // 손님은 자기 줄(inner/outer)을 따라 이동하니까, 출발 row 기준으로 칸수를 셈
+  // dest와 같은 테이블 안에서 출발 row 자리 중 dest COL과 가장 가까운 자리까지 거리
+  var startOrder = ROWT[cur]==='outer'?outerOrder:innerOrder;
+  var destCol = COL[dest];
+  var curIdx = startOrder.indexOf(cur);
+  var bestIdx = curIdx;
+  var bestDiff = 999;
+  startOrder.forEach(function(n, i){
+    if (TBL(n) !== TBL(dest)) return; // dest와 같은 테이블 자리만
+    var diff = Math.abs(COL[n] - destCol);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+  });
+  var steps2 = Math.abs(bestIdx - curIdx);
   return prefix + lr + '으로 ' + steps2 + '칸 이동 후 맞은편 줄이에요';
 }
 function getParam(k){ try { return new URLSearchParams(location.search).get(k)||''; } catch(e){ return ''; } }
