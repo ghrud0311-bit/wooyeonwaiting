@@ -71,6 +71,12 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .floor-login input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; text-align: center; letter-spacing: 0.2em; outline: none; margin-bottom: 10px; font-family: inherit; }
 .floor-login button { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-family: inherit; cursor: pointer; }
 .floor-login .err { color: var(--danger); font-size: 12px; margin-top: 8px; min-height: 14px; }
+.pair-status { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.7rem 0.9rem; margin-bottom: 0.9rem; font-size: 13px; }
+.ps-head { font-size: 11px; color: var(--text3); letter-spacing: 0.05em; margin-bottom: 6px; }
+.ps-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.ps-item { padding: 4px 9px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+.ps-item.mutual { background: #e7f4ec; color: #2d6e3f; border: 1px solid #b8dec5; }
+.ps-item.oneway { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
 @media (max-width: 680px){
   .seat-row { gap: 4px; }
   .seat-row.off1 { padding-left: calc(38px + 4px); }
@@ -106,9 +112,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   <div id="manualHint" class="manual-hint hidden">수동 이동 켜짐 — 옮길 손님 자리를 누른 뒤, 보낼 자리를 누르세요. (둘 다 손님이면 서로 교환)</div>
   <div id="pairHint" class="manual-hint hidden">같이 앉기 켜짐 — 함께 앉힐 두 손님 자리를 차례로 누르세요. 다시 누르면 해제. (다음 자리 이동부터 반영)</div>
   <div id="shuffleInfo" class="hint" style="cursor:pointer;margin-bottom:0.7rem" onclick="showShuffleTimes()"></div>
+  <div id="pairStatus" class="pair-status hidden"></div>
 
   <div class="table-block">
-    <div class="table-title">왼쪽 테이블 (1~12)</div>
+    <div class="table-title">안쪽 테이블 (1~12)</div>
     <div class="table-flow">
       <div class="seat-row" id="L_cap"></div>
       <div class="rows">
@@ -118,7 +125,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     </div>
   </div>
   <div class="table-block">
-    <div class="table-title">오른쪽 테이블 (13~26)</div>
+    <div class="table-title">입구쪽 테이블 (13~26)</div>
     <div class="table-flow">
       <div class="rows">
         <div class="seat-row" id="R_outer"></div>
@@ -271,6 +278,55 @@ function renderBoard(){
   const over = list.filter(function(o){var e=elapsedMin(o.lastOrder);return e!=null&&e>=90;}).length;
   document.getElementById('meta').textContent = '착석 '+list.length+'명 (남'+m+'/여'+f+')'+(over?' · 🔴'+over:'')+' · 영업누적 '+cumLeave+'명';
   var sInfo = document.getElementById('shuffleInfo'); if (sInfo) sInfo.textContent = shuffleLog.length ? ('🔀 이번 영업 자리 이동 '+shuffleLog.length+'회 · 마지막 '+shuffleLog[shuffleLog.length-1]+' (탭: 전체 시각)') : '🔀 이번 영업 자리 이동 없음';
+  renderPairStatus();
+}
+
+function renderPairStatus(){
+  var panel = document.getElementById('pairStatus');
+  if (!panel) return;
+  // 모든 신청 수집
+  var reqs = [];
+  Object.entries(occ).forEach(function(e){
+    var from = parseInt(e[0]);
+    var w = e[1].wantPair;
+    if (w) reqs.push([from, w]);
+  });
+  if (!reqs.length) { panel.classList.add('hidden'); panel.innerHTML = ''; return; }
+  // 상호/일방향 분류
+  var mutualKeys = new Set();
+  var seenMutual = new Set();
+  var oneWay = [];
+  reqs.forEach(function(r){
+    var rev = reqs.find(function(rr){ return rr[0] === r[1] && rr[1] === r[0]; });
+    if (rev) {
+      var key = Math.min(r[0],r[1])+'-'+Math.max(r[0],r[1]);
+      mutualKeys.add(key);
+    }
+  });
+  var items = [];
+  reqs.forEach(function(r){
+    var key = Math.min(r[0],r[1])+'-'+Math.max(r[0],r[1]);
+    if (mutualKeys.has(key)) {
+      if (!seenMutual.has(key)) {
+        seenMutual.add(key);
+        items.push({ type:'mutual', a: Math.min(r[0],r[1]), b: Math.max(r[0],r[1]) });
+      }
+    } else {
+      items.push({ type:'oneway', a: r[0], b: r[1] });
+    }
+  });
+  // 상호 먼저 정렬
+  items.sort(function(a,b){ if (a.type!==b.type) return a.type==='mutual'?-1:1; return a.a-b.a; });
+  var mCnt = items.filter(function(x){return x.type==='mutual';}).length;
+  var oCnt = items.filter(function(x){return x.type==='oneway';}).length;
+  var html = '<div class="ps-head">🔗 같이앉기 신청 · 상호 '+mCnt+'쌍 · 일방향 '+oCnt+'건</div><div class="ps-list">';
+  html += items.map(function(x){
+    if (x.type==='mutual') return '<span class="ps-item mutual">'+x.a+' ↔ '+x.b+' ✓</span>';
+    return '<span class="ps-item oneway">'+x.a+' → '+x.b+'</span>';
+  }).join('');
+  html += '</div>';
+  panel.innerHTML = html;
+  panel.classList.remove('hidden');
 }
 
 function doMove(){
