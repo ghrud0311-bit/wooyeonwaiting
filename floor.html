@@ -206,7 +206,7 @@ let lastMetaEditAt = 0;
 
 async function loadSeats(){
   try {
-    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:H')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:J')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const d = await r.json();
     occ = {};
     var seatCount = {};
@@ -217,8 +217,9 @@ async function loadSeats(){
         const seat = parseInt(row[4]);
         if (!seat) continue;
         let hist = []; try { hist = JSON.parse(row[7]||'[]'); } catch(eh) { hist = []; }
+        var wantPair = row[9] ? parseInt(row[9]) : 0;
         seatCount[seat] = (seatCount[seat]||0) + 1;
-        occ[seat] = { id: String(row[0]||'').padStart(4,'0'), gender: String(row[1]||''), enter: String(row[2]||''), lastOrder: String(row[3]||''), history: hist };
+        occ[seat] = { id: String(row[0]||'').padStart(4,'0'), gender: String(row[1]||''), enter: String(row[2]||''), lastOrder: String(row[3]||''), history: hist, wantPair: wantPair };
       }
     }
     dupSet = new Set(Object.keys(seatCount).filter(function(k){return seatCount[k]>1;}).map(Number));
@@ -286,6 +287,21 @@ function doMove(){
   const occSeats = new Set(persons.map(p=>p.from));
   const apins = pins.filter(function(p){ return occSeats.has(p[0]) && occSeats.has(p[1]); });
 
+  // 손님 상호 짝 신청 (좌석 J열 wantPair): A→B && B→A 인 페어만 이번 셔플 한정 핀에 추가
+  var mutualPairs = [];
+  Object.entries(occ).forEach(function(e){
+    var a = parseInt(e[0]);
+    var w = e[1].wantPair;
+    if (!w || a >= w) return; // 중복 방지, a < w 만 처리
+    if (a > 26 || w > 26) return; // 바자리는 제외
+    if (occ[w] && occ[w].wantPair === a) {
+      // 기존 apins/mutualPairs에 이미 있는지 체크
+      var already = apins.some(function(p){ return (p[0]===a&&p[1]===w)||(p[0]===w&&p[1]===a); });
+      if (!already) mutualPairs.push([a, w]);
+    }
+  });
+  mutualPairs.forEach(function(p){ apins.push(p); });
+
   function assignOnce(){ var sm=shuffle(sg.male), sf=shuffle(sg.female), pos={}; males.forEach(function(p,i){ pos[p.from]=sm[i]; }); females.forEach(function(p,i){ pos[p.from]=sf[i]; }); return pos; }
   function npairsOf(pos){ var seat2id={}; persons.forEach(function(p){ seat2id[pos[p.from]]=p.id; }); var set=new Set(); persons.forEach(function(p){ NB[pos[p.from]].forEach(function(s2){ var oid=seat2id[s2]; if(oid) set.add([p.id,oid].sort().join('|')); }); }); return set; }
   function scoreOf(pos){ var rep=0; npairsOf(pos).forEach(function(pp){ if(neighborHist.has(pp)) rep++; }); var v=0; apins.forEach(function(pr){ var a=pos[pr[0]], b=pos[pr[1]]; var sameG = occ[pr[0]] && occ[pr[1]] && occ[pr[0]].gender===occ[pr[1]].gender; var ok = sameG ? isDiag(a,b) : (NB[a].indexOf(b)>=0); if(!ok) v++; }); return v*1000 + rep; }
@@ -294,7 +310,7 @@ function doMove(){
   var unmet = apins.filter(function(pr){ var a=best[pr[0]], b=best[pr[1]]; var sameG = occ[pr[0]] && occ[pr[1]] && occ[pr[0]].gender===occ[pr[1]].gender; var ok = sameG ? isDiag(a,b) : (NB[a].indexOf(b)>=0); return !ok; }).length;
 
   var msg = persons.length+'명의 자리를 새로 배정할까요?\n(최대한 새로운 이웃과 앉도록 섞어요)';
-  if (apins.length) msg += '\n같이 앉기 '+apins.length+'쌍 반영' + (unmet ? (' — 그중 '+unmet+'쌍은 자리 여건상 최대한 가깝게' ) : '');
+  if (apins.length) msg += '\n같이 앉기 '+apins.length+'쌍 반영' + (mutualPairs.length ? (' (그중 손님 상호 신청 '+mutualPairs.length+'쌍)') : '') + (unmet ? (' — 그중 '+unmet+'쌍은 자리 여건상 최대한 가깝게' ) : '');
   if (!confirm(msg)) return;
 
   const assign = persons.map(function(p){ return { from: p.from, to: best[p.from] }; });
