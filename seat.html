@@ -51,6 +51,17 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .move-num small { font-size: 24px; font-weight: 500; color: var(--text2); }
 .move-dir { font-size: 17px; font-weight: 500; color: var(--success); background: #eef6f1; border: 1px solid #c8e0d0; border-radius: 10px; padding: 0.9rem; margin: 1.2rem 0 0.6rem; line-height: 1.5; }
 .move-from { font-size: 12px; color: var(--text3); }
+.cards-area { padding: 0.6rem 0 1rem; text-align: center; }
+.cards-hint { font-size: 14px; color: var(--text2); margin-bottom: 1.2rem; line-height: 1.5; }
+.cards-wrap { display: flex; gap: 10px; justify-content: center; perspective: 900px; margin-bottom: 0.6rem; }
+.card-slot { width: 95px; height: 135px; cursor: pointer; transform-style: preserve-3d; transition: transform 0.7s; position: relative; }
+.card-slot.flipped { transform: rotateY(180deg); cursor: default; }
+.card-face { position: absolute; inset: 0; border-radius: 12px; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.card-back { background: linear-gradient(135deg, #1a1916 0%, #3a3530 100%); color: #d4a82a; font-size: 40px; font-family: Georgia, serif; }
+.card-front { background: var(--surface); border: 2px solid var(--border); color: var(--text); transform: rotateY(180deg); font-size: 36px; flex-direction: column; }
+.card-front small { font-size: 12px; font-weight: 500; color: var(--text3); margin-top: 2px; letter-spacing: 0.05em; }
+.card-slot.real .card-front { border-color: #d4a82a; background: #fff4d8; color: #8c5b1a; box-shadow: 0 0 16px rgba(212,168,42,0.45); }
+.card-slot.fake .card-front { opacity: 0.45; }
 .done-box { text-align: center; padding: 3rem 1rem; }
 .done-icon { font-size: 44px; margin-bottom: 1rem; }
 .done-title { font-size: 20px; font-weight: 700; margin-bottom: 0.5rem; }
@@ -106,8 +117,25 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   <div id="errView" class="err-box hidden">올바른 자리 QR이 아니에요.<br>자리에 놓인 QR을 다시 스캔해주세요.</div>
 
   <div id="moveView" class="hidden">
-    <div class="move-box">
-      <div class="move-label">새 자리로 이동해주세요</div>
+    <div class="cards-area">
+      <div class="cards-hint" id="cardsHint">운명의 카드 한 장을 골라주세요</div>
+      <div class="cards-wrap">
+        <div class="card-slot" id="card0" onclick="pickCard(0)">
+          <div class="card-face card-back">?</div>
+          <div class="card-face card-front"><span id="cardNum0"></span><small>번</small></div>
+        </div>
+        <div class="card-slot" id="card1" onclick="pickCard(1)">
+          <div class="card-face card-back">?</div>
+          <div class="card-face card-front"><span id="cardNum1"></span><small>번</small></div>
+        </div>
+        <div class="card-slot" id="card2" onclick="pickCard(2)">
+          <div class="card-face card-back">?</div>
+          <div class="card-face card-front"><span id="cardNum2"></span><small>번</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="move-box hidden" id="moveResult">
+      <div class="move-label">이동하실 자리예요</div>
       <div class="move-num"><span id="mvNum">—</span><small>번</small></div>
       <div class="move-dir" id="mvDir">—</div>
       <div class="move-from" id="mvFrom">—</div>
@@ -344,14 +372,10 @@ async function loadContext(){
     noticeText = (d2 && d2.values && d2.values[0] && d2.values[0][0]) ? String(d2.values[0][0]) : '';
   } catch(e) {}
 
-  // (1) 옛 자리 큐알 첫 스캔
+  // (1) 옛 자리 큐알 첫 스캔 — 카드 3장 연출
   if (oldHere) {
-    document.getElementById('mvNum').textContent = oldHere.newSeat;
-    document.getElementById('mvDir').textContent = moveHint(seatNum, oldHere.newSeat);
-    document.getElementById('mvFrom').textContent = '현재 ' + seatNum + '번 → ' + oldHere.newSeat + '번';
     document.getElementById('headerTitle').textContent = '자리 이동 안내';
-    show('moveView');
-    clearGuide();
+    startCardShuffle(oldHere.newSeat);
     return;
   }
 
@@ -469,6 +493,47 @@ function openInfo(){
   document.getElementById('infoBg').classList.add('on');
 }
 function closeInfo(){ document.getElementById('infoBg').classList.remove('on'); }
+
+// ===== 셔플 카드 3장 연출 =====
+var cardRealSeat = 0;
+var cardFakes = [];
+var cardPicked = false;
+function startCardShuffle(newSeat){
+  cardRealSeat = newSeat;
+  cardPicked = false;
+  var avail = [];
+  for (var i = 1; i <= 32; i++) if (i !== seatNum && i !== newSeat) avail.push(i);
+  for (var j = avail.length - 1; j > 0; j--) { var k = Math.floor(Math.random()*(j+1)); var t = avail[j]; avail[j] = avail[k]; avail[k] = t; }
+  cardFakes = [avail[0], avail[1]];
+  for (var c = 0; c < 3; c++) {
+    var el = document.getElementById('card'+c);
+    el.classList.remove('flipped','real','fake');
+    document.getElementById('cardNum'+c).textContent = '';
+  }
+  document.getElementById('cardsHint').textContent = '운명의 카드 한 장을 골라주세요';
+  document.getElementById('moveResult').classList.add('hidden');
+  show('moveView');
+}
+function pickCard(idx){
+  if (cardPicked) return;
+  cardPicked = true;
+  var realCard = document.getElementById('card'+idx);
+  document.getElementById('cardNum'+idx).textContent = cardRealSeat;
+  realCard.classList.add('flipped','real');
+  document.getElementById('cardsHint').textContent = '✨ 당신의 자리가 정해졌어요';
+  document.getElementById('mvNum').textContent = cardRealSeat;
+  document.getElementById('mvDir').textContent = moveHint(seatNum, cardRealSeat);
+  document.getElementById('mvFrom').textContent = '현재 ' + seatNum + '번 → ' + cardRealSeat + '번';
+  document.getElementById('moveResult').classList.remove('hidden');
+  var others = [0,1,2].filter(function(x){ return x !== idx; });
+  setTimeout(function(){
+    others.forEach(function(slot, fi){
+      document.getElementById('cardNum'+slot).textContent = cardFakes[fi];
+      document.getElementById('card'+slot).classList.add('flipped','fake');
+    });
+  }, 1000);
+  clearGuide();
+}
 </script>
 </body>
 </html>
