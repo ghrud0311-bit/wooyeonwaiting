@@ -38,6 +38,11 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .seat .t { font-size: 9px; color: var(--text3); margin-top: 1px; line-height: 1; }
 .seat.overdue { background: #fdecea !important; border-color: #e8a89e !important; }
 .seat.overdue .t { color: var(--danger); font-weight: 700; }
+.seat.urgent { animation: seatBlink 1s ease-in-out infinite; }
+@keyframes seatBlink {
+  0%, 100% { background: #fdecea; border-color: #e8a89e; }
+  50% { background: #f5a098; border-color: #c4524a; }
+}
 .m-hist { font-size: 12px; color: var(--text2); line-height: 1.7; background: var(--surface2); border-radius: 8px; padding: 8px 10px; margin: 0.4rem 0 0.2rem; }
 .m-hist .h-row b { color: var(--text); }
 .btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -265,7 +270,7 @@ function renderBoard(){
       let cls = o ? (o.gender==='남성'?'m':o.gender==='여성'?'f':'') : 'empty';
       const idTxt = o ? o.id : '빈자리';
       let tHtml = '';
-      if (o) { const em = elapsedMin(o.lastOrder); if (em!=null) { if (em>=90) cls += ' overdue'; tHtml = '<span class="t">'+em+'분</span>'; } }
+      if (o) { const em = elapsedMin(o.lastOrder); if (em!=null) { if (em>=80) cls += ' overdue'; if (em>=90) cls += ' urgent'; tHtml = '<span class="t">'+em+'분</span>'; } }
       if ((manualMode && selA===n) || (pairMode && (pinSelA===n || pinSelB===n))) cls += ' sel';
       if (dupSet.has(n)) cls += ' dup';
       var pinHtml = ''; if (o && pinOf[n]) { var pc = PINCOL[(pinOf[n]-1) % PINCOL.length]; pinHtml = '<span class="pinmark" style="background:'+pc+'">'+pinOf[n]+'</span>'; }
@@ -275,7 +280,7 @@ function renderBoard(){
   const list = Object.values(occ);
   const m = list.filter(o=>o.gender==='남성').length;
   const f = list.filter(o=>o.gender==='여성').length;
-  const over = list.filter(function(o){var e=elapsedMin(o.lastOrder);return e!=null&&e>=90;}).length;
+  const over = list.filter(function(o){var e=elapsedMin(o.lastOrder);return e!=null&&e>=80;}).length;
   document.getElementById('meta').textContent = '착석 '+list.length+'명 (남'+m+'/여'+f+')'+(over?' · 🔴'+over:'')+' · 영업누적 '+cumLeave+'명';
   var sInfo = document.getElementById('shuffleInfo'); if (sInfo) sInfo.textContent = shuffleLog.length ? ('🔀 이번 영업 자리 이동 '+shuffleLog.length+'회 · 마지막 '+shuffleLog[shuffleLog.length-1]+' (탭: 전체 시각)') : '🔀 이번 영업 자리 이동 없음';
   renderPairStatus();
