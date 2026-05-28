@@ -80,7 +80,7 @@ body { font-family: 'Noto Sans KR', -apple-system, sans-serif; background: #0e0e
 
 <!-- 게임 화면 -->
 <div id="gameView" class="hidden" style="width:100%;display:flex;flex-direction:column;align-items:center">
-  <div class="score-banner" id="scoreBanner">💰 현재 <b id="bannerScore">1</b>점 문제 · 우리 조: <b id="bannerMy">- </b>점</div>
+  <div class="score-banner" id="scoreBanner">💰 현재 <b id="bannerScore">1</b>점 문제</div>
   <div class="status" id="status">대기 중...</div>
   <div class="buzzer-wrap">
     <button class="buzzer" id="buzzer">대기</button>
@@ -321,9 +321,8 @@ function setupGameView(v) {
   const myPenalized = isPenalized(v, myTeam);
   const notFinalist = v.state === 'finalRound' && !isFinalist(v, myTeam);
 
-  // 점수 배너
+  // 점수 배너 — 배점만 표시
   document.getElementById('bannerScore').textContent = v.currentScore || 1;
-  document.getElementById('bannerMy').textContent = (v.scores || {})[myTeam] || 0;
 
   // 부저 상태
   buzzer.classList.remove('active','penalty');
@@ -349,9 +348,6 @@ function setupGameView(v) {
   else if (v.state === 'finalRound') status.textContent = isFinalist(v, myTeam) ? '🔥 막판 결정 — 우리 조 참여!' : '🔥 막판 결정 — 우리 조 미참여';
   else if (v.state === 'disabling') status.textContent = '잠시만요...';
   else status.textContent = '-';
-
-  // 점수판
-  renderScoreboard(v);
 }
 
 function renderScoreboard(v) {
@@ -422,3 +418,4 @@ gameRef.child('state').on('value', snap => {
 </script>
 </body>
 </html>
+                                                                                                                                               

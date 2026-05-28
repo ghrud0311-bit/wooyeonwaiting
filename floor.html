@@ -85,7 +85,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .ps-item.mutual { background: #e7f4ec; color: #2d6e3f; border: 1px solid #b8dec5; }
 .ps-item.oneway { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
 .btn.game-start { background: linear-gradient(180deg, #d4a82a 0%, #a08020 100%); color: #1a1916; border-color: #a08020; font-weight: 700; }
-.game-panel { background: linear-gradient(180deg, #1a1916 0%, #2a2825 100%); color: #fff; border: 1px solid #d4a82a; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1rem; }
+.game-panel { background: linear-gradient(180deg, #1a1916 0%, #2a2825 100%); color: #fff; border: 1px solid transparent; border-radius: 12px; max-height: 0; overflow: hidden; padding: 0 1.1rem; margin-top: 0; transition: max-height 0.5s ease, padding 0.3s ease, margin-top 0.3s ease, border-color 0.3s ease; }
+.game-panel.on { max-height: 3000px; padding: 1rem 1.1rem; margin-top: 0.7rem; border-color: #d4a82a; }
 .gp-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.7rem; gap: 8px; flex-wrap: wrap; }
 .gp-label { font-size: 11px; color: #d4a82a; letter-spacing: 0.1em; }
 .gp-state { font-size: 14px; font-weight: 700; }
@@ -143,32 +144,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <button class="btn" id="pairBtn" onclick="togglePair()">🔗 같이 앉기</button>
     <button class="btn primary" onclick="doMove()">🔀 자리 이동</button>
   </div>
-  <div class="bar">
-    <button class="btn game-start" onclick="startGame()">🎮 게임 시작</button>
-  </div>
-  <div id="gamePanel" class="game-panel hidden">
-    <div class="gp-row"><span class="gp-label">GAME</span><span class="gp-state" id="gpState">대기</span></div>
-    <div class="gp-teams" id="gpTeams"></div>
-    <div class="gp-score-input">
-      <label>현재 배점:</label>
-      <input type="number" id="gpScore" value="1" min="1" max="10" onchange="updateScore()">
-      <span style="font-size:11px;color:#888">점</span>
-    </div>
-    <div id="gpBuzzedBox" class="gp-buzzed hidden">
-      🎤 정답 도전: <span class="big" id="gpBuzzedTeam">-</span>조
-    </div>
-    <div id="gpActions" class="gp-actions hidden">
-      <button class="correct" onclick="markCorrect()">⭕ 정답 (+<span id="gpActionScore">1</span>)</button>
-      <button class="wrong" onclick="markWrong()">❌ 오답</button>
-    </div>
-    <div class="gp-btns">
-      <button id="gpPracticeBtn" onclick="togglePractice()">🎯 연습 시작</button>
-      <button class="primary" id="gpRoundBtn" onclick="startRound()">🏁 라운드 시작</button>
-      <button class="danger" onclick="endGame()">🏁 종료</button>
-    </div>
-    <div id="gpPenalties" class="gp-pen"></div>
-    <div class="gp-scores" id="gpScores"></div>
-  </div>
   <div id="manualHint" class="manual-hint hidden">수동 이동 켜짐 — 옮길 손님 자리를 누른 뒤, 보낼 자리를 누르세요. (둘 다 손님이면 서로 교환)</div>
   <div id="pairHint" class="manual-hint hidden">같이 앉기 켜짐 — 함께 앉힐 두 손님 자리를 차례로 누르세요. 다시 누르면 해제. (다음 자리 이동부터 반영)</div>
   <div id="shuffleInfo" class="hint" style="cursor:pointer;margin-bottom:0.7rem" onclick="showShuffleTimes()"></div>
@@ -199,6 +174,33 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="seat-row" id="B_bar"></div>
   </div>
   <div class="hint">남자=파랑 / 여자=분홍. 칸 안 숫자는 자리번호, 큰 글씨는 손님 뒷4자리. (칸을 누르면 수동 등록/수정)</div>
+
+  <div style="margin-top: 1.5rem;">
+    <button class="btn game-start" onclick="toggleGame()" id="gameToggleBtn">🎮 게임 시작</button>
+  </div>
+  <div id="gamePanel" class="game-panel">
+    <div class="gp-row"><span class="gp-label">GAME</span><span class="gp-state" id="gpState">대기</span></div>
+    <div class="gp-teams" id="gpTeams"></div>
+    <div class="gp-score-input">
+      <label>현재 배점:</label>
+      <input type="number" id="gpScore" value="1" min="1" max="10" onchange="updateScore()">
+      <span style="font-size:11px;color:#888">점</span>
+    </div>
+    <div id="gpBuzzedBox" class="gp-buzzed hidden">
+      🎤 정답 도전: <span class="big" id="gpBuzzedTeam">-</span>조
+    </div>
+    <div id="gpActions" class="gp-actions hidden">
+      <button class="correct" onclick="markCorrect()">⭕ 정답 (+<span id="gpActionScore">1</span>)</button>
+      <button class="wrong" onclick="markWrong()">❌ 오답</button>
+    </div>
+    <div class="gp-btns">
+      <button id="gpPracticeBtn" onclick="togglePractice()">🎯 연습 시작</button>
+      <button class="primary" id="gpRoundBtn" onclick="startRound()">🏁 라운드 시작</button>
+      <button class="danger" onclick="endGame()">🏁 종료</button>
+    </div>
+    <div id="gpPenalties" class="gp-pen"></div>
+    <div class="gp-scores" id="gpScores"></div>
+  </div>
 </div>
 <div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
   <div class="modal-card">
@@ -723,10 +725,26 @@ function endGame() {
   }
 }
 
+function toggleGame() {
+  const v = lastGame || {};
+  if (!v.state || v.state === 'off') {
+    startGame();
+  } else {
+    // 이미 게임 중이면 패널 펼침 토글만
+    const panel = document.getElementById('gamePanel');
+    panel.classList.toggle('on');
+  }
+}
 function renderGamePanel(v) {
   const panel = document.getElementById('gamePanel');
-  if (!v || !v.state || v.state === 'off') { panel.classList.add('hidden'); return; }
-  panel.classList.remove('hidden');
+  const btn = document.getElementById('gameToggleBtn');
+  if (!v || !v.state || v.state === 'off') {
+    panel.classList.remove('on');
+    if (btn) btn.textContent = '🎮 게임 시작';
+    return;
+  }
+  panel.classList.add('on');
+  if (btn) btn.textContent = '🎮 게임 진행 중 — 패널 토글';
   const stateMap = {
     'lobby': '🟡 대기 (조 안내 중)',
     'practice': '🎯 연습 진행 중',
