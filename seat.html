@@ -345,6 +345,15 @@ var activeSeats = new Set(); // 짝 신청 모달에서 활용
 
 async function loadContext(){
   show('loadingView');
+  // 게임 모드 확인 — Firebase REST. 켜져 있으면 buzzer로 리다이렉트
+  try {
+    var rg = await fetch('https://wooyeoon-18f43-default-rtdb.firebaseio.com/game/state.json?_='+Date.now(), {cache:'no-store'});
+    var gs = await rg.json();
+    if (gs && gs !== 'off') {
+      location.replace('buzzer.html?n=' + seatNum);
+      return;
+    }
+  } catch(e) {}
   var oldHere = null;
   var activeHere = null;
   try {

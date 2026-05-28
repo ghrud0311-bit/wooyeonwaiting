@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>우연 — 자리 관리</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -82,6 +84,33 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .ps-item { padding: 4px 9px; border-radius: 6px; font-size: 12px; font-weight: 500; }
 .ps-item.mutual { background: #e7f4ec; color: #2d6e3f; border: 1px solid #b8dec5; }
 .ps-item.oneway { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+.btn.game-start { background: linear-gradient(180deg, #d4a82a 0%, #a08020 100%); color: #1a1916; border-color: #a08020; font-weight: 700; }
+.game-panel { background: linear-gradient(180deg, #1a1916 0%, #2a2825 100%); color: #fff; border: 1px solid #d4a82a; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1rem; }
+.gp-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.7rem; gap: 8px; flex-wrap: wrap; }
+.gp-label { font-size: 11px; color: #d4a82a; letter-spacing: 0.1em; }
+.gp-state { font-size: 14px; font-weight: 700; }
+.gp-teams { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px; margin-bottom: 0.8rem; }
+.gp-team { background: #2a2825; border: 1px solid #444; border-radius: 8px; padding: 6px 8px; font-size: 12px; }
+.gp-team b { color: #d4a82a; font-size: 14px; margin-right: 4px; }
+.gp-team .seats { color: #aaa; font-size: 11px; }
+.gp-score-input { display: flex; align-items: center; gap: 8px; margin-bottom: 0.8rem; }
+.gp-score-input label { font-size: 12px; color: #aaa; }
+.gp-score-input input { width: 60px; padding: 6px 8px; background: #1a1916; border: 1px solid #444; border-radius: 6px; color: #d4a82a; font-size: 16px; font-weight: 700; text-align: center; font-family: inherit; }
+.gp-buzzed { background: linear-gradient(180deg, #ff5a5d 0%, #c41e21 100%); color: #fff; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 0.8rem; font-size: 16px; font-weight: 700; }
+.gp-buzzed .big { font-size: 32px; color: #fff4d8; display: block; }
+.gp-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 0.5rem; }
+.gp-actions button { padding: 14px; border-radius: 8px; border: none; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; color: #fff; }
+.gp-actions .correct { background: #4a8c5c; }
+.gp-actions .wrong { background: #c0503e; }
+.gp-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.gp-btns button { padding: 11px 4px; border-radius: 8px; border: 1px solid #444; background: #2a2825; color: #fff; font-family: inherit; font-size: 13px; cursor: pointer; }
+.gp-btns button.primary { background: #d4a82a; color: #1a1916; border-color: #d4a82a; font-weight: 700; }
+.gp-btns button.danger { background: transparent; color: #ff5a5d; border-color: #6b3d35; }
+.gp-scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 4px; margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid #333; }
+.gp-score-item { background: #1a1916; border-radius: 6px; padding: 6px 4px; text-align: center; font-size: 11px; color: #aaa; }
+.gp-score-item b { display: block; font-size: 18px; color: #d4a82a; font-weight: 700; }
+.gp-pen { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0.4rem; font-size: 11px; }
+.gp-pen-tag { background: #6b1012; color: #fff5a0; padding: 2px 7px; border-radius: 4px; }
 @media (max-width: 680px){
   .seat-row { gap: 4px; }
   .seat-row.off1 { padding-left: calc(38px + 4px); }
@@ -113,6 +142,32 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <button class="btn" id="manualBtn" onclick="toggleManual()">✋ 수동 이동</button>
     <button class="btn" id="pairBtn" onclick="togglePair()">🔗 같이 앉기</button>
     <button class="btn primary" onclick="doMove()">🔀 자리 이동</button>
+  </div>
+  <div class="bar">
+    <button class="btn game-start" onclick="startGame()">🎮 게임 시작</button>
+  </div>
+  <div id="gamePanel" class="game-panel hidden">
+    <div class="gp-row"><span class="gp-label">GAME</span><span class="gp-state" id="gpState">대기</span></div>
+    <div class="gp-teams" id="gpTeams"></div>
+    <div class="gp-score-input">
+      <label>현재 배점:</label>
+      <input type="number" id="gpScore" value="1" min="1" max="10" onchange="updateScore()">
+      <span style="font-size:11px;color:#888">점</span>
+    </div>
+    <div id="gpBuzzedBox" class="gp-buzzed hidden">
+      🎤 정답 도전: <span class="big" id="gpBuzzedTeam">-</span>조
+    </div>
+    <div id="gpActions" class="gp-actions hidden">
+      <button class="correct" onclick="markCorrect()">⭕ 정답 (+<span id="gpActionScore">1</span>)</button>
+      <button class="wrong" onclick="markWrong()">❌ 오답</button>
+    </div>
+    <div class="gp-btns">
+      <button id="gpPracticeBtn" onclick="togglePractice()">🎯 연습 시작</button>
+      <button class="primary" id="gpRoundBtn" onclick="startRound()">🏁 라운드 시작</button>
+      <button class="danger" onclick="endGame()">🏁 종료</button>
+    </div>
+    <div id="gpPenalties" class="gp-pen"></div>
+    <div class="gp-scores" id="gpScores"></div>
   </div>
   <div id="manualHint" class="manual-hint hidden">수동 이동 켜짐 — 옮길 손님 자리를 누른 뒤, 보낼 자리를 누르세요. (둘 다 손님이면 서로 교환)</div>
   <div id="pairHint" class="manual-hint hidden">같이 앉기 켜짐 — 함께 앉힐 두 손님 자리를 차례로 누르세요. 다시 누르면 해제. (다음 자리 이동부터 반영)</div>
@@ -512,6 +567,265 @@ function doFloorLogin(){
 var _floorStarted = false;
 async function startFloor(){ if (_floorStarted) return; _floorStarted = true; await loadMeta(); loadSeats(); setInterval(loadSeats, 8000); }
 if (localStorage.getItem('floorAuth') === '1') { document.getElementById('floorLogin').style.display = 'none'; startFloor(); }
+
+// ===== 게임 모드 (Firebase 부저) =====
+const FB_CFG = {
+  apiKey: "AIzaSyDsm_VOxEkgCv2rJH_z618Y4dLzeiKfj_k",
+  authDomain: "wooyeoon-18f43.firebaseapp.com",
+  databaseURL: "https://wooyeoon-18f43-default-rtdb.firebaseio.com",
+  projectId: "wooyeoon-18f43",
+  storageBucket: "wooyeoon-18f43.firebasestorage.app",
+  messagingSenderId: "747837201136",
+  appId: "1:747837201136:web:7fd52a13f0b363f55ec035"
+};
+firebase.initializeApp(FB_CFG);
+const fbDB = firebase.database();
+const gRef = fbDB.ref('game');
+let lastGame = {};
+
+// 분조 알고리즘 (테이블 우선)
+function assignTeams(seats, numTeams) {
+  const tables = [
+    seats.filter(s => s <= 12).sort((a,b)=>a-b),
+    seats.filter(s => s >= 13 && s <= 26).sort((a,b)=>a-b),
+    seats.filter(s => s >= 27).sort((a,b)=>a-b),
+  ].filter(t => t.length > 0);
+  const total = seats.length;
+  if (numTeams > total) numTeams = total;
+  if (numTeams < 1) numTeams = 1;
+  let teamCount = tables.map(t => Math.max(1, Math.round(t.length / total * numTeams)));
+  let sum = teamCount.reduce((a,b)=>a+b, 0);
+  while (sum > numTeams) {
+    let idx = -1, minC = Infinity;
+    teamCount.forEach((c, i) => { if (c > 1 && c < minC) { minC = c; idx = i; } });
+    if (idx === -1) break;
+    teamCount[idx]--; sum--;
+  }
+  while (sum < numTeams) {
+    let idx = 0, maxR = -1;
+    tables.forEach((t, i) => { const r = t.length / teamCount[i]; if (r > maxR) { maxR = r; idx = i; } });
+    teamCount[idx]++; sum++;
+  }
+  const result = {};
+  let nextTeam = 1;
+  tables.forEach((s, i) => {
+    const k = teamCount[i];
+    const base = Math.floor(s.length / k);
+    const extra = s.length % k;
+    let idx = 0;
+    for (let t = 0; t < k; t++) {
+      const cnt = base + (t < extra ? 1 : 0);
+      for (let j = 0; j < cnt; j++) result[s[idx++]] = nextTeam;
+      nextTeam++;
+    }
+  });
+  return { teams: result, teamCount: numTeams };
+}
+
+function startGame() {
+  const activeSeats = Object.keys(occ).map(Number).sort((a,b)=>a-b);
+  if (activeSeats.length < 2) { alert('손님이 2명 이상 있어야 게임 가능해요.'); return; }
+  const input = prompt('몇 조로 나눌까요? (2~' + Math.min(10, activeSeats.length) + ')', '4');
+  if (!input) return;
+  const n = parseInt(input);
+  if (!n || n < 2 || n > activeSeats.length) { alert('잘못된 조 수예요.'); return; }
+  const { teams, teamCount } = assignTeams(activeSeats, n);
+  const scores = {};
+  for (let t = 1; t <= teamCount; t++) scores[t] = 0;
+  gRef.set({
+    state: 'lobby', teams: teams, teamCount: teamCount, scores: scores,
+    currentScore: 1, winner: null, disabledTeam: null, penalizedTeams: [],
+    earlyBuzzers: null, finalists: null, champion: null, roundCount: 0
+  });
+}
+
+function togglePractice() {
+  const v = lastGame || {};
+  if (v.state === 'practice') {
+    gRef.update({ state: 'lobby', winner: null, disabledTeam: null, penalizedTeams: [] });
+  } else {
+    gRef.update({ state: 'practice', winner: null, disabledTeam: null, penalizedTeams: [] });
+  }
+}
+function startRound() {
+  const v = lastGame || {};
+  if (!v.state || v.state === 'off') { alert('먼저 게임을 시작해주세요.'); return; }
+  gRef.update({
+    state: 'round', winner: null, disabledTeam: null, penalizedTeams: [],
+    roundCount: (v.roundCount || 0) + 1
+  });
+}
+function updateScore() {
+  const val = Math.max(1, Math.min(10, parseInt(document.getElementById('gpScore').value) || 1));
+  gRef.child('currentScore').set(val);
+}
+function markCorrect() {
+  const v = lastGame || {};
+  if (!v.winner) return;
+  const team = v.winner.team;
+  const upd = { winner: null, disabledTeam: null, penalizedTeams: [], earlyBuzzers: null };
+  if (v.state === 'round') {
+    const scores = Object.assign({}, v.scores || {});
+    scores[team] = (scores[team] || 0) + (v.currentScore || 1);
+    upd.scores = scores;
+    upd.roundCount = (v.roundCount || 0) + 1;
+  }
+  if (v.state === 'finalRound') {
+    upd.state = 'gameover';
+    upd.champion = team;
+  }
+  gRef.update(upd);
+}
+function markWrong() {
+  const v = lastGame || {};
+  if (!v.winner) return;
+  const wrongTeam = v.winner.team;
+  gRef.update({
+    state: 'disabling', winner: null, disabledTeam: wrongTeam,
+    prevState: v.state, earlyBuzzers: null
+  });
+  const delay = Math.floor(Math.random() * 2000);
+  setTimeout(() => {
+    gRef.once('value', s => {
+      const cur = s.val() || {};
+      const eb = cur.earlyBuzzers || {};
+      const newPenalized = (cur.penalizedTeams || []).slice();
+      Object.keys(eb).forEach(t => { const n = parseInt(t); if (n && newPenalized.indexOf(n) < 0) newPenalized.push(n); });
+      gRef.update({
+        state: cur.prevState || 'round',
+        earlyBuzzers: null,
+        penalizedTeams: newPenalized
+      });
+    });
+  }, delay);
+}
+function endGame() {
+  const v = lastGame || {};
+  if (!v.state || v.state === 'off') return;
+  const scores = v.scores || {};
+  const teamCount = v.teamCount || 0;
+  let max = -1, leaders = [];
+  for (let t = 1; t <= teamCount; t++) {
+    const s = scores[t] || 0;
+    if (s > max) { max = s; leaders = [t]; }
+    else if (s === max) leaders.push(t);
+  }
+  if (leaders.length === 1) {
+    setTimeout(() => { gRef.update({ state: 'gameover', champion: leaders[0], winner: null }); }, 3000);
+    alert('3초 뒤 우승팀 발표!');
+  } else {
+    if (confirm('동점 — 막판 결정전! ' + leaders.join(', ') + '조 sudden death. 시작?')) {
+      gRef.update({
+        state: 'finalRound', finalists: leaders, winner: null,
+        disabledTeam: null, penalizedTeams: [], earlyBuzzers: null
+      });
+    }
+  }
+}
+
+function renderGamePanel(v) {
+  const panel = document.getElementById('gamePanel');
+  if (!v || !v.state || v.state === 'off') { panel.classList.add('hidden'); return; }
+  panel.classList.remove('hidden');
+  const stateMap = {
+    'lobby': '🟡 대기 (조 안내 중)',
+    'practice': '🎯 연습 진행 중',
+    'round': '🏁 라운드 ' + (v.roundCount || 1),
+    'disabling': '⏳ 잠시 후 재활성...',
+    'finalRound': '🔥 막판 결정전',
+    'gameover': '🏆 종료'
+  };
+  document.getElementById('gpState').textContent = stateMap[v.state] || v.state;
+  const teams = v.teams || {};
+  const teamCount = v.teamCount || 0;
+  let teamsHtml = '';
+  for (let t = 1; t <= teamCount; t++) {
+    const members = Object.keys(teams).filter(k => teams[k] === t).map(Number).sort((a,b)=>a-b);
+    teamsHtml += '<div class="gp-team"><b>'+t+'조</b><span class="seats">'+members.join(', ')+'번</span></div>';
+  }
+  document.getElementById('gpTeams').innerHTML = teamsHtml;
+  const scoreInput = document.getElementById('gpScore');
+  if (document.activeElement !== scoreInput) scoreInput.value = v.currentScore || 1;
+  document.getElementById('gpActionScore').textContent = v.currentScore || 1;
+  const buzzedBox = document.getElementById('gpBuzzedBox');
+  const actionsBox = document.getElementById('gpActions');
+  if (v.winner) {
+    buzzedBox.classList.remove('hidden');
+    actionsBox.classList.remove('hidden');
+    document.getElementById('gpBuzzedTeam').textContent = v.winner.team;
+  } else {
+    buzzedBox.classList.add('hidden');
+    actionsBox.classList.add('hidden');
+  }
+  const practiceBtn = document.getElementById('gpPracticeBtn');
+  practiceBtn.textContent = v.state === 'practice' ? '🛑 연습 종료' : '🎯 연습 시작';
+  let scoresHtml = '';
+  for (let t = 1; t <= teamCount; t++) {
+    scoresHtml += '<div class="gp-score-item"><b>'+((v.scores||{})[t]||0)+'</b>'+t+'조</div>';
+  }
+  document.getElementById('gpScores').innerHTML = scoresHtml;
+  const pens = v.penalizedTeams || [];
+  const dis = v.disabledTeam;
+  let penHtml = '';
+  if (dis) penHtml += '<span class="gp-pen-tag">⛔ '+dis+'조 (오답)</span>';
+  pens.forEach(t => { penHtml += '<span class="gp-pen-tag">⛔ '+t+'조 (연타)</span>'; });
+  document.getElementById('gpPenalties').innerHTML = penHtml;
+}
+
+let aCtx = null;
+function ensA() {
+  try { if (!aCtx) aCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (aCtx.state === 'suspended') aCtx.resume(); } catch(e) {}
+}
+function sndBuzz() {
+  ensA(); if (!aCtx) return;
+  const c = aCtx, n = c.currentTime;
+  const o1 = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain();
+  o1.connect(g); o2.connect(g); g.connect(c.destination);
+  o1.type='square'; o2.type='square'; o1.frequency.value=220; o2.frequency.value=110;
+  g.gain.setValueAtTime(0,n); g.gain.linearRampToValueAtTime(0.55,n+0.02);
+  g.gain.setValueAtTime(0.55,n+0.5); g.gain.exponentialRampToValueAtTime(0.001,n+0.75);
+  o1.start(n); o2.start(n); o1.stop(n+0.75); o2.stop(n+0.75);
+}
+function sndCorrect() {
+  ensA(); if (!aCtx) return;
+  const c = aCtx, n = c.currentTime;
+  [523, 659, 784].forEach((f, i) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.frequency.value = f; o.type='sine';
+    const s = n + i*0.13;
+    g.gain.setValueAtTime(0, s); g.gain.linearRampToValueAtTime(0.5, s+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, s+0.4);
+    o.start(s); o.stop(s+0.4);
+  });
+}
+function sndWrong() {
+  ensA(); if (!aCtx) return;
+  const c = aCtx, n = c.currentTime;
+  const o = c.createOscillator(), g = c.createGain();
+  o.connect(g); g.connect(c.destination);
+  o.frequency.setValueAtTime(220, n); o.frequency.linearRampToValueAtTime(110, n+0.4);
+  o.type='sawtooth';
+  g.gain.setValueAtTime(0.5, n); g.gain.exponentialRampToValueAtTime(0.001, n+0.6);
+  o.start(n); o.stop(n+0.6);
+}
+document.addEventListener('click', ensA, { once: true });
+
+let prevWinnerForSnd = null;
+let prevStateForSnd = null;
+gRef.on('value', snap => {
+  const v = snap.val() || {};
+  if (v.winner && (!prevWinnerForSnd || prevWinnerForSnd.ts !== v.winner.ts)) sndBuzz();
+  if (!v.winner && prevWinnerForSnd) {
+    if (v.state === 'disabling') sndWrong();
+    else if (prevStateForSnd === 'round' || prevStateForSnd === 'practice' || prevStateForSnd === 'finalRound') sndCorrect();
+  }
+  prevWinnerForSnd = v.winner || null;
+  prevStateForSnd = v.state;
+  lastGame = v;
+  renderGamePanel(v);
+});
 </script>
 </body>
 </html>

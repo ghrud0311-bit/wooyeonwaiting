@@ -8,82 +8,102 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body { font-family: 'Noto Sans KR', -apple-system, sans-serif; background: #0e0e10; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 1.2rem; touch-action: manipulation; }
-.header { text-align: center; margin-bottom: 1.5rem; }
-.header h1 { font-size: 17px; color: #d4a82a; letter-spacing: 0.25em; font-weight: 700; margin-bottom: 4px; }
+.header { text-align: center; margin-bottom: 1rem; }
+.header h1 { font-size: 16px; color: #d4a82a; letter-spacing: 0.25em; font-weight: 700; margin-bottom: 4px; }
 .header .sub { font-size: 12px; color: #888; }
-.status { text-align: center; padding: 1rem; font-size: 17px; min-height: 60px; color: #ccc; }
-.team-select-hint { font-size: 14px; color: #aaa; text-align: center; margin-bottom: 1rem; }
-.team-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; max-width: 360px; margin-bottom: 2rem; }
-.team-btn { aspect-ratio: 1; background: #2a2825; border: 1px solid #444; border-radius: 12px; color: #fff; font-size: 24px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
-.team-btn:active { transform: scale(0.95); }
-.buzzer-wrap { display: flex; flex-direction: column; align-items: center; gap: 2rem; }
-.buzzer { width: 240px; height: 240px; border-radius: 50%; background: #2a2825; border: 6px solid #1a1916; color: #555; font-size: 20px; font-weight: 700; cursor: not-allowed; transition: all 0.08s; user-select: none; -webkit-user-select: none; line-height: 1.2; }
-.buzzer.active { background: linear-gradient(180deg, #ff5a5d 0%, #c41e21 100%); color: #fff; border-color: #6b1012; cursor: pointer; box-shadow: 0 10px 0 #6b1012, 0 14px 30px rgba(255,80,80,0.45); font-size: 26px; animation: pulse 0.8s ease-in-out infinite; }
+.conn { font-size: 11px; color: #555; position: fixed; top: 8px; right: 12px; }
+.conn.on { color: #4a8c5c; }
+
+.info-card { background: #2a2825; border: 1px solid #444; border-radius: 14px; padding: 1.6rem 1.2rem; margin-bottom: 1.5rem; text-align: center; max-width: 360px; width: 100%; }
+.info-card .label { font-size: 12px; color: #888; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
+.info-card .team-num { font-size: 72px; font-weight: 700; color: #d4a82a; line-height: 1; margin-bottom: 0.3rem; }
+.info-card .team-num small { font-size: 24px; color: #888; font-weight: 500; }
+.info-card .members { font-size: 13px; color: #bbb; line-height: 1.5; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #444; }
+.info-card .members b { color: #fff; font-weight: 500; }
+.info-card .btn { width: 100%; padding: 14px; background: #d4a82a; color: #1a1916; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; margin-top: 1rem; }
+
+.score-banner { background: linear-gradient(180deg, #2a2825 0%, #1a1916 100%); border: 1px solid #d4a82a; border-radius: 10px; padding: 8px 16px; margin-bottom: 1rem; font-size: 14px; color: #d4a82a; }
+.score-banner b { font-size: 18px; }
+
+.status { text-align: center; padding: 0.8rem; font-size: 16px; min-height: 50px; color: #aaa; }
+.buzzer-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.buzzer { width: 260px; height: 260px; border-radius: 50%; background: #2a2825; border: 6px solid #1a1916; color: #555; font-size: 18px; font-weight: 700; cursor: not-allowed; transition: all 0.08s; user-select: none; -webkit-user-select: none; line-height: 1.3; }
+.buzzer.active { background: linear-gradient(180deg, #ff5a5d 0%, #c41e21 100%); color: #fff; border-color: #6b1012; cursor: pointer; box-shadow: 0 10px 0 #6b1012, 0 14px 30px rgba(255,80,80,0.45); font-size: 28px; animation: pulse 0.8s ease-in-out infinite; }
 .buzzer.active:active { transform: translateY(8px); box-shadow: 0 2px 0 #6b1012, 0 4px 10px rgba(255,80,80,0.4); animation: none; }
+.buzzer.penalty { background: #3a2a2a; color: #c87575; border-color: #2a1a1a; }
 @keyframes pulse {
   0%, 100% { box-shadow: 0 10px 0 #6b1012, 0 14px 30px rgba(255,80,80,0.45); }
   50%      { box-shadow: 0 10px 0 #6b1012, 0 14px 40px rgba(255,80,80,0.75); }
 }
-.winner { text-align: center; padding: 1rem 0 2rem; }
-.winner-label { font-size: 18px; color: #d4a82a; letter-spacing: 0.15em; margin-bottom: 0.5rem; }
-.winner-team { font-size: 84px; font-weight: 700; color: #ff5a5d; line-height: 1; }
-.winner-team small { font-size: 28px; color: #d4a82a; margin-left: 6px; font-weight: 500; }
-.me-tag { display: inline-block; padding: 4px 10px; background: #d4a82a; color: #1a1916; border-radius: 6px; font-size: 12px; font-weight: 700; margin-left: 8px; vertical-align: middle; }
-.admin-panel { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 340px; margin-top: 1rem; }
-.admin-btn { padding: 18px; border-radius: 12px; border: 1px solid #444; background: #2a2825; color: #fff; font-size: 16px; font-weight: 500; font-family: inherit; cursor: pointer; }
-.admin-btn:active { transform: scale(0.98); }
-.admin-btn.primary { background: linear-gradient(180deg, #f5c956 0%, #d4a82a 100%); color: #1a1916; border-color: #d4a82a; font-weight: 700; font-size: 18px; padding: 22px; }
-.admin-btn.danger { background: linear-gradient(180deg, #ff5a5d 0%, #c41e21 100%); color: #fff; border-color: #6b1012; }
-.admin-btn.ghost { background: transparent; color: #aaa; font-size: 13px; padding: 12px; border-color: #333; }
-.team-change { font-size: 12px; color: #666; margin-top: 1.5rem; text-align: center; cursor: pointer; padding: 8px; }
-.team-change:active { color: #aaa; }
-.connection { font-size: 11px; color: #555; position: fixed; top: 8px; right: 12px; }
-.connection.on { color: #4a8c5c; }
+
+.winner-display { text-align: center; padding: 2rem 1rem; }
+.winner-display .label { font-size: 16px; color: #d4a82a; letter-spacing: 0.15em; margin-bottom: 0.5rem; }
+.winner-display .team { font-size: 84px; font-weight: 700; color: #ff5a5d; line-height: 1; }
+.winner-display .team small { font-size: 28px; color: #d4a82a; margin-left: 6px; }
+.winner-display .me { display: inline-block; padding: 4px 10px; background: #d4a82a; color: #1a1916; border-radius: 6px; font-size: 12px; font-weight: 700; margin-left: 8px; vertical-align: middle; }
+
+.champion { text-align: center; padding: 3rem 1rem; animation: champFade 0.8s; }
+.champion .crown { font-size: 56px; margin-bottom: 0.5rem; }
+.champion .label { font-size: 18px; color: #d4a82a; letter-spacing: 0.2em; margin-bottom: 1rem; }
+.champion .team { font-size: 100px; font-weight: 700; color: #ff5a5d; line-height: 1; }
+.champion .team small { font-size: 32px; color: #d4a82a; margin-left: 8px; }
+.champion .score { font-size: 14px; color: #888; margin-top: 1rem; }
+@keyframes champFade { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+.scoreboard { width: 100%; max-width: 360px; padding: 0.8rem; margin-top: 1.5rem; background: #1a1916; border: 1px solid #333; border-radius: 10px; font-size: 13px; }
+.scoreboard .row { display: flex; justify-content: space-between; padding: 4px 0; color: #aaa; }
+.scoreboard .row.mine { color: #d4a82a; font-weight: 700; }
+.scoreboard .row .lbl { color: #666; font-size: 11px; }
+
+.err-box { text-align: center; padding: 3rem 1rem; color: #888; font-size: 15px; line-height: 1.6; }
+
+.hidden { display: none !important; }
 </style>
 </head>
 <body>
-<div class="connection" id="conn">●</div>
+<div class="conn" id="conn">●</div>
 <div class="header">
-  <h1>WOOYEON · BUZZER</h1>
-  <div class="sub" id="modeLabel">팀 부저</div>
+  <h1>WOOYEON · GAME</h1>
+  <div class="sub" id="modeLabel">대기 중</div>
 </div>
 
-<!-- 팀 선택 -->
-<div id="teamSelectView" style="width:100%;max-width:380px">
-  <div class="team-select-hint">우리 팀 번호를 골라주세요</div>
-  <div class="team-grid">
-    <button class="team-btn" data-team="1">1</button>
-    <button class="team-btn" data-team="2">2</button>
-    <button class="team-btn" data-team="3">3</button>
-    <button class="team-btn" data-team="4">4</button>
-    <button class="team-btn" data-team="5">5</button>
-  </div>
+<div id="loading" class="status">불러오는 중...</div>
+<div id="errView" class="err-box hidden">게임에 참여할 수 없는 자리예요.<br>잠시 후 다시 시도해주세요.</div>
+
+<!-- 조 안내 카드 (lobby) -->
+<div id="introCard" class="info-card hidden">
+  <div class="label">YOUR TEAM</div>
+  <div class="team-num"><span id="introTeam">-</span><small>조</small></div>
+  <div class="members" id="introMembers">조원: -</div>
+  <button class="btn" onclick="confirmIntro()">확인</button>
 </div>
 
 <!-- 게임 화면 -->
-<div id="gameView" style="display:none">
+<div id="gameView" class="hidden" style="width:100%;display:flex;flex-direction:column;align-items:center">
+  <div class="score-banner" id="scoreBanner">💰 현재 <b id="bannerScore">1</b>점 문제 · 우리 조: <b id="bannerMy">- </b>점</div>
   <div class="status" id="status">대기 중...</div>
-  <div id="winnerInfo" style="display:none" class="winner">
-    <div class="winner-label">🏆 WINNER</div>
-    <div class="winner-team"><span id="winnerTeam">-</span><small>팀</small><span id="meTag" class="me-tag" style="display:none">나</span></div>
-  </div>
-  <div class="buzzer-wrap" id="buzzerWrap">
+  <div class="buzzer-wrap">
     <button class="buzzer" id="buzzer">대기</button>
   </div>
-  <div class="team-change" onclick="changeTeam()">← 팀 다시 고르기</div>
 </div>
 
-<!-- 관리자 화면 -->
-<div id="adminView" style="display:none">
-  <div class="status" id="adminStatus">대기 중</div>
-  <div class="admin-panel">
-    <button class="admin-btn primary" id="adminMain">시작</button>
-    <button class="admin-btn ghost" id="adminReset">↻ 리셋</button>
-    <button class="admin-btn ghost" id="adminTest">🔊 사운드 테스트</button>
-  </div>
-  <div style="margin-top:2rem;font-size:11px;color:#555;text-align:center;line-height:1.6">
-    1) 블루투스 스피커 연결<br>2) "사운드 테스트"로 소리 확인<br>3) "시작" 누르면 팀 폰들이 부저 활성
-  </div>
+<!-- 누가 부저 누름 -->
+<div id="winnerDisplay" class="winner-display hidden">
+  <div class="label">🎤 정답 도전</div>
+  <div class="team"><span id="winnerTeam">-</span><small>조</small><span id="winnerMe" class="me hidden">우리!</span></div>
+</div>
+
+<!-- 우승 -->
+<div id="championView" class="champion hidden">
+  <div class="crown">🏆</div>
+  <div class="label">CHAMPION</div>
+  <div class="team"><span id="champTeam">-</span><small>조</small></div>
+  <div class="score" id="champScore">-</div>
+</div>
+
+<!-- 점수판 (게임 중) -->
+<div id="scoreboardSection" class="hidden" style="width:100%;display:flex;justify-content:center">
+  <div class="scoreboard" id="scoreboard"></div>
 </div>
 
 <!-- Firebase SDK -->
@@ -103,8 +123,16 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const gameRef = db.ref('game');
 
-const isAdmin = new URLSearchParams(location.search).get('admin') === '1';
-let myTeam = parseInt(localStorage.getItem('buzzer_team')) || null;
+const params = new URLSearchParams(location.search);
+const mySeat = parseInt(params.get('n')) || 0;
+const isAdmin = params.get('admin') === '1';
+
+let myTeam = null;
+let confirmedIntro = parseInt(localStorage.getItem('buzzer_intro_seen')) === mySeat;
+let lastGameVal = {};
+let prevWinner = null;
+let prevState = null;
+let prevChampion = null;
 
 // 연결 상태
 db.ref('.info/connected').on('value', snap => {
@@ -114,144 +142,283 @@ db.ref('.info/connected').on('value', snap => {
 // 사운드
 let audioCtx = null;
 function ensureAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch(e) {}
 }
 function playBuzz() {
-  ensureAudio();
-  const ctx = audioCtx;
-  // 게임쇼 부저: 낮은 톤 두 개 짧게 빠앙!
-  const now = ctx.currentTime;
-  const o1 = ctx.createOscillator();
-  const o2 = ctx.createOscillator();
+  ensureAudio(); if (!audioCtx) return;
+  const ctx = audioCtx, now = ctx.currentTime;
+  const o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
   const gain = ctx.createGain();
   o1.connect(gain); o2.connect(gain); gain.connect(ctx.destination);
-  o1.type = 'square'; o2.type = 'square';
-  o1.frequency.value = 220;
-  o2.frequency.value = 110;
+  o1.type='square'; o2.type='square';
+  o1.frequency.value = 220; o2.frequency.value = 110;
   gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(0.5, now + 0.02);
-  gain.gain.setValueAtTime(0.5, now + 0.55);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+  gain.gain.linearRampToValueAtTime(0.5, now+0.02);
+  gain.gain.setValueAtTime(0.5, now+0.5);
+  gain.gain.exponentialRampToValueAtTime(0.001, now+0.75);
   o1.start(now); o2.start(now);
-  o1.stop(now + 0.8); o2.stop(now + 0.8);
+  o1.stop(now+0.75); o2.stop(now+0.75);
 }
-function changeTeam(){
-  localStorage.removeItem('buzzer_team');
-  myTeam = null;
-  document.getElementById('gameView').style.display = 'none';
-  document.getElementById('teamSelectView').style.display = 'block';
-  document.getElementById('modeLabel').textContent = '팀 부저';
+function playCorrect() {
+  ensureAudio(); if (!audioCtx) return;
+  const ctx = audioCtx, now = ctx.currentTime;
+  [523, 659, 784].forEach((freq, i) => {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = freq; osc.type = 'sine';
+    const start = now + i*0.13;
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(0.4, start+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, start+0.4);
+    osc.start(start); osc.stop(start+0.4);
+  });
+}
+function playWrong() {
+  ensureAudio(); if (!audioCtx) return;
+  const ctx = audioCtx, now = ctx.currentTime;
+  const osc = ctx.createOscillator(), gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.frequency.setValueAtTime(220, now);
+  osc.frequency.linearRampToValueAtTime(110, now+0.4);
+  osc.type='sawtooth';
+  gain.gain.setValueAtTime(0.45, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now+0.6);
+  osc.start(now); osc.stop(now+0.6);
 }
 
-if (isAdmin) {
-  document.getElementById('modeLabel').textContent = '관리자';
-  document.getElementById('teamSelectView').style.display = 'none';
-  document.getElementById('adminView').style.display = 'block';
+function show(id) {
+  ['loading','errView','introCard','gameView','winnerDisplay','championView'].forEach(v => {
+    const el = document.getElementById(v);
+    if (el) el.classList.toggle('hidden', v !== id);
+  });
+}
 
-  document.getElementById('adminMain').addEventListener('click', () => {
-    ensureAudio();
-    const v = lastVal || {};
-    if (v.winner || v.state === 'active') {
-      // 취소/리셋
-      gameRef.set({ state: 'idle', winner: null });
-    } else {
-      // 시작
-      gameRef.set({ state: 'active', winner: null, startAt: firebase.database.ServerValue.TIMESTAMP });
-    }
-  });
-  document.getElementById('adminReset').addEventListener('click', () => {
-    gameRef.set({ state: 'idle', winner: null });
-  });
-  document.getElementById('adminTest').addEventListener('click', () => {
-    playBuzz();
-  });
+function confirmIntro() {
+  confirmedIntro = true;
+  localStorage.setItem('buzzer_intro_seen', mySeat);
+  render(lastGameVal);
+}
 
-  let lastVal = null;
-  let prevWinner = null;
-  gameRef.on('value', snap => {
-    const v = snap.val() || { state: 'idle' };
-    lastVal = v;
-    const status = document.getElementById('adminStatus');
-    const main = document.getElementById('adminMain');
-    if (v.winner) {
-      status.innerHTML = '🏆 <span style="color:#ff5a5d;font-size:42px;font-weight:700">' + v.winner.team + '</span><span style="color:#d4a82a">팀 우승!</span>';
-      main.textContent = '다시 시작';
-      main.className = 'admin-btn primary';
-    } else if (v.state === 'active') {
-      status.innerHTML = '<span style="color:#ff5a5d">🔴 활성</span> — 부저 대기 중';
-      main.textContent = '취소';
-      main.className = 'admin-btn danger';
-    } else {
-      status.textContent = '대기 중';
-      main.textContent = '시작';
-      main.className = 'admin-btn primary';
-    }
-    // 우승 시 사운드
-    const winTeam = v.winner ? v.winner.team : null;
-    if (winTeam && winTeam !== prevWinner) {
-      playBuzz();
-    }
-    prevWinner = winTeam;
-  });
+function getMembers(teams, team) {
+  return Object.keys(teams || {}).filter(k => teams[k] === team).map(Number).sort((a,b)=>a-b);
+}
 
-} else {
-  // 팀 모드
-  document.querySelectorAll('.team-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      myTeam = parseInt(btn.dataset.team);
-      localStorage.setItem('buzzer_team', myTeam);
-      showGame();
-    });
-  });
-  function showGame() {
-    document.getElementById('teamSelectView').style.display = 'none';
-    document.getElementById('gameView').style.display = 'block';
-    document.getElementById('modeLabel').textContent = myTeam + '팀';
+function isFinalist(v, team) {
+  return Array.isArray(v.finalists) && v.finalists.indexOf(team) >= 0;
+}
+function isPenalized(v, team) {
+  if (v.disabledTeam === team) return true;
+  if (Array.isArray(v.penalizedTeams) && v.penalizedTeams.indexOf(team) >= 0) return true;
+  return false;
+}
+
+const buzzer = document.getElementById('buzzer');
+buzzer.addEventListener('click', () => {
+  const v = lastGameVal || {};
+  if (!myTeam) return;
+  // 게임 활성 상태인지
+  const isPlayState = v.state === 'practice' || v.state === 'round' || v.state === 'finalRound';
+  const isDisabling = v.state === 'disabling';
+  if (!isPlayState && !isDisabling) return;
+  if (v.winner) return;
+  // 우리 조 페널티 / disabled / finalist 아님
+  if (isPenalized(v, myTeam)) return;
+  if (v.state === 'finalRound' && !isFinalist(v, myTeam)) return;
+
+  // disabling 중이면 연타 페널티 등록
+  if (isDisabling) {
+    gameRef.child('earlyBuzzers/' + myTeam).set(true);
+    return;
   }
-  if (myTeam) showGame();
 
-  const buzzer = document.getElementById('buzzer');
-  buzzer.addEventListener('click', () => {
-    if (!buzzer.classList.contains('active')) return;
-    if (!myTeam) return;
-    buzzer.classList.remove('active');
-    buzzer.textContent = '...';
-    gameRef.child('winner').transaction(current => {
-      if (current === null) return { team: myTeam, ts: firebase.database.ServerValue.TIMESTAMP };
+  // 실제 부저 — transaction
+  gameRef.child('winner').transaction(current => {
+    if (current === null) return { team: myTeam, seat: mySeat, ts: firebase.database.ServerValue.TIMESTAMP };
+    return;
+  });
+});
+
+function render(v) {
+  if (!v) v = {};
+  document.getElementById('modeLabel').textContent =
+    v.state === 'lobby' ? '대기 중' :
+    v.state === 'practice' ? '🎯 연습 중' :
+    v.state === 'round' ? '🏁 라운드 ' + (v.roundCount || 1) :
+    v.state === 'disabling' ? '잠시...' :
+    v.state === 'finalRound' ? '🔥 막판 결정' :
+    v.state === 'gameover' ? '게임 종료' : '-';
+
+  // 자리 확인
+  if (!mySeat || mySeat < 1 || mySeat > 32) { show('errView'); return; }
+  const teams = v.teams || {};
+  myTeam = teams[mySeat] || teams[String(mySeat)] || null;
+  if (!myTeam) {
+    if (v.state === 'off' || !v.state) {
+      // 게임 안 시작됨 — 안내
+      document.getElementById('errView').innerHTML = '게임이 진행 중이 아니에요.<br>자리 QR을 다시 스캔하면 정상 화면으로 돌아가요.';
+      show('errView');
       return;
-    });
-  });
-
-  gameRef.on('value', snap => {
-    const v = snap.val() || { state: 'idle' };
-    const status = document.getElementById('status');
-    const winnerInfo = document.getElementById('winnerInfo');
-    const wrap = document.getElementById('buzzerWrap');
-    if (v.winner) {
-      buzzer.classList.remove('active');
-      wrap.style.display = 'none';
-      status.style.display = 'none';
-      winnerInfo.style.display = 'block';
-      document.getElementById('winnerTeam').textContent = v.winner.team;
-      document.getElementById('meTag').style.display = (v.winner.team === myTeam) ? 'inline-block' : 'none';
-    } else if (v.state === 'active') {
-      wrap.style.display = 'flex';
-      status.style.display = 'block';
-      winnerInfo.style.display = 'none';
-      buzzer.classList.add('active');
-      buzzer.textContent = '🔔 누르세요!';
-      status.textContent = '지금!';
-    } else {
-      wrap.style.display = 'flex';
-      status.style.display = 'block';
-      winnerInfo.style.display = 'none';
-      buzzer.classList.remove('active');
-      buzzer.textContent = '대기';
-      status.textContent = '관리자가 시작할 때까지 잠시만요...';
     }
-  });
+    show('errView');
+    return;
+  }
+
+  // 우승 발표
+  if (v.state === 'gameover' && v.champion) {
+    if (v.champion !== prevChampion) {
+      prevChampion = v.champion;
+      if (v.champion === myTeam) playCorrect();
+    }
+    const teamsCount = v.teamCount || Object.keys(teams).length;
+    document.getElementById('champTeam').textContent = v.champion;
+    const champScore = (v.scores || {})[v.champion] || 0;
+    document.getElementById('champScore').textContent = '점수: ' + champScore + '점';
+    show('championView');
+    return;
+  }
+  prevChampion = null;
+
+  // 인트로 (조 안내) — confirmedIntro 안 되어 있고 state가 'lobby'면
+  if (v.state === 'lobby' && !confirmedIntro) {
+    document.getElementById('introTeam').textContent = myTeam;
+    document.getElementById('introMembers').innerHTML = '조원: <b>자리 ' + getMembers(teams, myTeam).join(', ') + '번</b>';
+    show('introCard');
+    return;
+  }
+  // lobby 인데 confirm 됨
+  if (v.state === 'lobby' && confirmedIntro) {
+    show('gameView');
+    setupGameView(v);
+    return;
+  }
+
+  // 누가 부저 누름 (winner 있음)
+  if (v.winner) {
+    if (v.winner.ts !== prevWinner) {
+      prevWinner = v.winner.ts;
+      if (v.winner.team === myTeam) {
+        // 내가 누름! (또는 우리 조)
+      }
+    }
+    document.getElementById('winnerTeam').textContent = v.winner.team;
+    document.getElementById('winnerMe').classList.toggle('hidden', v.winner.team !== myTeam);
+    show('winnerDisplay');
+    return;
+  }
+  prevWinner = null;
+
+  // 게임 활성/대기 화면
+  show('gameView');
+  setupGameView(v);
 }
+
+function setupGameView(v) {
+  const isPlayState = v.state === 'practice' || v.state === 'round' || v.state === 'finalRound';
+  const isDisabling = v.state === 'disabling';
+  const myPenalized = isPenalized(v, myTeam);
+  const notFinalist = v.state === 'finalRound' && !isFinalist(v, myTeam);
+
+  // 점수 배너
+  document.getElementById('bannerScore').textContent = v.currentScore || 1;
+  document.getElementById('bannerMy').textContent = (v.scores || {})[myTeam] || 0;
+
+  // 부저 상태
+  buzzer.classList.remove('active','penalty');
+  if (isPlayState && !v.winner && !myPenalized && !notFinalist) {
+    buzzer.classList.add('active');
+    buzzer.textContent = '🔔 누르세요!';
+  } else if (myPenalized) {
+    buzzer.classList.add('penalty');
+    buzzer.textContent = '⛔ 대기';
+  } else if (notFinalist) {
+    buzzer.textContent = '— 막판 미참여';
+  } else if (isDisabling) {
+    buzzer.textContent = '대기';
+  } else {
+    buzzer.textContent = '대기';
+  }
+
+  // 상태 메시지
+  const status = document.getElementById('status');
+  if (v.state === 'lobby') status.textContent = '관리자가 시작할 때까지 잠시만요...';
+  else if (v.state === 'practice') status.textContent = myPenalized ? '⛔ 우리 조 다음 부저 잠시 비활성' : '🎯 연습 중 — 자유롭게 눌러보세요';
+  else if (v.state === 'round') status.textContent = myPenalized ? '⛔ 우리 조 다음 부저 잠시 비활성' : '🏁 라운드 진행 중 — 빨리 누르세요!';
+  else if (v.state === 'finalRound') status.textContent = isFinalist(v, myTeam) ? '🔥 막판 결정 — 우리 조 참여!' : '🔥 막판 결정 — 우리 조 미참여';
+  else if (v.state === 'disabling') status.textContent = '잠시만요...';
+  else status.textContent = '-';
+
+  // 점수판
+  renderScoreboard(v);
+}
+
+function renderScoreboard(v) {
+  const teams = v.teams || {};
+  const scores = v.scores || {};
+  const teamCount = v.teamCount || 0;
+  if (teamCount < 1) {
+    document.getElementById('scoreboardSection').classList.add('hidden');
+    return;
+  }
+  let html = '';
+  for (let t = 1; t <= teamCount; t++) {
+    const members = getMembers(teams, t);
+    const sc = scores[t] || 0;
+    const mine = t === myTeam ? ' mine' : '';
+    html += '<div class="row'+mine+'"><span>'+t+'조 <span class="lbl">('+members.join(',')+'번)</span></span><span>'+sc+'점</span></div>';
+  }
+  document.getElementById('scoreboard').innerHTML = html;
+  document.getElementById('scoreboardSection').classList.remove('hidden');
+}
+
+// 첫 사용자 인터랙션 시 AudioContext 활성화 (iOS Safari 대응)
+document.addEventListener('touchstart', ensureAudio, { once: true });
+document.addEventListener('click', ensureAudio, { once: true });
+
+// 정답/오답 사운드: 상태 전이 감지
+function detectSoundEvents(v) {
+  // winner가 있다가 사라짐 = 정답 또는 오답 처리
+  if (prevState && prevState.winner && !v.winner) {
+    // 정답: roundCount 증가 (라운드 모드에서) 또는 새 라운드
+    // 오답: disabledTeam 변경 또는 새로 set
+    const wasRound = prevState.state === 'round' || prevState.state === 'practice' || prevState.state === 'finalRound';
+    if (wasRound) {
+      const newDisabled = v.disabledTeam;
+      const prevDisabled = prevState.disabledTeam;
+      // disabledTeam이 새로 추가됐으면 오답
+      if (newDisabled && newDisabled !== prevDisabled && newDisabled === prevState.winner.team) {
+        playWrong();
+      } else {
+        // 정답으로 처리됨
+        playCorrect();
+      }
+    }
+  }
+}
+
+gameRef.on('value', snap => {
+  const v = snap.val() || { state: 'off' };
+  detectSoundEvents(v);
+  lastGameVal = v;
+  prevState = v;
+  render(v);
+});
+
+// 새 게임 시작되면 인트로 확인 리셋
+gameRef.child('teams').on('value', snap => {
+  // teams가 새로 set 되면 (게임 재시작) 인트로 다시 보이게
+  // 간단: lobby 진입 시 confirmedIntro 유지하되, 게임 종료 후 lobby로 다시 진입 시 reset
+});
+gameRef.child('state').on('value', snap => {
+  const s = snap.val();
+  // 'off' 상태로 가면 confirmedIntro 리셋 (다음 게임 위해)
+  if (s === 'off' || !s) {
+    localStorage.removeItem('buzzer_intro_seen');
+    confirmedIntro = false;
+  }
+});
 </script>
 </body>
 </html>
