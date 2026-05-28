@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>우연 — 부저</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Noto Sans KR', -apple-system, sans-serif; background: #0e0e10; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 1.2rem; touch-action: manipulation; }
+.header { text-align: center; margin-bottom: 1.5rem; }
+.header h1 { font-size: 17px; color: #d4a82a; letter-spacing: 0.25em; font-weight: 700; margin-bottom: 4px; }
+.header .sub { font-size: 12px; color: #888; }
+.status { text-align: center; padding: 1rem; font-size: 17px; min-height: 60px; color: #ccc; }
+.team-select-hint { font-size: 14px; color: #aaa; text-align: center; margin-bottom: 1rem; }
+.team-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; max-width: 360px; margin-bottom: 2rem; }
+.team-btn { aspect-ratio: 1; background: #2a2825; border: 1px solid #444; border-radius: 12px; color: #fff; font-size: 24px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.team-btn:active { transform: scale(0.95); }
+.buzzer-wrap { display: flex; flex-direction: column; align-items: center; gap: 2rem; }
+.buzzer { width: 240px; height: 240px; border-radius: 50%; background: #2a2825; border: 6px solid #1a1916; color: #555; font-size: 20px; font-weight: 700; cursor: not-allowed; transition: all 0.08s; user-select: none; -webkit-user-select: none; line-height: 1.2; }
+.buzzer.active { background: linear-gradient(180deg, #ff5a5d 0%, #c41e21 100%); color: #fff; border-color: #6b1012; cursor: pointer; box-shadow: 0 10px 0 #6b1012, 0 14px 30px rgba(255,80,80,0.45); font-size: 26px; animation: pulse 0.8s ease-in-out infinite; }
+.buzzer.active:active { transform: translateY(8px); box-shadow: 0 2px 0 #6b1012, 0 4px 10px rgba(255,80,80,0.4); animation: none; }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 10px 0 #6b1012, 0 14px 30px rgba(255,80,80,0.45); }
+  50%      { box-shadow: 0 10px 0 #6b1012, 0 14px 40px rgba(255,80,80,0.75); }
+}
+.winner { text-align: center; padding: 1rem 0 2rem; }
+.winner-label { font-size: 18px; color: #d4a82a; letter-spacing: 0.15em; margin-bottom: 0.5rem; }
+.winner-team { font-size: 84px; font-weight: 700; color: #ff5a5d; line-height: 1; }
+.winner-team small { font-size: 28px; color: #d4a82a; margin-left: 6px; font-weight: 500; }
+.me-tag { display: inline-block; padding: 4px 10px; background: #d4a82a; color: #1a1916; border-radius: 6px; font-size: 12px; font-weight: 700; margin-left: 8px; vertical-align: middle; }
+.admin-panel { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 340px; margin-top: 1rem; }
+.admin-btn { padding: 18px; border-radius: 12px; border: 1px solid #444; background: #2a2825; color: #fff; font-size: 16px; font-weight: 500; font-family: inherit; cursor: pointer; }
+.admin-btn:active { transform: scale(0.98); }
+.admin-btn.primary { background: linear-gradient(180deg, #f5c956 0%, #d4a82a 100%); color: #1a1916; border-color: #d4a82a; font-weight: 700; font-size: 18px; padding: 22px; }
+.admin-btn.danger { background: linear-gradient(180deg, #ff5a5d 0%, #c41e21 100%); color: #fff; border-color: #6b1012; }
+.admin-btn.ghost { background: transparent; color: #aaa; font-size: 13px; padding: 12px; border-color: #333; }
+.team-change { font-size: 12px; color: #666; margin-top: 1.5rem; text-align: center; cursor: pointer; padding: 8px; }
+.team-change:active { color: #aaa; }
+.connection { font-size: 11px; color: #555; position: fixed; top: 8px; right: 12px; }
+.connection.on { color: #4a8c5c; }
+</style>
+</head>
+<body>
+<div class="connection" id="conn">●</div>
+<div class="header">
+  <h1>WOOYEON · BUZZER</h1>
+  <div class="sub" id="modeLabel">팀 부저</div>
+</div>
+
+<!-- 팀 선택 -->
+<div id="teamSelectView" style="width:100%;max-width:380px">
+  <div class="team-select-hint">우리 팀 번호를 골라주세요</div>
+  <div class="team-grid">
+    <button class="team-btn" data-team="1">1</button>
+    <button class="team-btn" data-team="2">2</button>
+    <button class="team-btn" data-team="3">3</button>
+    <button class="team-btn" data-team="4">4</button>
+    <button class="team-btn" data-team="5">5</button>
+  </div>
+</div>
+
+<!-- 게임 화면 -->
+<div id="gameView" style="display:none">
+  <div class="status" id="status">대기 중...</div>
+  <div id="winnerInfo" style="display:none" class="winner">
+    <div class="winner-label">🏆 WINNER</div>
+    <div class="winner-team"><span id="winnerTeam">-</span><small>팀</small><span id="meTag" class="me-tag" style="display:none">나</span></div>
+  </div>
+  <div class="buzzer-wrap" id="buzzerWrap">
+    <button class="buzzer" id="buzzer">대기</button>
+  </div>
+  <div class="team-change" onclick="changeTeam()">← 팀 다시 고르기</div>
+</div>
+
+<!-- 관리자 화면 -->
+<div id="adminView" style="display:none">
+  <div class="status" id="adminStatus">대기 중</div>
+  <div class="admin-panel">
+    <button class="admin-btn primary" id="adminMain">시작</button>
+    <button class="admin-btn ghost" id="adminReset">↻ 리셋</button>
+    <button class="admin-btn ghost" id="adminTest">🔊 사운드 테스트</button>
+  </div>
+  <div style="margin-top:2rem;font-size:11px;color:#555;text-align:center;line-height:1.6">
+    1) 블루투스 스피커 연결<br>2) "사운드 테스트"로 소리 확인<br>3) "시작" 누르면 팀 폰들이 부저 활성
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDsm_VOxEkgCv2rJH_z618Y4dLzeiKfj_k",
+  authDomain: "wooyeoon-18f43.firebaseapp.com",
+  databaseURL: "https://wooyeoon-18f43-default-rtdb.firebaseio.com",
+  projectId: "wooyeoon-18f43",
+  storageBucket: "wooyeoon-18f43.firebasestorage.app",
+  messagingSenderId: "747837201136",
+  appId: "1:747837201136:web:7fd52a13f0b363f55ec035"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const gameRef = db.ref('game');
+
+const isAdmin = new URLSearchParams(location.search).get('admin') === '1';
+let myTeam = parseInt(localStorage.getItem('buzzer_team')) || null;
+
+// 연결 상태
+db.ref('.info/connected').on('value', snap => {
+  document.getElementById('conn').classList.toggle('on', snap.val() === true);
+});
+
+// 사운드
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playBuzz() {
+  ensureAudio();
+  const ctx = audioCtx;
+  // 게임쇼 부저: 낮은 톤 두 개 짧게 빠앙!
+  const now = ctx.currentTime;
+  const o1 = ctx.createOscillator();
+  const o2 = ctx.createOscillator();
+  const gain = ctx.createGain();
+  o1.connect(gain); o2.connect(gain); gain.connect(ctx.destination);
+  o1.type = 'square'; o2.type = 'square';
+  o1.frequency.value = 220;
+  o2.frequency.value = 110;
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.5, now + 0.02);
+  gain.gain.setValueAtTime(0.5, now + 0.55);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+  o1.start(now); o2.start(now);
+  o1.stop(now + 0.8); o2.stop(now + 0.8);
+}
+function changeTeam(){
+  localStorage.removeItem('buzzer_team');
+  myTeam = null;
+  document.getElementById('gameView').style.display = 'none';
+  document.getElementById('teamSelectView').style.display = 'block';
+  document.getElementById('modeLabel').textContent = '팀 부저';
+}
+
+if (isAdmin) {
+  document.getElementById('modeLabel').textContent = '관리자';
+  document.getElementById('teamSelectView').style.display = 'none';
+  document.getElementById('adminView').style.display = 'block';
+
+  document.getElementById('adminMain').addEventListener('click', () => {
+    ensureAudio();
+    const v = lastVal || {};
+    if (v.winner || v.state === 'active') {
+      // 취소/리셋
+      gameRef.set({ state: 'idle', winner: null });
+    } else {
+      // 시작
+      gameRef.set({ state: 'active', winner: null, startAt: firebase.database.ServerValue.TIMESTAMP });
+    }
+  });
+  document.getElementById('adminReset').addEventListener('click', () => {
+    gameRef.set({ state: 'idle', winner: null });
+  });
+  document.getElementById('adminTest').addEventListener('click', () => {
+    playBuzz();
+  });
+
+  let lastVal = null;
+  let prevWinner = null;
+  gameRef.on('value', snap => {
+    const v = snap.val() || { state: 'idle' };
+    lastVal = v;
+    const status = document.getElementById('adminStatus');
+    const main = document.getElementById('adminMain');
+    if (v.winner) {
+      status.innerHTML = '🏆 <span style="color:#ff5a5d;font-size:42px;font-weight:700">' + v.winner.team + '</span><span style="color:#d4a82a">팀 우승!</span>';
+      main.textContent = '다시 시작';
+      main.className = 'admin-btn primary';
+    } else if (v.state === 'active') {
+      status.innerHTML = '<span style="color:#ff5a5d">🔴 활성</span> — 부저 대기 중';
+      main.textContent = '취소';
+      main.className = 'admin-btn danger';
+    } else {
+      status.textContent = '대기 중';
+      main.textContent = '시작';
+      main.className = 'admin-btn primary';
+    }
+    // 우승 시 사운드
+    const winTeam = v.winner ? v.winner.team : null;
+    if (winTeam && winTeam !== prevWinner) {
+      playBuzz();
+    }
+    prevWinner = winTeam;
+  });
+
+} else {
+  // 팀 모드
+  document.querySelectorAll('.team-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      myTeam = parseInt(btn.dataset.team);
+      localStorage.setItem('buzzer_team', myTeam);
+      showGame();
+    });
+  });
+  function showGame() {
+    document.getElementById('teamSelectView').style.display = 'none';
+    document.getElementById('gameView').style.display = 'block';
+    document.getElementById('modeLabel').textContent = myTeam + '팀';
+  }
+  if (myTeam) showGame();
+
+  const buzzer = document.getElementById('buzzer');
+  buzzer.addEventListener('click', () => {
+    if (!buzzer.classList.contains('active')) return;
+    if (!myTeam) return;
+    buzzer.classList.remove('active');
+    buzzer.textContent = '...';
+    gameRef.child('winner').transaction(current => {
+      if (current === null) return { team: myTeam, ts: firebase.database.ServerValue.TIMESTAMP };
+      return;
+    });
+  });
+
+  gameRef.on('value', snap => {
+    const v = snap.val() || { state: 'idle' };
+    const status = document.getElementById('status');
+    const winnerInfo = document.getElementById('winnerInfo');
+    const wrap = document.getElementById('buzzerWrap');
+    if (v.winner) {
+      buzzer.classList.remove('active');
+      wrap.style.display = 'none';
+      status.style.display = 'none';
+      winnerInfo.style.display = 'block';
+      document.getElementById('winnerTeam').textContent = v.winner.team;
+      document.getElementById('meTag').style.display = (v.winner.team === myTeam) ? 'inline-block' : 'none';
+    } else if (v.state === 'active') {
+      wrap.style.display = 'flex';
+      status.style.display = 'block';
+      winnerInfo.style.display = 'none';
+      buzzer.classList.add('active');
+      buzzer.textContent = '🔔 누르세요!';
+      status.textContent = '지금!';
+    } else {
+      wrap.style.display = 'flex';
+      status.style.display = 'block';
+      winnerInfo.style.display = 'none';
+      buzzer.classList.remove('active');
+      buzzer.textContent = '대기';
+      status.textContent = '관리자가 시작할 때까지 잠시만요...';
+    }
+  });
+}
+</script>
+</body>
+</html>
