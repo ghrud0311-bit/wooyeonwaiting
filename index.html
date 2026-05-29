@@ -88,18 +88,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .notice-box-item { display: flex; gap: 8px; font-size: 12px; color: var(--text2); line-height: 1.7; margin-bottom: 0.3rem; }
 .notice-box-item:last-child { margin-bottom: 0; }
 
-.my-waiting { background: #fff; border-radius: 14px; padding: 1.8rem 1.4rem; margin: 1rem 0; text-align: center; border: 1px solid var(--border); }
-.my-waiting .label { font-size: 12px; color: var(--text3); letter-spacing: 0.1em; margin-bottom: 0.4rem; }
-.my-waiting .name { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 0.8rem; }
-.my-waiting .pos { font-size: 64px; font-weight: 700; color: var(--accent); line-height: 1; margin-bottom: 0.2rem; }
-.my-waiting .pos small { font-size: 22px; color: var(--text2); margin-left: 4px; }
-.my-waiting .total { font-size: 13px; color: var(--text2); margin-bottom: 1rem; }
-.my-waiting .hint { font-size: 12px; color: var(--text3); padding-top: 0.8rem; border-top: 1px solid var(--border); margin-top: 0.8rem; line-height: 1.5; }
-.my-waiting .state { display: inline-block; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; margin-bottom: 0.6rem; }
-.my-waiting .state.coming { background: #fff8ec; color: #8a6020; border: 1px solid #f0d898; }
-.my-waiting .state.entered { background: #eef6f1; color: var(--success); border: 1px solid #c8e0d0; }
-.my-waiting .state.noshow { background: #fdf0ee; color: var(--danger); border: 1px solid #e8c8c4; }
-.my-waiting .refresh-mini { display: inline-block; margin-top: 0.6rem; font-size: 12px; color: var(--text3); cursor: pointer; padding: 6px 12px; }
 /* 개인정보 동의 */
 .agree-section { margin-bottom: 0.8rem; }
 .agree-check-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 0.5rem; cursor: pointer; }
@@ -229,15 +217,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="status-dot"></div>
     <span id="statusText">현황 확인 중...</span>
   </div>
-  <div id="myWaitingView" class="my-waiting" style="display:none">
-    <div class="label">MY WAITING</div>
-    <div class="name" id="mwName">—</div>
-    <div id="mwStateWrap"></div>
-    <div class="pos"><span id="mwPos">—</span><small>번째</small></div>
-    <div class="total" id="mwTotal">전체 — 팀 중</div>
-    <div class="hint" id="mwHint">앞에 — 팀 남았어요. 페이지를 닫지 않아도 실시간으로 업데이트돼요.</div>
-    <span class="refresh-mini" onclick="loadData()">↻ 새로고침</span>
-  </div>
   <div class="stat-grid">
     <div class="stat-card">
       <p class="stat-label">전체 대기</p>
@@ -337,7 +316,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
               · 수집항목: 이름, 성별, 인원, 연락처, 접수일시<br>
               · 이용목적: 예약 접수, 본인 확인, 예약 안내 연락, 좌석 운영<br>
               · 보관기간: 접수일 익일 파기<br>
-              · 등록 즉시 입력하신 번호로 <b>실시간 대기 순번 확인 링크 문자</b>가 발송됩니다.<br>
               · 동의를 거부할 권리가 있으며, 필수항목 미동의 시 예약이 제한될 수 있습니다.
             </p>
           </div>
@@ -522,29 +500,15 @@ function renderOperatingBanner(total) {
 }
 
 function updateMyInfo(myPhone) {
-  const mwView = document.getElementById('myWaitingView');
-  if (!myPhone) { document.getElementById('ahead').textContent='—'; if(mwView) mwView.style.display='none'; return; }
-  if (!allRows.length) { document.getElementById('ahead').textContent='—'; if(mwView) mwView.style.display='none'; return; }
+  if (!myPhone) { document.getElementById('ahead').textContent='—'; return; }
+  if (!allRows.length) { document.getElementById('ahead').textContent='—'; return; }
   const i=allRows.findIndex(r=>r[6]&&r[6].replace(/-/g,'').endsWith(myPhone.replace(/-/g,'')));
   if (i>=0){
     document.getElementById('mynum').textContent=(i+1)+'번';
     document.getElementById('mypeople').textContent=(allRows[i][5]||'—')+'명';
     document.getElementById('ahead').textContent=i;
-    // SMS 링크로 들어온 손님 — 큰 카드 표시
-    if (mwView && mwView.dataset.shown === '1') {
-      document.getElementById('mwName').textContent = (allRows[i][3] || '손님') + '님';
-      document.getElementById('mwPos').textContent = (i+1);
-      document.getElementById('mwTotal').textContent = '전체 ' + allRows.length + '팀 중';
-      document.getElementById('mwHint').textContent = i === 0 ? '🎉 곧 입장해주세요!' : '앞에 ' + i + '팀 남았어요. 페이지 열어두면 실시간 갱신돼요.';
-    }
   } else {
     document.getElementById('ahead').textContent='—';
-    if (mwView && mwView.dataset.shown === '1') {
-      document.getElementById('mwName').textContent = '접수 내역을 찾을 수 없어요';
-      document.getElementById('mwPos').textContent = '—';
-      document.getElementById('mwTotal').textContent = '';
-      document.getElementById('mwHint').textContent = '이미 입장하셨거나 노쇼 처리된 상태일 수 있어요.';
-    }
   }
 }
 
@@ -643,13 +607,8 @@ async function loadData() {
     }
     document.getElementById('total').textContent=allRows.length;
     updateStatus(allRows.length);
-    const p = getParam('phone') || getParam('p');
-    if (p) {
-      // SMS 링크로 진입한 손님은 큰 카드로 표시
-      const mw = document.getElementById('myWaitingView');
-      if (mw) { mw.style.display = 'block'; mw.dataset.shown = '1'; }
-      updateMyInfo(p);
-    }
+    const p=getParam('phone');
+    if (p) updateMyInfo(p);
     else document.getElementById('ahead').textContent='—';
   } catch(e){
     document.getElementById('total').textContent='—';
@@ -929,4 +888,72 @@ async function searchLoyalForOptOut() {
   if (inputVal.length !== 8) {
     resultEl.innerHTML = '<div class="optout-notfound">전화번호 8자리를 정확히 입력해주세요.</div>';
     return;
- 
+  }
+  const phone = '010-' + inputVal.slice(0,4) + '-' + inputVal.slice(4);
+  resultEl.innerHTML = '<div class="optout-notfound">조회 중...</div>';
+  let info = null;
+  try {
+    const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('단골!A:E')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const d = await r.json();
+    if (d && d.values) {
+      for (let i = 1; i < d.values.length; i++) {
+        if (String(d.values[i][0]).trim() === phone) {
+          info = {
+            joinedAt: d.values[i][1] || '',
+            visits: parseInt(d.values[i][2]) || 0,
+            lastVisit: d.values[i][3] || '',
+            coupons: parseInt(d.values[i][4]) || 0
+          };
+          break;
+        }
+      }
+    }
+  } catch(e) {}
+  if (!info) {
+    resultEl.innerHTML = '<div class="optout-notfound">단골 회원으로 등록되어 있지 않아요.<br><span style="font-size:11px;color:#bbb">' + phone + '</span></div>';
+    return;
+  }
+  const joinedShort = info.joinedAt ? String(info.joinedAt).split(' ')[0] : '—';
+  const lastShort = info.lastVisit ? String(info.lastVisit).split(' ')[0] : '아직 없음';
+  resultEl.innerHTML = '<div class="optout-info">'
+    + '<div class="optout-info-row"><span class="label">전화번호</span><span class="value">' + phone + '</span></div>'
+    + '<div class="optout-info-row"><span class="label">가입일</span><span class="value">' + joinedShort + '</span></div>'
+    + '<div class="optout-info-row"><span class="label">누적 방문</span><span class="value">' + info.visits + '회</span></div>'
+    + '<div class="optout-info-row"><span class="label">쿠폰 발급</span><span class="value">' + info.coupons + '장</span></div>'
+    + '<div class="optout-info-row"><span class="label">마지막 방문</span><span class="value">' + lastShort + '</span></div>'
+    + '</div>'
+    + '<button class="optout-delete-btn" onclick="confirmOptOut(\'' + phone + '\')">단골 탈퇴하기</button>';
+}
+function confirmOptOut(phone) {
+  if (!confirm(phone + ' 회원 정보를 정말 삭제하시겠어요?\n\n· 누적 방문/쿠폰 기록이 모두 삭제됩니다\n· 단골 혜택을 다시 받으려면 새로 등록하셔야 해요\n· 이 동작은 되돌릴 수 없습니다')) return;
+  const payload = JSON.stringify({type:'loyalRemove', phone: phone});
+  let sent = false;
+  try {
+    if (navigator.sendBeacon) {
+      sent = navigator.sendBeacon(GAS_URL, new Blob([payload], {type:'text/plain'}));
+    }
+  } catch(e) {}
+  if (!sent) {
+    try {
+      fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(()=>{});
+    } catch(e) {}
+  }
+  document.getElementById('optOutResult').innerHTML = '<div class="optout-success">✅ 단골 탈퇴가 완료되었습니다<small>그동안 이용해주셔서 감사합니다 :)</small></div>';
+}
+// 모달 바깥 클릭으로 닫기
+document.getElementById('optOutOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeOptOut();
+});
+
+loadData();
+setInterval(loadData,10000);
+refreshBanner();
+setInterval(refreshBanner,1000);
+// 방금 등록한 경우 GAS 반영 대기 후 재시도
+if (getParam('phone')) {
+  setTimeout(loadData, 3000);
+  setTimeout(loadData, 6000);
+}
+</script>
+</body>
+</html>
