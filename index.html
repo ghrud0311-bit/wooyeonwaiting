@@ -642,6 +642,11 @@ async function loadData() {
       const mw = document.getElementById('myWaitingView');
       if (mw) { mw.style.display = 'block'; mw.dataset.shown = '1'; }
       updateMyInfo(p);
+      // 현장 등록 직후만 자동 복귀 (다음 손님 받기 위해 키오스크/태블릿 점유 해제)
+      if (getParam('jr') === '1' && !window._kioskCdStarted) {
+        window._kioskCdStarted = true;
+        startKioskCountdown();
+      }
     }
     else document.getElementById('ahead').textContent='—';
   } catch(e){
@@ -884,7 +889,27 @@ function registerLoyal() {
 
 function goToMyTurn() {
   document.getElementById('completeOverlay').classList.remove('active');
-  window.location.href=window.location.pathname+'?phone='+encodeURIComponent(pendingPhone);
+  // jr=1: just-registered. 현장 등록 직후 자기 순번 화면 진입 표식.
+  // ?phone=만 있는 URL(예: SMS 링크)은 자동 복귀 안 함.
+  window.location.href=window.location.pathname+'?phone='+encodeURIComponent(pendingPhone)+'&jr=1';
+}
+
+// 현장 키오스크: 등록 직후 자기 순번 보기 → 10초 카운트다운 → 등록 페이지로 복귀
+function startKioskCountdown() {
+  let n = 10;
+  const hintEl = document.getElementById('mwHint');
+  const tick = () => {
+    if (hintEl) {
+      hintEl.innerHTML = '<b style="color:#d4a82a;font-size:15px">' + n + '초 후 메인 화면으로 돌아갑니다</b><br><span style="color:var(--text3);font-size:11px">다음 손님 등록을 위해 이 페이지는 곧 닫힙니다</span>';
+    }
+    if (n <= 0) {
+      window.location.replace(window.location.pathname);
+      return;
+    }
+    n--;
+    setTimeout(tick, 1000);
+  };
+  tick();
 }
 
 document.getElementById('formOverlay').addEventListener('click',function(e){
