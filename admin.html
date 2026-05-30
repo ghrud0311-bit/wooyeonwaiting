@@ -710,10 +710,10 @@ function setSeatDirect(id, val) {
   syncSeatsToGAS();  // debounce + 순차 + keepalive
 }
 
-// 자리수 변경을 GAS에 동기화 — debounce 제거.
+// 자리수 변경을 GAS에 즉시 동기화 (debounce 제거).
 // 이전 300ms debounce가 화근: 입력 후 곧장 새로고침하면 setTimeout 콜백이
 // 발사되기 전에 페이지 unload → fetch 자체가 안 일어남 → 시트 미반영 → 폴링이
-// 옛 0/0 값으로 다시 덮어씀. 매 입력마다 즉시 keepalive fetch로 안전 발송.
+// 옛 0/0 값으로 다시 덮어씀. 매 입력마다 즉시 keepalive fetch.
 function syncSeatsToGAS() {
   const tM = parseInt(seats.tM)||0;
   const tF = parseInt(seats.tF)||0;
@@ -725,7 +725,7 @@ function syncSeatsToGAS() {
   try { fetch(GAS_URL + '?type=setSeats&value=' + remain, opts).catch(function(){}); } catch(e) {}
   try { fetch(GAS_URL + '?type=setFull&value=' + (full ? 'TRUE' : 'FALSE'), opts).catch(function(){}); } catch(e) {}
 }
-// 안전망: 페이지 unload 직전에도 한 번 더 강제 발송 (sendBeacon은 GAS doGet과 호환 안 되니 fetch keepalive)
+// 안전망: 페이지 unload 직전에도 한 번 더 강제 발송
 window.addEventListener('pagehide', function() {
   try { syncSeatsToGAS(); } catch(e) {}
 });
@@ -1419,4 +1419,13 @@ function renderList() {
           ${gender ? `<span class="gender-badge ${gClass}">${gender}</span>` : ''}
           ${getSeatBadge(seat)}
           ${getLoyalBadge(row[6])}
-      
+        </div>
+        <p class="waiting-meta">${row[5]?row[5]+'명 · ':''}${getTimeStr(row)}${row[6]?' · '+row[6]:''}</p>
+      </div>
+      ${getActionBtns(key, row)}
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
