@@ -349,7 +349,9 @@ async function loadContext(){
   try {
     var rg = await fetch('https://wooyeoon-18f43-default-rtdb.firebaseio.com/game/state.json?_='+Date.now(), {cache:'no-store'});
     var gs = await rg.json();
-    if (gs && gs !== 'off') {
+    // 게임 진행 중인 상태만 buzzer로 리다이렉트 — gameover/off는 그대로 자리 페이지
+    var ACTIVE_STATES = ['lobby','practice','round','disabling','finalRound'];
+    if (typeof gs === 'string' && ACTIVE_STATES.indexOf(gs) !== -1) {
       location.replace('buzzer.html?n=' + seatNum);
       return;
     }

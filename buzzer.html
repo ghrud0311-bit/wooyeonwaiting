@@ -243,6 +243,14 @@ buzzer.addEventListener('click', () => {
 
 function render(v) {
   if (!v) v = {};
+  // 게임 완전 종료(off/null) — 자리 페이지로 자동 복귀
+  if (!v.state || v.state === 'off') {
+    if (mySeat && mySeat >= 1 && mySeat <= 32) {
+      try { localStorage.removeItem('buzzer_intro_seen'); } catch(e) {}
+      location.replace('seat.html?n=' + mySeat);
+      return;
+    }
+  }
   document.getElementById('modeLabel').textContent =
     v.state === 'lobby' ? '대기 중' :
     v.state === 'practice' ? '🎯 연습 중' :
@@ -418,4 +426,3 @@ gameRef.child('state').on('value', snap => {
 </script>
 </body>
 </html>
-                                                                                                                                               

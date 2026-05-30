@@ -704,6 +704,8 @@ function markWrong() {
 function endGame() {
   const v = lastGame || {};
   if (!v.state || v.state === 'off') return;
+  // 이미 우승 발표 중이면 곧장 완전 종료
+  if (v.state === 'gameover') { fullStopGame(); return; }
   const scores = v.scores || {};
   const teamCount = v.teamCount || 0;
   let max = -1, leaders = [];
@@ -713,16 +715,27 @@ function endGame() {
     else if (s === max) leaders.push(t);
   }
   if (leaders.length === 1) {
-    setTimeout(() => { gRef.update({ state: 'gameover', champion: leaders[0], winner: null }); }, 3000);
-    alert('3초 뒤 우승팀 발표!');
+    setTimeout(() => {
+      gRef.update({ state: 'gameover', champion: leaders[0], winner: null });
+      // 우승 발표 후 자동 정리 — 20초 뒤 게임 노드 완전 제거
+      setTimeout(fullStopGame, 20000);
+    }, 3000);
+    alert('3초 뒤 우승팀 발표! 20초 후 자동 종료됩니다.\n(바로 종료하려면 "🏁 종료" 한 번 더 클릭)');
   } else {
     if (confirm('동점 — 막판 결정전! ' + leaders.join(', ') + '조 sudden death. 시작?')) {
       gRef.update({
         state: 'finalRound', finalists: leaders, winner: null,
         disabledTeam: null, penalizedTeams: [], earlyBuzzers: null
       });
+    } else {
+      // 동점인데 결정전 거절 → 완전 종료
+      fullStopGame();
     }
   }
+}
+function fullStopGame() {
+  // 게임 노드 완전 제거 → 손님 폰이 'off' 감지 → seat 페이지로 복귀
+  if (gRef) gRef.remove().catch(function(e){ console.error(e); });
 }
 
 function toggleGame() {
