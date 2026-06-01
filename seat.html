@@ -259,6 +259,7 @@ var SEAT_LABEL_MAP = {
   21:'B10', 22:'BJ', 23:'RJ', 24:'RQ', 25:'BQ', 26:'BK'
 };
 function seatLabel(n) {
+  if (typeof CARD_MODE !== 'undefined' && !CARD_MODE) return String(n);
   var k = parseInt(n);
   var raw = SEAT_LABEL_MAP[k];
   if (!raw) return String(n);
@@ -281,33 +282,39 @@ const API_KEY = 'AIzaSyDNs6DjFlPRHukWl572r1pMZV72F6ZtODI';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
 
 // 자리 → 토스 주문 URL (영구 단축링크)
-const TOSS_URL = {
-  1: 'https://toss.place/_t/qryGTWrrhlWo',
-  2: 'https://toss.place/_t/qryGTWrrh2eg',
-  3: 'https://toss.place/_t/qrXP3gkUV33T',
-  4: 'https://toss.place/_t/qrXP3gkUVV20',
-  5: 'https://toss.place/_t/qryGTWrrhqAq',
-  6: 'https://toss.place/_t/qryGTWrrhMm3',
-  7: 'https://toss.place/_t/qrXP3gkUVksI',
-  8: 'https://toss.place/_t/qrXP3gkUVEeE',
-  9: 'https://toss.place/_t/qryGTWrrhKZi',
-  10: 'https://toss.place/_t/qryGTWrrhI4t',
-  11: 'https://toss.place/_t/qrXP3gkUVcAd',
-  12: 'https://toss.place/_t/qrXP3gkUVSox',
-  13: 'https://toss.place/_t/qryGTWrrhl9U',
-  14: 'https://toss.place/_t/qrXP3gkUVq5P',
-  15: 'https://toss.place/_t/qryGTWrrhvTR',
-  16: 'https://toss.place/_t/qryGTWrrh2iC',
-  17: 'https://toss.place/_t/qrXP3gkUV34m',
-  18: 'https://toss.place/_t/qrXP3gkUVV99',
-  19: 'https://toss.place/_t/qryGTWrrhqVS',
-  20: 'https://toss.place/_t/qryGTWrrhMoF',
-  21: 'https://toss.place/_t/qrXP3gkUVkTV',
-  22: 'https://toss.place/_t/qrXP3gkUVEij',
-  23: 'https://toss.place/_t/qryGTWrrhKDZ',
-  24: 'https://toss.place/_t/qryGTWrrhIjs',
-  25: 'https://toss.place/_t/qrXP3gkUVcXh',
-  26: 'https://toss.place/_t/qrXP3gkUVS0w',
+// === 자리/토스 매핑 모드 스위치 ===
+// true  = R/B 카드 매핑 (현재 운영)
+// false = 단순 1~26 번호 (즉시 옛 매핑 복귀)
+const CARD_MODE = true;
+
+// R/B 카드 매핑 (PDF #1~#13 → 카드값 A,2~10,J,Q,K)
+const TOSS_URL_CARD = {
+  1: 'https://toss.place/_t/qryGTWrrhlWo',  // RK
+  2: 'https://toss.place/_t/qryGTWrrh2eg',  // RA
+  3: 'https://toss.place/_t/qrXP3gkUV33T',  // BA
+  4: 'https://toss.place/_t/qrXP3gkUVV20',  // B2
+  5: 'https://toss.place/_t/qryGTWrrhqAq',  // R2
+  6: 'https://toss.place/_t/qryGTWrrhMm3',  // R3
+  7: 'https://toss.place/_t/qrXP3gkUVksI',  // B3
+  8: 'https://toss.place/_t/qrXP3gkUVEeE',  // B4
+  9: 'https://toss.place/_t/qryGTWrrhKZi',  // R4
+  10:'https://toss.place/_t/qryGTWrrhI4t',  // R5
+  11:'https://toss.place/_t/qrXP3gkUVcAd',  // B5
+  12:'https://toss.place/_t/qrXP3gkUVSox',  // B6
+  13:'https://toss.place/_t/qryGTWrrhl9U',  // R6
+  14:'https://toss.place/_t/qrXP3gkUVq5P',  // B7
+  15:'https://toss.place/_t/qryGTWrrhvTR',  // R7
+  16:'https://toss.place/_t/qryGTWrrh2iC',  // R8
+  17:'https://toss.place/_t/qrXP3gkUV34m',  // B8
+  18:'https://toss.place/_t/qrXP3gkUVV99',  // B9
+  19:'https://toss.place/_t/qryGTWrrhqVS',  // R9
+  20:'https://toss.place/_t/qryGTWrrhMoF',  // R10
+  21:'https://toss.place/_t/qrXP3gkUVkTV',  // B10
+  22:'https://toss.place/_t/qrXP3gkUVEij',  // BJ
+  23:'https://toss.place/_t/qryGTWrrhKDZ',  // RJ
+  24:'https://toss.place/_t/qryGTWrrhIjs',  // RQ
+  25:'https://toss.place/_t/qrXP3gkUVcXh',  // BQ
+  26:'https://toss.place/_t/qrXP3gkUVS0w',  // BK
   27: 'https://toss.place/_t/qryGTWrrhvUr',
   28: 'https://toss.place/_t/qryGTWrrh2aX',
   29: 'https://toss.place/_t/qryGTWrrhqXc',
@@ -315,6 +322,44 @@ const TOSS_URL = {
   31: 'https://toss.place/_t/qrXP3gkUV3jg',
   32: 'https://toss.place/_t/qrXP3gkUVVWv'
 };
+
+// 옛 매핑 (시스템 자리 N → PDF #N. 1~13 R, 14~26 B)
+const TOSS_URL_LEGACY = {
+  1: 'https://toss.place/_t/qryGTWrrh2eg',
+  2: 'https://toss.place/_t/qryGTWrrhqAq',
+  3: 'https://toss.place/_t/qryGTWrrhMm3',
+  4: 'https://toss.place/_t/qryGTWrrhKZi',
+  5: 'https://toss.place/_t/qryGTWrrhI4t',
+  6: 'https://toss.place/_t/qryGTWrrhl9U',
+  7: 'https://toss.place/_t/qryGTWrrhvTR',
+  8: 'https://toss.place/_t/qryGTWrrh2iC',
+  9: 'https://toss.place/_t/qryGTWrrhqVS',
+  10:'https://toss.place/_t/qryGTWrrhMoF',
+  11:'https://toss.place/_t/qryGTWrrhKDZ',
+  12:'https://toss.place/_t/qryGTWrrhIjs',
+  13:'https://toss.place/_t/qryGTWrrhlWo',
+  14:'https://toss.place/_t/qrXP3gkUV33T',
+  15:'https://toss.place/_t/qrXP3gkUVV20',
+  16:'https://toss.place/_t/qrXP3gkUVksI',
+  17:'https://toss.place/_t/qrXP3gkUVEeE',
+  18:'https://toss.place/_t/qrXP3gkUVcAd',
+  19:'https://toss.place/_t/qrXP3gkUVSox',
+  20:'https://toss.place/_t/qrXP3gkUVq5P',
+  21:'https://toss.place/_t/qrXP3gkUV34m',
+  22:'https://toss.place/_t/qrXP3gkUVV99',
+  23:'https://toss.place/_t/qrXP3gkUVkTV',
+  24:'https://toss.place/_t/qrXP3gkUVEij',
+  25:'https://toss.place/_t/qrXP3gkUVcXh',
+  26:'https://toss.place/_t/qrXP3gkUVS0w',
+  27:'https://toss.place/_t/qryGTWrrhvUr',
+  28:'https://toss.place/_t/qryGTWrrh2aX',
+  29:'https://toss.place/_t/qryGTWrrhqXc',
+  30:'https://toss.place/_t/qrXP3gkUVqDN',
+  31:'https://toss.place/_t/qrXP3gkUV3jg',
+  32:'https://toss.place/_t/qrXP3gkUVVWv'
+};
+
+const TOSS_URL = CARD_MODE ? TOSS_URL_CARD : TOSS_URL_LEGACY;
 
 const COL = {1:0,2:1,4:2,6:3,8:4,10:5,12:6,13:7,14:8,16:9,18:10,20:11,22:12,24:13,26:14,3:1,5:2,7:3,9:4,11:5,15:8,17:9,19:10,21:11,23:12,25:13};
 const outerOrder=[1,2,4,6,8,10,12,13,14,16,18,20,22,24,26];

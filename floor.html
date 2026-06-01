@@ -249,6 +249,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 </div>
 
 <script>
+const CARD_MODE = true;  // false면 1~26 숫자 그대로 (직원 화면 동일 정책)
 // 자리 표시 매핑 — 사용자 정의 카드값.
 // 카드값: 1=A, 11=J, 12=Q, 13=K. 27~32는 그대로(바자리).
 var SEAT_LABEL_MAP = {
@@ -259,6 +260,7 @@ var SEAT_LABEL_MAP = {
   21:'B10', 22:'BJ', 23:'RJ', 24:'RQ', 25:'BQ', 26:'BK'
 };
 function seatLabel(n) {
+  if (typeof CARD_MODE !== 'undefined' && !CARD_MODE) return String(n);
   var k = parseInt(n);
   return SEAT_LABEL_MAP[k] || String(n);
 }
