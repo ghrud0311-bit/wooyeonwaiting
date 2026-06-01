@@ -249,6 +249,21 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 </div>
 
 <script>
+// 자리 표시 매핑: 1=R13, 13=R1, 14=B1, 26=B13. 27+ 는 그대로.
+function seatLabel(n) {
+  n = parseInt(n);
+  if (n >= 1 && n <= 13) return 'R' + (14 - n);
+  if (n >= 14 && n <= 26) return 'B' + (n - 13);
+  return String(n);
+}
+function seatNumFromLabel(label) {
+  var s = String(label).trim().toUpperCase();
+  var m = s.match(/^([RB])\s*(\d+)$/);
+  if (!m) return parseInt(s);
+  if (m[1] === 'R') return 14 - parseInt(m[2]);
+  return parseInt(m[2]) + 13;
+}
+
 const SHEET_ID = '1NmPb6wxX0usqeP-gd7cFQPgHecLQsCYcA3i3wcU3uwc';
 const API_KEY = 'AIzaSyDNs6DjFlPRHukWl572r1pMZV72F6ZtODI';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
@@ -357,7 +372,7 @@ function renderBoard(){
       if ((manualMode && selA===n) || (pairMode && (pinSelA===n || pinSelB===n))) cls += ' sel';
       if (dupSet.has(n)) cls += ' dup';
       var pinHtml = ''; if (o && pinOf[n]) { var pc = PINCOL[(pinOf[n]-1) % PINCOL.length]; pinHtml = '<span class="pinmark" style="background:'+pc+'">'+pinOf[n]+'</span>'; }
-      return '<div class="seat '+cls+'" onclick="onSeatClick('+n+')">'+pinHtml+'<span class="n">'+n+'</span><span class="id">'+idTxt+'</span>'+tHtml+'</div>';
+      return '<div class="seat '+cls+'" onclick="onSeatClick('+n+')">'+pinHtml+'<span class="n">'+seatLabel(n)+'</span><span class="id">'+idTxt+'</span>'+tHtml+'</div>';
     }).join('');
   });
   const list = Object.values(occ);
@@ -573,7 +588,7 @@ function manualPick(n){
   if (n === selA) { selA = null; renderBoard(); return; }
   var assign = [{ from: selA, to: n }];
   if (occ[n]) assign.push({ from: n, to: selA });
-  var label = occ[n] ? (selA+'번 ↔ '+n+'번 교환') : (selA+'번 → '+n+'번 이동');
+  var label = occ[n] ? (seatLabel(selA)+' ↔ '+seatLabel(n)+' 교환') : (seatLabel(selA)+' → '+seatLabel(n)+' 이동');
   if (!confirm(label + ' 할까요?')) return;
   var moveMap = {}; assign.forEach(function(a){ moveMap[a.from] = a.to; });
   var changed = false;

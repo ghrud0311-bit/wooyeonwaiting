@@ -249,6 +249,21 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 </div>
 
 <script>
+// 자리 표시 매핑: 1=R13, 13=R1, 14=B1, 26=B13. 27+ 는 그대로.
+function seatLabel(n) {
+  n = parseInt(n);
+  if (n >= 1 && n <= 13) return 'R' + (14 - n);
+  if (n >= 14 && n <= 26) return 'B' + (n - 13);
+  return String(n);
+}
+function seatNumFromLabel(label) {
+  var s = String(label).trim().toUpperCase();
+  var m = s.match(/^([RB])\s*(\d+)$/);
+  if (!m) return parseInt(s);
+  if (m[1] === 'R') return 14 - parseInt(m[2]);
+  return parseInt(m[2]) + 13;
+}
+
 const SHEET_ID = '1NmPb6wxX0usqeP-gd7cFQPgHecLQsCYcA3i3wcU3uwc';
 const API_KEY = 'AIzaSyDNs6DjFlPRHukWl572r1pMZV72F6ZtODI';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvIfxTPJVZUfjED-3XwLcHKRfbHouWLVFh9grynew8FdjUavr5nikX5wJMDdcYf1vH/exec';
@@ -298,7 +313,7 @@ function pad4(v){ return String(v==null?'':v).padStart(4,'0'); }
 function moveHint(cur,dest){
   cur=+cur; dest=+dest;
   if(cur===dest) return '같은 자리에 그대로 계시면 돼요';
-  if(cur>=27 || dest>=27) return '바 자리 ' + dest + '번으로 이동하세요';
+  if(cur>=27 || dest>=27) return '바 자리  ' + seatLabel(dest) + '으로 이동하세요';
   var prefix = TBL(cur)!==TBL(dest) ? '옆 테이블입니다. ' : '';
   var east = COL[dest] > COL[cur];
   var lr = (ROWT[cur]==='outer') ? (east?'왼쪽':'오른쪽') : (east?'오른쪽':'왼쪽');
@@ -393,7 +408,7 @@ async function loadContext(){
   // (2) 이미 등록된 자리 → 메뉴 분기 (주문 / 신청 / 안내)
   if (activeHere) {
     clearGuide();
-    document.getElementById('mnSeat').textContent = seatNum;
+    document.getElementById('mnSeat').textContent = seatLabel(seatNum);
     document.getElementById('headerTitle').textContent = '메뉴';
     show('menuView');
     return;
@@ -401,7 +416,7 @@ async function loadContext(){
 
   // (3) 빈 자리 → 안내사항 페이지 (안내 텍스트 있으면) → 등록 폼
   if (noticeText && noticeText.trim()) {
-    document.getElementById('ntSeat').textContent = seatNum;
+    document.getElementById('ntSeat').textContent = seatLabel(seatNum);
     document.getElementById('ntInfo').textContent = noticeText;
     document.getElementById('headerTitle').textContent = '안내사항';
     show('noticeView');
@@ -412,7 +427,7 @@ async function loadContext(){
 }
 
 function goToReg(){
-  document.getElementById('regSeat').textContent = seatNum;
+  document.getElementById('regSeat').textContent = seatLabel(seatNum);
   document.getElementById('headerTitle').textContent = '자리 등록';
   show('regView');
 }
@@ -445,7 +460,7 @@ function submitSeat(){
   var sent = false;
   try { if (navigator.sendBeacon) sent = navigator.sendBeacon(GAS_URL, new Blob([payload], {type:'text/plain'})); } catch(e) { sent = false; }
   if (!sent) { try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {} }
-  document.getElementById('doneSeatText').textContent = seatNum;
+  document.getElementById('doneSeatText').textContent = seatLabel(seatNum);
   document.getElementById('headerTitle').textContent = '등록 완료';
   show('doneView');
   setTimeout(goToss, 1500);
@@ -495,7 +510,7 @@ function submitPair(){
   try { if (navigator.sendBeacon) navigator.sendBeacon(GAS_URL, new Blob([payload], {type:'text/plain'})); } catch(e) {}
   try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {}
   closePair();
-  alert(pmSel + '번 자리 신청 완료!\n상대도 같은 신청을 하면 다음 자리섞기 때 같이 앉게 돼요.');
+  alert(seatLabel(pmSel) + ' 자리 신청 완료!\n상대도 같은 신청을 하면 다음 자리섞기 때 같이 앉게 돼요.');
 }
 
 // ===== 안내사항 모달 =====
@@ -534,7 +549,7 @@ function pickCard(idx){
   document.getElementById('cardsHint').textContent = '✨ 당신의 자리가 정해졌어요';
   document.getElementById('mvNum').textContent = cardRealSeat;
   document.getElementById('mvDir').textContent = moveHint(seatNum, cardRealSeat);
-  document.getElementById('mvFrom').textContent = '현재 ' + seatNum + '번 → ' + cardRealSeat + '번';
+  document.getElementById('mvFrom').textContent = '현재 ' + seatLabel(seatNum) + ' → ' + seatLabel(cardRealSeat);
   document.getElementById('moveResult').classList.remove('hidden');
   var others = [0,1,2].filter(function(x){ return x !== idx; });
   setTimeout(function(){

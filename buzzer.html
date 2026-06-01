@@ -112,6 +112,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
 <script>
+// 자리 표시 매핑: 1=R13, 13=R1, 14=B1, 26=B13. 27+ 는 그대로.
+function seatLabel(n) {
+  n = parseInt(n);
+  if (n >= 1 && n <= 13) return 'R' + (14 - n);
+  if (n >= 14 && n <= 26) return 'B' + (n - 13);
+  return String(n);
+}
+function seatNumFromLabel(label) {
+  var s = String(label).trim().toUpperCase();
+  var m = s.match(/^([RB])\s*(\d+)$/);
+  if (!m) return parseInt(s);
+  if (m[1] === 'R') return 14 - parseInt(m[2]);
+  return parseInt(m[2]) + 13;
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyDsm_VOxEkgCv2rJH_z618Y4dLzeiKfj_k",
   authDomain: "wooyeoon-18f43.firebaseapp.com",
@@ -294,7 +309,7 @@ function render(v) {
   // 인트로 (조 안내) — confirmedIntro 안 되어 있고 state가 'lobby'면
   if (v.state === 'lobby' && !confirmedIntro) {
     document.getElementById('introTeam').textContent = myTeam;
-    document.getElementById('introMembers').innerHTML = '조원: <b>자리 ' + getMembers(teams, myTeam).join(', ') + '번</b>';
+    document.getElementById('introMembers').innerHTML = '조원: <b>' + getMembers(teams, myTeam).map(seatLabel).join(', ') + '</b>';
     show('introCard');
     return;
   }
