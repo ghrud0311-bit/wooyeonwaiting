@@ -8,20 +8,20 @@
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-  --bg: #f7f6f4; --surface: #ffffff; --surface2: #f2f1ef;
-  --border: #e8e6e2; --border2: #d8d6d2;
-  --text: #1a1916; --text2: #6e6b66; --text3: #a8a49e;
-  --accent: #1a1916; --accent2: #3a3834;
-  --danger: #c0503e; --success: #4a8c5c;
+  --bg: #000000; --surface: #1c1c1e; --surface2: #2c2c2e;
+  --border: rgba(84,84,88,0.4); --border2: rgba(84,84,88,0.6);
+  --text: #f5f5f7; --text2: #aeaeb2; --text3: #86868b;
+  --accent: #0a84ff; --accent2: #0a84ff;
+  --danger: #ff453a; --success: #30d158;
 }
-body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 0 1rem 4rem; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Noto Sans KR', sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 0 1rem 4rem; }
 .wrap { width: 100%; max-width: 400px; }
 .header { padding: 2.2rem 0 1.6rem; }
 .header-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; margin-bottom: 0.3rem; }
 .header-title { font-size: 24px; font-weight: 400; }
 .status-banner { border-radius: 8px; padding: 0.8rem 1rem; margin: 0 0 0.8rem; display: flex; align-items: center; gap: 9px; font-size: 13px; }
 .status-banner.open { background: #eef6f1; border: 1px solid #c8e0d0; color: var(--success); }
-.open-countdown { display: inline-block; margin-top: 3px; font-size: 13px; font-weight: 700; color: #8a6020; }
+.open-countdown { display: inline-block; margin-top: 3px; font-size: 13px; font-weight: 600; color: #8a6020; }
 .status-banner.open-few { background: #fff8ec; border: 1px solid #f0d898; color: #8a6020; }
 .status-banner.waiting { background: #fdf8f2; border: 1px solid #e8ddd0; color: #8a6e4a; }
 .status-banner.full { background: #fdf0ee; border: 1px solid #e8c8c4; color: var(--danger); }
@@ -34,11 +34,11 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .status-banner.closed .status-dot { background: var(--text3); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem; }
 .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; }
 .stat-value { font-size: 38px; font-weight: 300; color: var(--text); line-height: 1; }
 .stat-unit { font-size: 11px; color: var(--text3); margin-top: 5px; }
-.my-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 8px; }
+.my-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 0.9rem 1rem; margin-bottom: 8px; }
 .my-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; }
 .my-label { font-size: 12px; color: var(--text3); }
 .my-val { font-size: 13px; font-weight: 400; color: var(--text); }
@@ -47,15 +47,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .dot { display: inline-block; animation: blink 1.2s ease-in-out infinite; color: var(--text3); font-size: 28px; line-height: 1; }
 .dot:nth-child(2) { animation-delay: 0.2s; }
 .dot:nth-child(3) { animation-delay: 0.4s; }
-.register-btn { display: block; width: 100%; margin: 0.8rem 0 0; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; }
+.register-btn { display: block; width: 100%; margin: 0.8rem 0 0; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; cursor: pointer; }
 .section-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin: 1.2rem 0 0.6rem; }
 .search-row { display: flex; gap: 8px; }
-.search-input { flex: 1; padding: 10px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; }
+.search-input { flex: 1; padding: 10px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; outline: none; }
 .search-input::placeholder { color: var(--text3); }
 .search-input:focus { border-color: var(--border2); }
-.search-btn { padding: 10px 16px; background: var(--accent); border: none; border-radius: 8px; font-size: 13px; color: #fff; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; white-space: nowrap; }
+.search-btn { padding: 10px 16px; background: var(--accent); border: none; border-radius: 8px; font-size: 13px; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; cursor: pointer; white-space: nowrap; }
 .search-result { margin-top: 7px; font-size: 12px; min-height: 16px; color: var(--text2); }
-.notice-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-top: 1.2rem; }
+.notice-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem; margin-top: 1.2rem; }
 .notice-title { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.8rem; }
 .notice-item { display: flex; gap: 8px; font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 0.45rem; }
 .notice-item:last-child { margin-bottom: 0; }
@@ -84,14 +84,14 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 /* Slide content */
 .slide-title { font-size: 18px; font-weight: 500; line-height: 1.4; margin-bottom: 0.2rem; }
 .slide-sub { font-size: 12px; color: var(--text3); margin-bottom: 1rem; }
-.notice-box { background: #fdf8f2; border: 1px solid #e8ddd0; border-radius: 10px; padding: 1rem; margin-bottom: 0.8rem; }
+.notice-box { background: #fdf8f2; border: 1px solid #e8ddd0; border-radius: 14px; padding: 1rem; margin-bottom: 0.8rem; }
 .notice-box-item { display: flex; gap: 8px; font-size: 12px; color: var(--text2); line-height: 1.7; margin-bottom: 0.3rem; }
 .notice-box-item:last-child { margin-bottom: 0; }
 
-.my-waiting { background: #fff; border-radius: 14px; padding: 1.8rem 1.4rem; margin: 1rem 0; text-align: center; border: 1px solid var(--border); }
+.my-waiting { background: #fff; border-radius: 18px; padding: 1.8rem 1.4rem; margin: 1rem 0; text-align: center; border: 1px solid var(--border); }
 .my-waiting .label { font-size: 12px; color: var(--text3); letter-spacing: 0.1em; margin-bottom: 0.4rem; }
-.my-waiting .name { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 0.8rem; }
-.my-waiting .pos { font-size: 64px; font-weight: 700; color: var(--accent); line-height: 1; margin-bottom: 0.2rem; }
+.my-waiting .name { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 0.8rem; }
+.my-waiting .pos { font-size: 64px; font-weight: 600; color: var(--accent); line-height: 1; margin-bottom: 0.2rem; }
 .my-waiting .pos small { font-size: 22px; color: var(--text2); margin-left: 4px; }
 .my-waiting .total { font-size: 13px; color: var(--text2); margin-bottom: 1rem; }
 .my-waiting .hint { font-size: 12px; color: var(--text3); padding-top: 0.8rem; border-top: 1px solid var(--border); margin-top: 0.8rem; line-height: 1.5; }
@@ -107,11 +107,11 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
 .field-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 6px; }
 .field-hint { font-size: 11px; color: var(--text3); margin-top: 5px; }
-.field-input { width: 100%; padding: 12px 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 15px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; }
+.field-input { width: 100%; padding: 12px 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 15px; color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; outline: none; }
 .field-input:focus { border-color: var(--border2); }
 .phone-wrap { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .phone-prefix { padding: 12px 0 12px 13px; font-size: 15px; color: var(--text); white-space: nowrap; }
-.phone-input { flex: 1; padding: 12px 13px 12px 4px; background: transparent; border: none; font-size: 15px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; }
+.phone-input { flex: 1; padding: 12px 13px 12px 4px; background: transparent; border: none; font-size: 15px; color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; outline: none; }
 .phone-wrap:focus-within { border-color: var(--border2); }
 
 /* 선택 버튼 */
@@ -119,14 +119,14 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .btn-group.col2 { grid-template-columns: 1fr 1fr; }
 .btn-group.col3 { grid-template-columns: 1fr 1fr 1fr; }
 .btn-group.col4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-.sel-btn { padding: 12px 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--text2); font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: all 0.15s; text-align: center; }
+.sel-btn { padding: 12px 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--text2); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; cursor: pointer; transition: all 0.15s; text-align: center; }
 .sel-btn.selected { background: var(--text); border-color: var(--text); color: #fff; }
 .people-group { display: none; }
 .people-group.visible { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
 
 /* choice 버튼 */
 .choice-wrap { display: flex; flex-direction: column; gap: 8px; margin-top: 0.5rem; }
-.choice-btn { padding: 13px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); font-family: 'Noto Sans KR', sans-serif; cursor: pointer; text-align: left; transition: all 0.15s; line-height: 1.4; }
+.choice-btn { padding: 13px 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface2); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; cursor: pointer; text-align: left; transition: all 0.15s; line-height: 1.4; }
 .choice-btn:hover { border-color: var(--border2); }
 .choice-btn.selected { background: var(--text); border-color: var(--text); color: #fff; }
 .choice-label { font-weight: 500; font-size: 14px; color: var(--text); margin-bottom: 2px; }
@@ -134,16 +134,16 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .choice-note { font-size: 11px; color: var(--text3); margin-top: 3px; }
 .choice-btn.selected .choice-note { color: rgba(255,255,255,0.65); }
 .bottle-note { font-size: 12px; color: #b87c2a; background: #fff8ec; border: 1px solid #f0d898; border-radius: 8px; padding: 8px 12px; margin-top: 10px; line-height: 1.6; }
-.seat-img { width: 100%; border-radius: 10px; margin-bottom: 10px; object-fit: cover; max-height: 170px; }
+.seat-img { width: 100%; border-radius: 14px; margin-bottom: 10px; object-fit: cover; max-height: 170px; }
 .bar-note { background: var(--surface2); border-radius: 8px; padding: 0.8rem; margin-top: 8px; }
 .bar-note p { font-size: 11px; color: var(--text3); line-height: 1.7; }
 
 /* 이전/다음 버튼 — 입력 박스 바로 아래 */
 .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; gap: 8px; }
-.nav-prev { padding: 10px 18px; background: none; border: 1px solid var(--border2); border-radius: 8px; font-size: 13px; color: var(--text3); font-family: 'Noto Sans KR', sans-serif; cursor: pointer; letter-spacing: 0.02em; transition: all 0.15s; }
+.nav-prev { padding: 10px 18px; background: none; border: 1px solid var(--border2); border-radius: 8px; font-size: 13px; color: var(--text3); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; cursor: pointer; letter-spacing: 0.02em; transition: all 0.15s; }
 .nav-prev:hover { border-color: var(--text); color: var(--text); }
 .nav-prev:disabled { opacity: 0; pointer-events: none; }
-.nav-next { padding: 10px 22px; background: var(--accent); border: none; border-radius: 8px; font-size: 13px; color: #fff; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; letter-spacing: 0.04em; transition: background 0.15s; }
+.nav-next { padding: 10px 22px; background: var(--accent); border: none; border-radius: 8px; font-size: 13px; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; cursor: pointer; letter-spacing: 0.04em; transition: background 0.15s; }
 .nav-next:hover:not(:disabled) { background: var(--accent2); }
 .nav-next:disabled { background: var(--border2); cursor: not-allowed; }
 .step-counter { font-size: 11px; color: var(--text3); }
@@ -156,11 +156,11 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .complete-icon { font-size: 36px; margin-bottom: 0.8rem; }
 .complete-title { font-size: 17px; font-weight: 500; margin-bottom: 0.5rem; }
 .complete-sub { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 1.2rem; }
-.complete-go-btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; margin-top: 0.5rem; }
+.complete-go-btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; cursor: pointer; margin-top: 0.5rem; }
 .complete-go-btn:hover { background: var(--accent2); }
 
 /* 단골 등록 카드 */
-.loyalty-card { background: #fff7e8; border: 1px solid #f5d792; border-radius: 12px; padding: 14px 12px; margin: 0.5rem 0 1rem; text-align: left; }
+.loyalty-card { background: #fff7e8; border: 1px solid #f5d792; border-radius: 14px; padding: 14px 12px; margin: 0.5rem 0 1rem; text-align: left; }
 .loyalty-title { font-size: 14px; font-weight: 600; color: #8b5a00; margin-bottom: 4px; }
 .loyalty-desc { font-size: 12px; color: #6b4400; line-height: 1.55; margin-bottom: 8px; }
 .loyalty-desc strong { color: #b86b00; font-weight: 600; }
@@ -171,12 +171,12 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .loyalty-privacy-list li { padding-left: 8px; position: relative; margin-bottom: 2px; }
 .loyalty-privacy-list li:before { content: "·"; position: absolute; left: 0; color: #a08260; }
 .loyalty-privacy-note { font-size: 10px; color: #a08260; margin-top: 4px; line-height: 1.5; }
-.loyalty-btn { width: 100%; padding: 10px; background: #d49a3b; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; }
+.loyalty-btn { width: 100%; padding: 10px; background: #d49a3b; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; cursor: pointer; }
 .loyalty-btn:hover { background: #b8832d; }
 .loyalty-btn:disabled { background: #c9b487; cursor: default; }
-.loyalty-success { background: #e8f5e8; border: 1px solid #b5d8b5; border-radius: 12px; padding: 12px; margin: 0.5rem 0 1rem; text-align: center; font-size: 13px; color: #2d5a2d; font-weight: 500; }
+.loyalty-success { background: #e8f5e8; border: 1px solid #b5d8b5; border-radius: 14px; padding: 12px; margin: 0.5rem 0 1rem; text-align: center; font-size: 13px; color: #2d5a2d; font-weight: 500; }
 .loyalty-success small { display: block; font-size: 11px; font-weight: 400; color: #4a7a4a; margin-top: 4px; }
-.loyalty-info-only { background: #fff7e8; border: 1px solid #f5d792; border-radius: 12px; padding: 14px 14px; margin: 0.5rem 0 1rem; text-align: center; }
+.loyalty-info-only { background: #fff7e8; border: 1px solid #f5d792; border-radius: 14px; padding: 14px 14px; margin: 0.5rem 0 1rem; text-align: center; }
 .loyalty-info-only .loyalty-title { font-size: 14px; font-weight: 600; color: #8b5a00; margin-bottom: 6px; }
 .loyalty-info-only .loyalty-desc { font-size: 12.5px; color: #6b4400; line-height: 1.6; }
 .loyalty-info-only .loyalty-desc strong { color: #b86b00; font-weight: 600; }
@@ -184,10 +184,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .loyalty-info-only.coupon-ready .loyalty-title { color: #804010; }
 .loyalty-info-only.coupon-pending { background: #ffeed4; border-color: #f0b870; }
 .loyalty-info-only.coupon-pending .loyalty-title { color: #804010; }
-.loyalty-loading { background: #f5f5f5; border-radius: 12px; padding: 14px; margin: 0.5rem 0 1rem; text-align: center; font-size: 12px; color: #999; }
+.loyalty-loading { background: #f5f5f5; border-radius: 14px; padding: 14px; margin: 0.5rem 0 1rem; text-align: center; font-size: 12px; color: #999; }
 /* 단골 회원 관리 footer + 모달 */
 .loyal-footer { text-align: center; margin-top: 1rem; padding: 0.5rem 0; }
-.loyal-footer-link { background: none; border: none; font-size: 11px; color: var(--text3); cursor: pointer; text-decoration: underline; font-family: 'Noto Sans KR', sans-serif; padding: 4px 8px; }
+.loyal-footer-link { background: none; border: none; font-size: 11px; color: var(--text3); cursor: pointer; text-decoration: underline; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; padding: 4px 8px; }
 .loyal-footer-link:active { color: var(--text2); }
 .optout-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-start; justify-content: center; padding: 5vh 1rem 1rem; overflow-y: auto; }
 .optout-overlay.active { display: flex; }
@@ -199,15 +199,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .optout-desc { font-size: 13px; color: var(--text2); line-height: 1.5; margin: 0 0 12px; }
 .optout-input-row { display: flex; align-items: center; gap: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; margin-bottom: 10px; }
 .optout-prefix { font-size: 14px; color: var(--text1); font-weight: 500; padding-right: 4px; }
-.optout-input { flex: 1; border: none; background: transparent; padding: 10px 0; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; outline: none; color: var(--text1); }
+.optout-input { flex: 1; border: none; background: transparent; padding: 10px 0; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; outline: none; color: var(--text1); }
 .optout-input::placeholder { color: #c8c5c0; }
-.optout-search-btn { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; }
+.optout-search-btn { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; cursor: pointer; }
 .optout-search-btn:active { background: var(--accent2); }
-.optout-info { background: #fff7e8; border: 1px solid #f5d792; border-radius: 10px; padding: 12px; margin-top: 14px; }
+.optout-info { background: #fff7e8; border: 1px solid #f5d792; border-radius: 14px; padding: 12px; margin-top: 14px; }
 .optout-info-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; color: #6b4400; }
 .optout-info-row .label { color: #a08260; }
 .optout-info-row .value { font-weight: 500; }
-.optout-delete-btn { width: 100%; padding: 10px; margin-top: 10px; background: #fdeded; color: #c0503e; border: 1px solid #f0c4c4; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
+.optout-delete-btn { width: 100%; padding: 10px; margin-top: 10px; background: #fdeded; color: #c0503e; border: 1px solid #f0c4c4; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif; }
 .optout-delete-btn:active { background: #fad8d8; }
 .optout-notfound { text-align: center; padding: 20px 0; font-size: 13px; color: var(--text3); }
 .optout-success { text-align: center; padding: 24px 0; font-size: 14px; color: #2d5a2d; font-weight: 500; }
