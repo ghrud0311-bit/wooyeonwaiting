@@ -112,19 +112,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
 <script>
-// 자리 표시 매핑: 1=R13, 13=R1, 14=B1, 26=B13. 27+ 는 그대로.
+// 자리 표시 매핑 — 사용자 정의 카드값.
+// 카드값: 1=A, 11=J, 12=Q, 13=K. 27~32는 그대로(바자리).
+var SEAT_LABEL_MAP = {
+  1:'RK', 2:'RA', 3:'BA', 4:'B2', 5:'R2',
+  6:'R3', 7:'B3', 8:'B4', 9:'R4', 10:'R5',
+  11:'B5', 12:'B6', 13:'R6', 14:'B7', 15:'R7',
+  16:'R8', 17:'B8', 18:'B9', 19:'R9', 20:'R10',
+  21:'B10', 22:'BJ', 23:'RJ', 24:'RQ', 25:'BQ', 26:'BK'
+};
 function seatLabel(n) {
-  n = parseInt(n);
-  if (n >= 1 && n <= 13) return 'R' + (14 - n);
-  if (n >= 14 && n <= 26) return 'B' + (n - 13);
-  return String(n);
+  var k = parseInt(n);
+  return SEAT_LABEL_MAP[k] || String(n);
 }
 function seatNumFromLabel(label) {
-  var s = String(label).trim().toUpperCase();
-  var m = s.match(/^([RB])\s*(\d+)$/);
-  if (!m) return parseInt(s);
-  if (m[1] === 'R') return 14 - parseInt(m[2]);
-  return parseInt(m[2]) + 13;
+  var s = String(label).trim().toUpperCase().replace(/[\s-]/g,'');
+  for (var k in SEAT_LABEL_MAP) {
+    if (SEAT_LABEL_MAP[k] === s) return parseInt(k);
+  }
+  return parseInt(s);
 }
 
 const firebaseConfig = {
