@@ -763,9 +763,9 @@ function fullStopGame() {
   // 게임 노드 완전 제거 → 손님 폰이 'off' 감지 → seat 페이지로 복귀
   if (gRef) gRef.remove().catch(function(e){ console.error(e); });
 }
-// 어떤 상태에서든 강제로 게임 리셋 (최종결정전 갇힘 등)
+// 게임만 강제 리셋 (자리/시트 데이터엔 영향 없음)
 function resetGame() {
-  if (!confirm('게임을 완전히 리셋할까요?\n진행 중인 라운드/점수/우승팀 모두 사라집니다.')) return;
+  if (!confirm('게임만 리셋합니다.\n\n· 라운드/조/점수/우승팀 모두 삭제\n· 자리 배치/대기 명단/시트 데이터는 그대로\n\n계속할까요?')) return;
   fullStopGame();
 }
 

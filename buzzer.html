@@ -6,56 +6,58 @@
 <title>우연 — 부저</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+/* === Apple 다크 톤 — buzzer 손님 화면 === */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { font-family: 'Noto Sans KR', -apple-system, sans-serif; background: #0e0e10; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 1.2rem; touch-action: manipulation; }
-.header { text-align: center; margin-bottom: 1rem; }
-.header h1 { font-size: 16px; color: #d4a82a; letter-spacing: 0.25em; font-weight: 700; margin-bottom: 4px; }
-.header .sub { font-size: 12px; color: #888; }
-.conn { font-size: 11px; color: #555; position: fixed; top: 8px; right: 12px; }
-.conn.on { color: #4a8c5c; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Noto Sans KR', sans-serif; background: #000; color: #f5f5f7; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 1.5rem 1.2rem; touch-action: manipulation; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; }
+.header { text-align: center; margin-bottom: 1.2rem; }
+.header h1 { font-size: 11px; color: #86868b; letter-spacing: 0.18em; font-weight: 500; margin-bottom: 6px; text-transform: uppercase; }
+.header .sub { font-size: 15px; color: #f5f5f7; font-weight: 500; }
+.conn { font-size: 10px; color: #3a3a3c; position: fixed; top: 12px; right: 14px; }
+.conn.on { color: #30d158; }
 
-.info-card { background: #2a2825; border: 1px solid #444; border-radius: 14px; padding: 1.6rem 1.2rem; margin-bottom: 1.5rem; text-align: center; max-width: 360px; width: 100%; }
-.info-card .label { font-size: 12px; color: #888; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
-.info-card .team-num { font-size: 72px; font-weight: 700; color: #d4a82a; line-height: 1; margin-bottom: 0.3rem; }
-.info-card .team-num small { font-size: 24px; color: #888; font-weight: 500; }
-.info-card .members { font-size: 13px; color: #bbb; line-height: 1.5; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #444; }
-.info-card .members b { color: #fff; font-weight: 500; }
-.info-card .btn { width: 100%; padding: 14px; background: #d4a82a; color: #1a1916; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; margin-top: 1rem; }
+.info-card { background: #1c1c1e; border: none; border-radius: 22px; padding: 2.2rem 1.6rem; margin-bottom: 1.5rem; text-align: center; max-width: 380px; width: 100%; }
+.info-card .label { font-size: 11px; color: #86868b; letter-spacing: 0.15em; margin-bottom: 0.6rem; text-transform: uppercase; font-weight: 500; }
+.info-card .team-num { font-size: 88px; font-weight: 600; color: #0a84ff; line-height: 1; margin-bottom: 0.4rem; letter-spacing: -0.04em; }
+.info-card .team-num small { font-size: 28px; color: #86868b; font-weight: 400; margin-left: 4px; }
+.info-card .members { font-size: 15px; color: #aeaeb2; line-height: 1.5; margin-top: 1.3rem; padding-top: 1.3rem; border-top: 1px solid rgba(84,84,88,0.4); font-weight: 400; }
+.info-card .members b { color: #f5f5f7; font-weight: 500; }
+.info-card .btn { width: 100%; padding: 16px; background: #0a84ff; color: #fff; border: none; border-radius: 14px; font-size: 17px; font-weight: 600; font-family: inherit; cursor: pointer; margin-top: 1.4rem; letter-spacing: -0.01em; transition: opacity 0.15s; }
+.info-card .btn:active { opacity: 0.7; }
 
-.score-banner { background: linear-gradient(180deg, #2a2825 0%, #1a1916 100%); border: 1px solid #d4a82a; border-radius: 10px; padding: 8px 16px; margin-bottom: 1rem; font-size: 14px; color: #d4a82a; }
-.score-banner b { font-size: 18px; }
+.score-banner { background: #1c1c1e; border: none; border-radius: 14px; padding: 12px 18px; margin-bottom: 1.3rem; font-size: 15px; color: #aeaeb2; font-weight: 400; }
+.score-banner b { font-size: 22px; color: #f5f5f7; font-weight: 600; letter-spacing: -0.02em; margin: 0 2px; }
 
-.status { text-align: center; padding: 0.8rem; font-size: 16px; min-height: 50px; color: #aaa; }
+.status { text-align: center; padding: 1rem 0; font-size: 17px; min-height: 50px; color: #86868b; font-weight: 400; letter-spacing: -0.01em; }
 .buzzer-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-.buzzer { width: 260px; height: 260px; border-radius: 50%; background: #2a2825; border: 6px solid #1a1916; color: #555; font-size: 18px; font-weight: 700; cursor: not-allowed; transition: all 0.08s; user-select: none; -webkit-user-select: none; line-height: 1.3; }
-.buzzer.active { background: linear-gradient(180deg, #ff5a5d 0%, #c41e21 100%); color: #fff; border-color: #6b1012; cursor: pointer; box-shadow: 0 10px 0 #6b1012, 0 14px 30px rgba(255,80,80,0.45); font-size: 28px; animation: pulse 0.8s ease-in-out infinite; }
-.buzzer.active:active { transform: translateY(8px); box-shadow: 0 2px 0 #6b1012, 0 4px 10px rgba(255,80,80,0.4); animation: none; }
-.buzzer.penalty { background: #3a2a2a; color: #c87575; border-color: #2a1a1a; }
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 10px 0 #6b1012, 0 14px 30px rgba(255,80,80,0.45); }
-  50%      { box-shadow: 0 10px 0 #6b1012, 0 14px 40px rgba(255,80,80,0.75); }
+.buzzer { width: 280px; height: 280px; border-radius: 50%; background: #1c1c1e; border: none; color: #3a3a3c; font-size: 19px; font-weight: 500; cursor: not-allowed; transition: transform 0.1s, opacity 0.15s; user-select: none; -webkit-user-select: none; line-height: 1.3; letter-spacing: -0.01em; }
+.buzzer.active { background: #ff453a; color: #fff; cursor: pointer; font-size: 32px; font-weight: 600; animation: applePulse 1.6s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(255,69,58,0.45); }
+.buzzer.active:active { transform: scale(0.96); animation: none; opacity: 0.85; }
+.buzzer.penalty { background: #1c1c1e; color: #ff453a; opacity: 0.5; }
+@keyframes applePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,69,58,0.45); }
+  50%      { box-shadow: 0 0 0 24px rgba(255,69,58,0); }
 }
 
-.winner-display { text-align: center; padding: 2rem 1rem; }
-.winner-display .label { font-size: 16px; color: #d4a82a; letter-spacing: 0.15em; margin-bottom: 0.5rem; }
-.winner-display .team { font-size: 84px; font-weight: 700; color: #ff5a5d; line-height: 1; }
-.winner-display .team small { font-size: 28px; color: #d4a82a; margin-left: 6px; }
-.winner-display .me { display: inline-block; padding: 4px 10px; background: #d4a82a; color: #1a1916; border-radius: 6px; font-size: 12px; font-weight: 700; margin-left: 8px; vertical-align: middle; }
+.winner-display { text-align: center; padding: 2.5rem 1rem; }
+.winner-display .label { font-size: 13px; color: #86868b; letter-spacing: 0.15em; margin-bottom: 0.8rem; text-transform: uppercase; font-weight: 500; }
+.winner-display .team { font-size: 110px; font-weight: 600; color: #ff453a; line-height: 1; letter-spacing: -0.05em; }
+.winner-display .team small { font-size: 32px; color: #86868b; margin-left: 8px; font-weight: 400; }
+.winner-display .me { display: inline-block; padding: 5px 12px; background: #0a84ff; color: #fff; border-radius: 8px; font-size: 13px; font-weight: 600; margin-left: 10px; vertical-align: middle; letter-spacing: 0; }
 
 .champion { text-align: center; padding: 3rem 1rem; animation: champFade 0.8s; }
-.champion .crown { font-size: 56px; margin-bottom: 0.5rem; }
-.champion .label { font-size: 18px; color: #d4a82a; letter-spacing: 0.2em; margin-bottom: 1rem; }
-.champion .team { font-size: 100px; font-weight: 700; color: #ff5a5d; line-height: 1; }
-.champion .team small { font-size: 32px; color: #d4a82a; margin-left: 8px; }
-.champion .score { font-size: 14px; color: #888; margin-top: 1rem; }
-@keyframes champFade { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+.champion .crown { font-size: 64px; margin-bottom: 0.8rem; }
+.champion .label { font-size: 13px; color: #86868b; letter-spacing: 0.25em; margin-bottom: 1.4rem; font-weight: 500; text-transform: uppercase; }
+.champion .team { font-size: 128px; font-weight: 600; color: #0a84ff; line-height: 1; letter-spacing: -0.05em; }
+.champion .team small { font-size: 36px; color: #86868b; margin-left: 10px; font-weight: 400; }
+.champion .score { font-size: 15px; color: #86868b; margin-top: 1.2rem; font-weight: 400; }
+@keyframes champFade { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
 
-.scoreboard { width: 100%; max-width: 360px; padding: 0.8rem; margin-top: 1.5rem; background: #1a1916; border: 1px solid #333; border-radius: 10px; font-size: 13px; }
-.scoreboard .row { display: flex; justify-content: space-between; padding: 4px 0; color: #aaa; }
-.scoreboard .row.mine { color: #d4a82a; font-weight: 700; }
-.scoreboard .row .lbl { color: #666; font-size: 11px; }
+.scoreboard { width: 100%; max-width: 380px; padding: 1rem 1.2rem; margin-top: 1.5rem; background: #1c1c1e; border: none; border-radius: 14px; font-size: 14px; }
+.scoreboard .row { display: flex; justify-content: space-between; padding: 6px 0; color: #aeaeb2; font-weight: 400; }
+.scoreboard .row.mine { color: #0a84ff; font-weight: 600; }
+.scoreboard .row .lbl { color: #86868b; font-size: 12px; }
 
-.err-box { text-align: center; padding: 3rem 1rem; color: #888; font-size: 15px; line-height: 1.6; }
+.err-box { text-align: center; padding: 3rem 1rem; color: #86868b; font-size: 16px; line-height: 1.6; font-weight: 400; }
 
 .hidden { display: none !important; }
 </style>
