@@ -265,7 +265,7 @@ function seatLabel(n) {
   var color = raw.charAt(0);
   var card = raw.substring(1);
   var emoji = color === 'R' ? '🔴' : color === 'B' ? '🔵' : '';
-  if (card === 'K') card = '조커';
+  if (card === 'K') card = '🃏';
   return emoji + card;
 }
 function seatNumFromLabel(label) {
