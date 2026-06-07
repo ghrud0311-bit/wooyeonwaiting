@@ -449,6 +449,11 @@ function doMove(){
   const key = 'M'+M+'_F'+F;
   const sg = seatsByGender(key);
   if (!sg) { alert('이 인원 조합('+key+')은 배치표에 없어요. 인원/성별을 확인해주세요.'); return; }
+  // 배치표의 남/여 풀 크기와 실제 손님 수 비교 — 일치 안 하면 일부 손님이 자리 못 받음
+  if (sg.male.length !== M || sg.female.length !== F) {
+    alert('배치표 풀 크기 불일치: 손님 남'+M+'/여'+F+', 풀 남'+sg.male.length+'/여'+sg.female.length+'. SEATING_DATA["'+key+'"]를 확인 필요.');
+    return;
+  }
   const males = persons.filter(p=>p.gender==='남성');
   const females = persons.filter(p=>p.gender==='여성');
   const occSeats = new Set(persons.map(p=>p.from));
@@ -469,7 +474,12 @@ function doMove(){
   });
   mutualPairs.forEach(function(p){ apins.push(p); });
 
-  function assignOnce(){ var sm=shuffle(sg.male), sf=shuffle(sg.female), pos={}; males.forEach(function(p,i){ pos[p.from]=sm[i]; }); females.forEach(function(p,i){ pos[p.from]=sf[i]; }); return pos; }
+  function assignOnce(){
+    var sm = shuffle(sg.male), sf = shuffle(sg.female), pos = {};
+    males.forEach(function(p, i){ if (i < sm.length) pos[p.from] = sm[i]; });
+    females.forEach(function(p, i){ if (i < sf.length) pos[p.from] = sf[i]; });
+    return pos;
+  }
   function npairsOf(pos){ var seat2id={}; persons.forEach(function(p){ seat2id[pos[p.from]]=p.id; }); var set=new Set(); persons.forEach(function(p){ NB[pos[p.from]].forEach(function(s2){ var oid=seat2id[s2]; if(oid) set.add([p.id,oid].sort().join('|')); }); }); return set; }
   function scoreOf(pos){ var rep=0; npairsOf(pos).forEach(function(pp){ if(neighborHist.has(pp)) rep++; }); var v=0; apins.forEach(function(pr){ var a=pos[pr[0]], b=pos[pr[1]]; var sameG = occ[pr[0]] && occ[pr[1]] && occ[pr[0]].gender===occ[pr[1]].gender; var ok = sameG ? isDiag(a,b) : (NB[a].indexOf(b)>=0); if(!ok) v++; }); return v*1000 + rep; }
   var best=null, bs=Infinity;
@@ -481,6 +491,28 @@ function doMove(){
   if (!confirm(msg)) return;
 
   const assign = persons.map(function(p){ return { from: p.from, to: best[p.from] }; });
+
+  // ===== 안전장치 1: assign 검증 =====
+  // (1) to 값이 unique인가 (중복 매핑 방지)
+  // (2) 모든 person이 valid한 자리를 받았는가 (undefined/null 방지)
+  // (3) from === to 인 경우 제외 (자기 자리 그대로면 안내 불필요)
+  var _seenTo = {};
+  var _bugList = [];
+  for (var _i = 0; _i < assign.length; _i++) {
+    var _a = assign[_i];
+    if (_a.to == null || isNaN(_a.to)) {
+      _bugList.push('자리 ' + seatLabel(_a.from) + ' 손님 → 자리 미배정 (undefined)');
+      continue;
+    }
+    if (_seenTo[_a.to]) {
+      _bugList.push('자리 ' + seatLabel(_a.to) + '에 둘 이상 배정: ' + seatLabel(_seenTo[_a.to]) + ' + ' + seatLabel(_a.from));
+    }
+    _seenTo[_a.to] = _a.from;
+  }
+  if (_bugList.length > 0) {
+    alert('⚠️ 자리 배정 충돌 감지!\n\n' + _bugList.join('\n') + '\n\n다시 자리 섞기 시도하거나, 인원/성별 분포를 확인해주세요. 배정이 적용되지 않았습니다.');
+    return;
+  }
   // 핀을 새 자리로 따라가게 remap (이동된 자리만; 바 자리 등은 그대로)
   pins = pins.map(function(pr){ return [ (best[pr[0]]!=null?best[pr[0]]:pr[0]), (best[pr[1]]!=null?best[pr[1]]:pr[1]) ]; });
   npairsOf(best).forEach(function(pp){ neighborHist.add(pp); });
