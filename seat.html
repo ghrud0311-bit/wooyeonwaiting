@@ -150,7 +150,7 @@ input, textarea, select { color-scheme: dark; }
     </div>
     <div class="move-box hidden" id="moveResult">
       <div class="move-label">이동하실 자리예요</div>
-      <div class="move-num"><span id="mvNum">—</span><small>번</small></div>
+      <div class="move-num" id="mvNumBox"><span id="mvNum">—</span><small id="mvUnit"></small></div>
       <div class="move-dir" id="mvDir">—</div>
       <div class="move-from" id="mvFrom">—</div>
     </div>
@@ -384,7 +384,7 @@ function pad4(v){ return String(v==null?'':v).padStart(4,'0'); }
 function moveHint(cur,dest){
   cur=+cur; dest=+dest;
   if(cur===dest) return '같은 자리에 그대로 계시면 돼요';
-  if(cur>=27 || dest>=27) return '바 자리  ' + seatLabel(dest) + '으로 이동하세요';
+  if(cur>=27 || dest>=27) return '바 자리 ' + seatLabel(dest) + '번으로 이동하세요';
   var prefix = TBL(cur)!==TBL(dest) ? '옆 테이블입니다. ' : '';
   var east = COL[dest] > COL[cur];
   var lr = (ROWT[cur]==='outer') ? (east?'왼쪽':'오른쪽') : (east?'오른쪽':'왼쪽');
@@ -618,7 +618,10 @@ function pickCard(idx){
   document.getElementById('cardNum'+idx).textContent = cardRealSeat;
   realCard.classList.add('flipped','real');
   document.getElementById('cardsHint').textContent = '✨ 당신의 자리가 정해졌어요';
-  document.getElementById('mvNum').textContent = cardRealSeat;
+  // 카드값(🔴A 등)으로 표시. 바자리(27~32)는 숫자+'번' 그대로.
+  var _mvLabel = seatLabel(cardRealSeat);
+  document.getElementById('mvNum').textContent = _mvLabel;
+  document.getElementById('mvUnit').textContent = (cardRealSeat >= 27 ? '번' : '');
   document.getElementById('mvDir').textContent = moveHint(seatNum, cardRealSeat);
   document.getElementById('mvFrom').textContent = '현재 ' + seatLabel(seatNum) + ' → ' + seatLabel(cardRealSeat);
   document.getElementById('moveResult').classList.remove('hidden');
