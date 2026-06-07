@@ -67,6 +67,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro
 .done-title { font-size: 20px; font-weight: 600; margin-bottom: 0.5rem; }
 .done-seat { font-size: 15px; color: var(--text2); line-height: 1.6; margin-bottom: 1.4rem; }
 .done-seat b { color: var(--text); font-size: 17px; }
+.done-hint { font-size: 14px; color: var(--text3); margin-top: 1.8rem; letter-spacing: -0.01em; animation: pulseFade 1.4s ease-in-out infinite; }
+@keyframes pulseFade { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
 .err-box { text-align: center; padding: 3.5rem 1rem; color: var(--text2); font-size: 15px; line-height: 1.6; }
 .loading { text-align: center; padding: 3.5rem 1rem; color: var(--text3); font-size: 14px; }
 .hidden { display: none; }
@@ -211,8 +213,8 @@ input, textarea, select { color-scheme: dark; }
   <div id="doneView" class="done-box hidden">
     <div class="done-icon">🎉</div>
     <div class="done-title">등록되었어요</div>
-    <div class="done-seat"><b id="doneSeatText">—</b>번 자리에 편하게 앉아주세요!</div>
-    <button class="btn success" onclick="goToss()">주문하러 가기 →</button>
+    <div class="done-seat"><b id="doneSeatText">—</b><span id="doneSeatUnit"></span> 자리에 편하게 앉아주세요!</div>
+    <div class="done-hint" id="doneHint">잠시 후 주문 화면이 열려요…</div>
   </div>
 
   <div id="menuView" class="hidden menu-box">
@@ -588,8 +590,11 @@ function submitSeat(){
   try { if (navigator.sendBeacon) sent = navigator.sendBeacon(GAS_URL, new Blob([payload], {type:'text/plain'})); } catch(e) { sent = false; }
   if (!sent) { try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {} }
   document.getElementById('doneSeatText').textContent = seatLabel(seatNum);
+  document.getElementById('doneSeatUnit').textContent = (seatNum >= 27 ? '번' : '');
   document.getElementById('headerTitle').textContent = '등록 완료';
   show('doneView');
+  // 2.5초 후 토스 주문 화면으로 자동 이동
+  setTimeout(function(){ goToss(); }, 2500);
   setTimeout(goToss, 1500);
 }
 
