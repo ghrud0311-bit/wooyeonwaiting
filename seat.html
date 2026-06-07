@@ -119,6 +119,17 @@ select:-webkit-autofill {
   transition: background-color 9999s ease-in-out 0s, color 9999s ease-in-out 0s;
 }
 input, textarea, select { color-scheme: dark; }
+
+/* 손님 확인 모달 */
+.confirm-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 250; padding: 1.2rem; }
+.confirm-modal-bg.on { display: flex; }
+.confirm-modal { background: var(--surface); border-radius: 22px; padding: 2.2rem 1.5rem 1.5rem; max-width: 340px; width: 100%; text-align: center; }
+.confirm-label { font-size: 12px; color: var(--text3); margin-bottom: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; }
+.confirm-question { font-size: 17px; color: var(--text2); margin-bottom: 0.8rem; letter-spacing: -0.01em; font-weight: 400; }
+.confirm-info { font-size: 36px; font-weight: 600; color: var(--text); margin-bottom: 1.6rem; letter-spacing: -0.02em; line-height: 1.1; }
+.confirm-actions { display: flex; gap: 8px; }
+.confirm-actions .btn { margin-top: 0; flex: 1; padding: 14px; font-size: 15px; }
+.confirm-actions .btn.ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
 </style>
 </head>
 <body>
@@ -462,7 +473,7 @@ async function loadContext(){
           oldHere = { id: pad4(row[0]), newSeat: rowSeat };
         }
         if (rowSeat === seatNum && !activeHere) {
-          activeHere = { id: pad4(row[0]) };
+          activeHere = { id: pad4(row[0]), gender: row[1] || '' };
         }
       }
     }
@@ -476,12 +487,41 @@ async function loadContext(){
     return;
   }
 
-  // (2) 이미 등록된 자리 → 메뉴 분기 (주문 / 신청 / 안내)
+  // (2) 이미 등록된 자리 → 본인 확인 모달 → 맞으면 메뉴, 아니면 leave + 새 등록
   if (activeHere) {
-    clearGuide();
-    document.getElementById('mnSeat').textContent = seatLabel(seatNum);
-    document.getElementById('headerTitle').textContent = '메뉴';
-    show('menuView');
+    var genderShort = activeHere.gender === '남성' ? '남' : (activeHere.gender === '여성' ? '여' : '?');
+    showIdentityConfirm(
+      activeHere.id + ' / ' + genderShort,
+      function() {
+        // 맞다 → 기존 분기 (메뉴)
+        clearGuide();
+        document.getElementById('mnSeat').textContent = seatLabel(seatNum);
+        document.getElementById('headerTitle').textContent = '메뉴';
+        show('menuView');
+      },
+      function() {
+        // 아니다 → 옛 손님 leave 처리 후 새 등록 폼
+        var leavePayload = JSON.stringify({ type:'seatLeave', seat: seatNum });
+        try {
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(GAS_URL, new Blob([leavePayload], {type:'text/plain'}));
+          } else {
+            fetch(GAS_URL, { method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:leavePayload }).catch(function(){});
+          }
+        } catch(e) {}
+        // 잠시 후 새 등록 (시트 반영 약간 기다림)
+        setTimeout(function() {
+          if (noticeText && noticeText.trim()) {
+            document.getElementById('ntSeat').textContent = seatLabel(seatNum);
+            document.getElementById('ntInfo').textContent = noticeText;
+            document.getElementById('headerTitle').textContent = '안내사항';
+            show('noticeView');
+          } else {
+            goToReg();
+          }
+        }, 600);
+      }
+    );
     return;
   }
 
@@ -495,6 +535,22 @@ async function loadContext(){
     // 안내 텍스트 없으면 바로 등록 폼
     goToReg();
   }
+}
+
+
+// 손님 본인 확인 모달
+function showIdentityConfirm(info, onYes, onNo) {
+  document.getElementById('confirmInfo').textContent = info;
+  document.getElementById('confirmModalBg').classList.add('on');
+  window._confirmYes = onYes;
+  window._confirmNo = onNo;
+}
+function confirmIdentity(yes) {
+  document.getElementById('confirmModalBg').classList.remove('on');
+  if (yes) { if (window._confirmYes) window._confirmYes(); }
+  else { if (window._confirmNo) window._confirmNo(); }
+  window._confirmYes = null;
+  window._confirmNo = null;
 }
 
 function goToReg(){
@@ -635,5 +691,19 @@ function pickCard(idx){
   clearGuide();
 }
 </script>
+
+<div class="confirm-modal-bg" id="confirmModalBg">
+  <div class="confirm-modal">
+    <div class="confirm-label">SEAT CHECK</div>
+    <div class="confirm-question">이 자리에 앉으신 분이</div>
+    <div class="confirm-info" id="confirmInfo">— / —</div>
+    <div class="confirm-question" style="margin-bottom:1.6rem">맞으신가요?</div>
+    <div class="confirm-actions">
+      <button class="btn ghost" onclick="confirmIdentity(false)">아니에요</button>
+      <button class="btn" onclick="confirmIdentity(true)">맞아요</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
