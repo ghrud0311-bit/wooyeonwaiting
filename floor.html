@@ -325,11 +325,11 @@ function dynamicSeatPool(totalM, totalF) {
 
   // 각 테이블 내 외/내 분할 (외곽 우선 — 외곽이 더 편한 자리)
   const LO_cap = 7, LI_cap = 5, RO_cap = 8, RI_cap = 6;
-  let lo_n = Math.min(LO_cap, Math.ceil(L * LO_cap / CAP_L));
+  let lo_n = Math.min(LO_cap, Math.floor(L * LO_cap / CAP_L));
   let li_n = L - lo_n;
   if (li_n > LI_cap) { li_n = LI_cap; lo_n = L - li_n; }
   if (li_n < 0) li_n = 0;
-  let ro_n = Math.min(RO_cap, Math.ceil(R * RO_cap / CAP_R));
+  let ro_n = Math.min(RO_cap, Math.floor(R * RO_cap / CAP_R));
   let ri_n = R - ro_n;
   if (ri_n > RI_cap) { ri_n = RI_cap; ro_n = R - ri_n; }
   if (ri_n < 0) ri_n = 0;
