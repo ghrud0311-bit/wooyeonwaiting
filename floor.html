@@ -230,7 +230,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 </div>
 <div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
   <div class="modal-card">
-    <div class="modal-title"><span id="mSeat">—</span>번 자리</div>
+    <div class="modal-title"><span id="mSeat">—</span> 자리</div>
     <div class="m-label">전화번호 뒷 4자리</div>
     <input class="m-input" id="mId" type="tel" inputmode="numeric" maxlength="4" placeholder="0000">
     <div class="m-label">성별</div>
@@ -577,7 +577,7 @@ function doMove(){
 var mSeatNum = 0, mGender = '';
 function openSeatModal(n){
   mSeatNum = n; mGender = '';
-  document.getElementById('mSeat').textContent = n;
+  document.getElementById('mSeat').textContent = seatLabel(n);
   var o = occ[n];
   document.getElementById('mId').value = o ? o.id : '';
   document.getElementById('mgM').className = 'm-gbtn';
@@ -597,7 +597,7 @@ function openSeatModal(n){
         var dt = Math.floor((t2 - t1) / 60000);
         if (!isNaN(dt) && dt >= 0) elapsed = ' <span style="color:var(--text3)">(+'+dt+'분)</span>';
       }
-      return '<div class="h-row"><b>'+e.s+'번</b> · '+hhmm(e.t)+' '+lbl+elapsed+'</div>';
+      return '<div class="h-row"><b>'+seatLabel(e.s)+'</b> · '+hhmm(e.t)+' '+lbl+elapsed+'</div>';
     }).join('');
     const em = elapsedMin(o.lastOrder);
     if (em!=null) mh.innerHTML += '<div class="h-row" style="margin-top:4px;color:'+(em>=90?'var(--danger)':'var(--text3)')+'">마지막 주문 후 '+em+'분 경과</div>';
@@ -623,7 +623,7 @@ function registerManual(){
   closeModal(); setTimeout(loadSeats, 1200);
 }
 function leaveManual(){
-  if (!confirm(mSeatNum + '번 자리를 비울까요? (퇴장 처리, 누적 +1)')) return;
+  if (!confirm(seatLabel(mSeatNum) + ' 자리를 비울까요? (퇴장 처리, 누적 +1)')) return;
   var payload = JSON.stringify({ type:'seatLeave', seat:mSeatNum });
   try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {}
   closeModal(); setTimeout(loadSeats, 1200);
