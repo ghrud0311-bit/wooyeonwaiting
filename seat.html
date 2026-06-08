@@ -132,6 +132,16 @@ input, textarea, select { color-scheme: dark; }
 .confirm-actions { display: flex; gap: 8px; }
 .confirm-actions .btn { margin-top: 0; flex: 1; padding: 14px; font-size: 15px; }
 .confirm-actions .btn.ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+
+/* 자리 카드 배지 (R/B + 카드값 또는 조커) */
+.card-badge { display: inline-block; min-width: 1.6em; padding: 0.15em 0.4em; border-radius: 6px; font-family: Georgia, 'Times New Roman', serif; font-weight: 700; color: #fff; text-align: center; vertical-align: middle; line-height: 1.2; letter-spacing: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+.card-badge.card-r { background: #ff453a; }
+.card-badge.card-b { background: #0a84ff; }
+.card-badge.card-bar { background: #5a5a5e; color: #f5f5f7; }
+.card-badge.card-xl { min-width: 1.8em; padding: 0.2em 0.5em; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+.card-badge.card-r.card-xl { background: linear-gradient(135deg, #ff5e54, #d11a14); }
+.card-badge.card-b.card-xl { background: linear-gradient(135deg, #2997ff, #0064d8); }
+.card-badge .joker { font-family: -apple-system, 'SF Pro Display', sans-serif; font-size: 0.7em; font-weight: 800; letter-spacing: 0.05em; }
 </style>
 </head>
 <body>
@@ -287,6 +297,21 @@ var SEAT_LABEL_MAP = {
   16:'R8', 17:'B8', 18:'B9', 19:'R9', 20:'R10',
   21:'B10', 22:'BJ', 23:'RJ', 24:'RQ', 25:'BQ', 26:'BK'
 };
+
+// 카드 배지 HTML 생성 — seatLabel(텍스트)과 별개로 시각용
+function seatBadge(n, opts) {
+  opts = opts || {};
+  var k = parseInt(n);
+  var raw = SEAT_LABEL_MAP[k];
+  var size = opts.size ? ' card-' + opts.size : '';
+  if (!raw) return '<span class="card-badge card-bar' + size + '">' + n + '</span>';
+  var color = raw.charAt(0);
+  var card = raw.substring(1);
+  var cls = color === 'R' ? 'card-r' : 'card-b';
+  var inner = card === 'K' ? '<span class="joker">JOKER</span>' : card;
+  return '<span class="card-badge ' + cls + size + '">' + inner + '</span>';
+}
+
 function seatLabel(n) {
   if (typeof CARD_MODE !== 'undefined' && !CARD_MODE) return String(n);
   var k = parseInt(n);
@@ -499,7 +524,7 @@ async function loadContext(){
       function() {
         // 맞다 → 기존 분기 (메뉴)
         clearGuide();
-        document.getElementById('mnSeat').textContent = seatLabel(seatNum);
+        document.getElementById('mnSeat').innerHTML = seatBadge(seatNum);
         document.getElementById('headerTitle').textContent = '메뉴';
         show('menuView');
       },
@@ -516,7 +541,7 @@ async function loadContext(){
         // 잠시 후 새 등록 (시트 반영 약간 기다림)
         setTimeout(function() {
           if (noticeText && noticeText.trim()) {
-            document.getElementById('ntSeat').textContent = seatLabel(seatNum);
+            document.getElementById('ntSeat').innerHTML = seatBadge(seatNum);
             document.getElementById('ntInfo').textContent = noticeText;
             document.getElementById('headerTitle').textContent = '안내사항';
             show('noticeView');
@@ -531,7 +556,7 @@ async function loadContext(){
 
   // (3) 빈 자리 → 안내사항 페이지 (안내 텍스트 있으면) → 등록 폼
   if (noticeText && noticeText.trim()) {
-    document.getElementById('ntSeat').textContent = seatLabel(seatNum);
+    document.getElementById('ntSeat').innerHTML = seatBadge(seatNum);
     document.getElementById('ntInfo').textContent = noticeText;
     document.getElementById('headerTitle').textContent = '안내사항';
     show('noticeView');
@@ -558,7 +583,7 @@ function confirmIdentity(yes) {
 }
 
 function goToReg(){
-  document.getElementById('regSeat').textContent = seatLabel(seatNum);
+  document.getElementById('regSeat').innerHTML = seatBadge(seatNum);
   document.getElementById('headerTitle').textContent = '자리 등록';
   show('regView');
 }
@@ -591,7 +616,7 @@ function submitSeat(){
   var sent = false;
   try { if (navigator.sendBeacon) sent = navigator.sendBeacon(GAS_URL, new Blob([payload], {type:'text/plain'})); } catch(e) { sent = false; }
   if (!sent) { try { fetch(GAS_URL, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain'}, body:payload}).catch(function(){}); } catch(e) {} }
-  document.getElementById('doneSeatText').textContent = seatLabel(seatNum);
+  document.getElementById('doneSeatText').innerHTML = seatBadge(seatNum);
   document.getElementById('doneSeatUnit').textContent = (seatNum >= 27 ? '번' : '');
   document.getElementById('headerTitle').textContent = '등록 완료';
   show('doneView');
@@ -682,8 +707,7 @@ function pickCard(idx){
   realCard.classList.add('flipped','real');
   document.getElementById('cardsHint').textContent = '✨ 당신의 자리가 정해졌어요';
   // 카드값(🔴A 등)으로 표시. 바자리(27~32)는 숫자+'번' 그대로.
-  var _mvLabel = seatLabel(cardRealSeat);
-  document.getElementById('mvNum').textContent = _mvLabel;
+  document.getElementById('mvNum').innerHTML = seatBadge(cardRealSeat, { size: 'xl' });
   document.getElementById('mvUnit').textContent = (cardRealSeat >= 27 ? '번' : '');
   document.getElementById('mvDir').textContent = moveHint(seatNum, cardRealSeat);
   document.getElementById('mvFrom').textContent = '현재 ' + seatLabel(seatNum) + ' → ' + seatLabel(cardRealSeat);
