@@ -163,6 +163,9 @@ input, textarea, select { color-scheme: dark; }
 .tcard.xl .joker-icon.sm { width: 28px; height: 28px; }
 .tcard.xl .joker-icon.lg { width: 110px; height: 110px; }
 .tcard .corner-tl, .tcard .corner-br { display: flex; align-items: center; justify-content: center; }
+
+#moveResult:not(.hidden) { animation: mvFadeIn 0.55s ease-out; }
+@keyframes mvFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
@@ -726,7 +729,7 @@ function startCardShuffle(newSeat){
   cardRealSeat = newSeat;
   cardPicked = false;
   var avail = [];
-  for (var i = 1; i <= 32; i++) if (i !== seatNum && i !== newSeat) avail.push(i);
+  for (var i = 1; i <= 26; i++) if (i !== seatNum && i !== newSeat) avail.push(i);
   for (var j = avail.length - 1; j > 0; j--) { var k = Math.floor(Math.random()*(j+1)); var t = avail[j]; avail[j] = avail[k]; avail[k] = t; }
   cardFakes = [avail[0], avail[1]];
   for (var c = 0; c < 3; c++) {
@@ -757,15 +760,17 @@ function pickCard(idx){
   } else {
     document.getElementById('cardNum'+idx).textContent = disp.card;
   }
+  // (1) 0ms — 내가 고른 카드 뒤집기
   realCard.classList.add('flipped','real');
   document.getElementById('cardsHint').textContent = '✨ 당신의 자리가 정해졌어요';
-  // 카드값(🔴A 등)으로 표시. 바자리(27~32)는 숫자+'번' 그대로.
+  // 결과 박스 데이터 세팅 (보이진 않음 — 아래에서 step 3에 표시)
   document.getElementById('mvNum').innerHTML = seatBadge(cardRealSeat, { size: 'xl' });
   document.getElementById('mvUnit').textContent = (cardRealSeat >= 27 ? '번' : '');
   document.getElementById('mvDir').textContent = moveHint(seatNum, cardRealSeat);
   document.getElementById('mvFrom').textContent = '현재 ' + seatLabel(seatNum) + ' → ' + seatLabel(cardRealSeat);
-  document.getElementById('moveResult').classList.remove('hidden');
   var others = [0,1,2].filter(function(x){ return x !== idx; });
+
+  // (2) 900ms 후 — 안 고른 두 카드 뒤집기
   setTimeout(function(){
     others.forEach(function(slot, fi){
       var fdisp = cardDisplayFor(cardFakes[fi]);
@@ -776,7 +781,13 @@ function pickCard(idx){
       }
       document.getElementById('card'+slot).classList.add('flipped','fake');
     });
-  }, 1000);
+  }, 900);
+
+  // (3) 1900ms 후 — 아래 '이동하실 자리예요' 카드 + 안내 표시 (페이드 인)
+  setTimeout(function(){
+    document.getElementById('moveResult').classList.remove('hidden');
+  }, 1900);
+
   clearGuide();
 }
 </script>
