@@ -133,15 +133,22 @@ input, textarea, select { color-scheme: dark; }
 .confirm-actions .btn { margin-top: 0; flex: 1; padding: 14px; font-size: 15px; }
 .confirm-actions .btn.ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
 
-/* 자리 카드 배지 (R/B + 카드값 또는 조커) */
-.card-badge { display: inline-block; min-width: 1.6em; padding: 0.15em 0.4em; border-radius: 6px; font-family: Georgia, 'Times New Roman', serif; font-weight: 700; color: #fff; text-align: center; vertical-align: middle; line-height: 1.2; letter-spacing: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
-.card-badge.card-r { background: #ff453a; }
-.card-badge.card-b { background: #0a84ff; }
-.card-badge.card-bar { background: #5a5a5e; color: #f5f5f7; }
-.card-badge.card-xl { min-width: 1.8em; padding: 0.2em 0.5em; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
-.card-badge.card-r.card-xl { background: linear-gradient(135deg, #ff5e54, #d11a14); }
-.card-badge.card-b.card-xl { background: linear-gradient(135deg, #2997ff, #0064d8); }
-.card-badge .joker { font-family: -apple-system, 'SF Pro Display', sans-serif; font-size: 0.7em; font-weight: 800; letter-spacing: 0.05em; }
+/* 자리 트럼프 카드 배지 — 직사각형 라운드, 코너+가운데 카드값 */
+.tcard { display: inline-block; position: relative; width: 38px; height: 54px; border-radius: 5px; background: #fff; vertical-align: middle; box-shadow: 0 1px 3px rgba(0,0,0,0.35), inset 0 0 0 0.5px rgba(0,0,0,0.1); font-family: Georgia, 'Times New Roman', serif; font-weight: 700; margin: 0 1px; }
+.tcard.r { background: linear-gradient(155deg, #ff5e54 0%, #d11a14 100%); }
+.tcard.b { background: linear-gradient(155deg, #2997ff 0%, #0064d8 100%); }
+.tcard.bar { background: linear-gradient(155deg, #6e6e72 0%, #3a3a3c 100%); }
+.tcard .corner-tl, .tcard .corner-br { position: absolute; color: #fff; font-size: 10px; line-height: 1; font-weight: 700; }
+.tcard .corner-tl { top: 4px; left: 5px; }
+.tcard .corner-br { bottom: 4px; right: 5px; transform: rotate(180deg); }
+.tcard .center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+.tcard .joker { font-family: -apple-system, 'SF Pro Display', sans-serif; font-size: 9px; font-weight: 800; letter-spacing: 0.05em; transform: rotate(-12deg); }
+.tcard.xl { width: 120px; height: 168px; border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.45), inset 0 0 0 0.5px rgba(255,255,255,0.1); margin: 0; }
+.tcard.xl .corner-tl, .tcard.xl .corner-br { font-size: 22px; top: 10px; left: 12px; }
+.tcard.xl .corner-br { top: auto; left: auto; bottom: 10px; right: 12px; }
+.tcard.xl .center { font-size: 76px; }
+.tcard.xl .joker { font-size: 26px; transform: rotate(-12deg); }
+
 </style>
 </head>
 <body>
@@ -298,19 +305,23 @@ var SEAT_LABEL_MAP = {
   21:'B10', 22:'BJ', 23:'RJ', 24:'RQ', 25:'BQ', 26:'BK'
 };
 
-// 카드 배지 HTML 생성 — seatLabel(텍스트)과 별개로 시각용
+// 트럼프 카드 배지 HTML — 가로 38 세로 54 (XL: 120x168)
 function seatBadge(n, opts) {
   opts = opts || {};
   var k = parseInt(n);
   var raw = SEAT_LABEL_MAP[k];
-  var size = opts.size ? ' card-' + opts.size : '';
-  if (!raw) return '<span class="card-badge card-bar' + size + '">' + n + '</span>';
+  var size = opts.size === 'xl' ? ' xl' : '';
+  function build(cls, corner, center) {
+    return '<span class="tcard ' + cls + size + '"><span class="corner-tl">' + corner + '</span><span class="center">' + center + '</span><span class="corner-br">' + corner + '</span></span>';
+  }
+  if (!raw) return build('bar', String(n), String(n));
   var color = raw.charAt(0);
   var card = raw.substring(1);
-  var cls = color === 'R' ? 'card-r' : 'card-b';
-  var inner = card === 'K' ? '<span class="joker">JOKER</span>' : card;
-  return '<span class="card-badge ' + cls + size + '">' + inner + '</span>';
+  var cls = color === 'R' ? 'r' : 'b';
+  if (card === 'K') return build(cls, 'K', '<span class="joker">JOKER</span>');
+  return build(cls, card, card);
 }
+
 
 function seatLabel(n) {
   if (typeof CARD_MODE !== 'undefined' && !CARD_MODE) return String(n);
