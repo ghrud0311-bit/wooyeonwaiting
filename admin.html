@@ -1378,8 +1378,17 @@ function dynamicSeatPoolAdmin(totalM, totalF) {
   const roD = splitRow(ro_n, R, rightM, rightF);
   const riD = { m: rightM - roD.m, f: rightF - roD.f };
   function distRow(seats, m, f) {
-    const sh = shuffleArr(seats);
-    return { male: sh.slice(0, m), female: sh.slice(m, m + f) };
+    // row 안 자리는 NUM 순서대로 (옆 자리끼리 인접) — M/F 교대 배치로 같은 성별 인접 방지
+    const male = [], female = [];
+    let mLeft = m, fLeft = f;
+    let useM = (m > f) || (m === f && Math.random() < 0.5);
+    for (let i = 0; i < seats.length; i++) {
+      if (useM && mLeft > 0) { male.push(seats[i]); mLeft--; }
+      else if (fLeft > 0) { female.push(seats[i]); fLeft--; }
+      else if (mLeft > 0) { male.push(seats[i]); mLeft--; }
+      useM = !useM;
+    }
+    return { male: male, female: female };
   }
   const lo = distRow(lo_seats, loD.m, loD.f);
   const li = distRow(li_seats, liD.m, liD.f);
