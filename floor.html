@@ -335,44 +335,30 @@ function dynamicSeatPool(totalM, totalF) {
   if (ri_n < 0) ri_n = 0;
 
   // 각 row에서 중앙 우선 자리 추출
-  const rowSeats = {
-    lo: getCenterSeats(NUM.lo, lo_n),
-    li: getCenterSeats(NUM.li, li_n),
-    ro: getCenterSeats(NUM.ro, ro_n),
-    ri: getCenterSeats(NUM.ri, ri_n)
+  const leftSeats = [].concat(getCenterSeats(NUM.lo, lo_n), getCenterSeats(NUM.li, li_n));
+  const rightSeats = [].concat(getCenterSeats(NUM.ro, ro_n), getCenterSeats(NUM.ri, ri_n));
+
+  // === 좌/우 테이블별 M/F 비례 정확 분배 ===
+  // 좌측 L자리에 남자 round(totalM * L / total), 우측 R자리에 남자 = totalM - 좌측남자
+  // 경계 체크: M/F 합이 좌/우 크기를 넘지 않도록
+  let leftM = Math.round(totalM * L / total);
+  // 좌측 여자 = L - leftM, 음수면 보정
+  if (L - leftM > totalF) leftM = L - totalF;
+  if (leftM < 0) leftM = 0;
+  if (leftM > totalM) leftM = totalM;
+  if (leftM > L) leftM = L;
+  const leftF = L - leftM;
+  const rightM = totalM - leftM;
+  const rightF = totalF - leftF;
+
+  // 각 테이블 자리 셔플 후 앞 M 남자 / 뒤 F 여자
+  const leftSh = shuffle(leftSeats);
+  const rightSh = shuffle(rightSeats);
+
+  return {
+    male: [].concat(leftSh.slice(0, leftM), rightSh.slice(0, rightM)),
+    female: [].concat(leftSh.slice(leftM), rightSh.slice(rightM))
   };
-
-  // === row별 M/F 비례 분배 — 한쪽 테이블 한 성별 몰림 방지 ===
-  const male = [], female = [];
-  let mLeft = totalM, fLeft = totalF;
-  const rowKeys = ['lo','li','ro','ri'];
-  // row 처리 순서 무작위 (특정 row가 항상 같은 성별로 시작 안 되게)
-  shuffle(rowKeys).forEach(function(rk){
-    const seats = rowSeats[rk];
-    const rowN = seats.length;
-    if (rowN === 0) return;
-    const seatsLeftAll = mLeft + fLeft;
-    if (seatsLeftAll === 0) return;
-    // 이 row에 남자 몇 명 배정? 비율 + 반올림
-    let mForRow = Math.round(rowN * mLeft / seatsLeftAll);
-    mForRow = Math.min(mForRow, mLeft, rowN);
-    const fForRow = Math.min(rowN - mForRow, fLeft);
-    // 실제 합이 rowN보다 작으면 남은 자리는 더 많은 성별로
-    const used = mForRow + fForRow;
-    let extraM = 0, extraF = 0;
-    if (used < rowN) {
-      const remain = rowN - used;
-      if (mLeft - mForRow >= remain) extraM = remain;
-      else if (fLeft - fForRow >= remain) extraF = remain;
-    }
-    // 자리 셔플 후 앞 m개 남자, 뒤 f개 여자
-    const sh = shuffle(seats);
-    let i = 0;
-    for (let k = 0; k < mForRow + extraM; k++, i++) { male.push(sh[i]); mLeft--; }
-    for (let k = 0; k < fForRow + extraF; k++, i++) { female.push(sh[i]); fLeft--; }
-  });
-
-  return { male: male, female: female };
 }
 function seatsByGender(key){
   // key 형식 "M{n}_F{n}"
@@ -573,7 +559,7 @@ function doMove(){
         if (seat2gender[s2] === myG && myS < s2) sameGenderEdges++;
       });
     });
-    return v * 1000 + rep * 10 + sameGenderEdges;
+    return v * 1000 + rep * 10 + sameGenderEdges * 5;
   }
   var best=null, bs=Infinity;
   for (var k=0;k<800;k++){ var pos=assignOnce(); var sc=scoreOf(pos); if(sc<bs){ bs=sc; best=pos; } if(bs===0) break; }
