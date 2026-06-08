@@ -77,6 +77,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro
 .tcard.xl .center { font-size: 76px; }
 .tcard.xl .joker { font-size: 26px; transform: rotate(-12deg); }
 
+
+.tcard .joker-icon { display: block; }
+.tcard .joker-icon.sm { width: 12px; height: 12px; }
+.tcard .joker-icon.lg { width: 38px; height: 38px; }
+.tcard.xl .joker-icon.sm { width: 22px; height: 22px; }
+.tcard.xl .joker-icon.lg { width: 110px; height: 110px; }
+.tcard .corner-tl, .tcard .corner-br { display: flex; align-items: center; justify-content: center; }
 </style>
 </head>
 <body>
@@ -140,7 +147,7 @@ var SEAT_LABEL_MAP = {
   21:'B10', 22:'BJ', 23:'RJ', 24:'RQ', 25:'BQ', 26:'BK'
 };
 
-// 트럼프 카드 배지 HTML — 가로 38 세로 54 (XL: 120x168)
+// 트럼프 카드 배지 HTML — 가로 38 세로 54 (XL: 120x168). K = 광대 그림.
 function seatBadge(n, opts) {
   opts = opts || {};
   var k = parseInt(n);
@@ -153,9 +160,14 @@ function seatBadge(n, opts) {
   var color = raw.charAt(0);
   var card = raw.substring(1);
   var cls = color === 'R' ? 'r' : 'b';
-  if (card === 'K') return build(cls, 'K', '<span class="joker">JOKER</span>');
+  if (card === 'K') {
+    var jokerSm = '<svg class="joker-icon sm" viewBox="0 0 20 20" preserveAspectRatio="xMidYMid meet"><path d="M3 8 L7 3 L10 7 L13 3 L17 8 Z" fill="white"/><circle cx="7" cy="2.5" r="1.2" fill="white"/><circle cx="13" cy="2.5" r="1.2" fill="white"/><circle cx="10" cy="6" r="1.2" fill="white"/><circle cx="10" cy="13" r="5" fill="white"/><circle cx="10" cy="13.5" r="1.4" fill="#d11a14"/></svg>';
+    var jokerLg = '<svg class="joker-icon lg" viewBox="0 0 20 20" preserveAspectRatio="xMidYMid meet"><path d="M3 8 L7 3 L10 7 L13 3 L17 8 Z" fill="white"/><circle cx="7" cy="2.5" r="1.2" fill="white"/><circle cx="13" cy="2.5" r="1.2" fill="white"/><circle cx="10" cy="6" r="1.2" fill="white"/><circle cx="10" cy="13" r="5" fill="white"/><circle cx="10" cy="13.5" r="1.4" fill="#d11a14"/></svg>';
+    return build(cls, jokerSm, jokerLg);
+  }
   return build(cls, card, card);
 }
+
 
 
 function seatLabel(n) {
