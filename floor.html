@@ -335,14 +335,13 @@ function dynamicSeatPool(totalM, totalF) {
   if (ri_n < 0) ri_n = 0;
 
   // 각 row에서 중앙 우선 자리 추출
-  const leftSeats = [].concat(getCenterSeats(NUM.lo, lo_n), getCenterSeats(NUM.li, li_n));
-  const rightSeats = [].concat(getCenterSeats(NUM.ro, ro_n), getCenterSeats(NUM.ri, ri_n));
+  const lo_seats = getCenterSeats(NUM.lo, lo_n);
+  const li_seats = getCenterSeats(NUM.li, li_n);
+  const ro_seats = getCenterSeats(NUM.ro, ro_n);
+  const ri_seats = getCenterSeats(NUM.ri, ri_n);
 
-  // === 좌/우 테이블별 M/F 비례 정확 분배 ===
-  // 좌측 L자리에 남자 round(totalM * L / total), 우측 R자리에 남자 = totalM - 좌측남자
-  // 경계 체크: M/F 합이 좌/우 크기를 넘지 않도록
+  // === 좌/우 테이블별 M/F 비례 ===
   let leftM = Math.round(totalM * L / total);
-  // 좌측 여자 = L - leftM, 음수면 보정
   if (L - leftM > totalF) leftM = L - totalF;
   if (leftM < 0) leftM = 0;
   if (leftM > totalM) leftM = totalM;
@@ -351,13 +350,35 @@ function dynamicSeatPool(totalM, totalF) {
   const rightM = totalM - leftM;
   const rightF = totalF - leftF;
 
-  // 각 테이블 자리 셔플 후 앞 M 남자 / 뒤 F 여자
-  const leftSh = shuffle(leftSeats);
-  const rightSh = shuffle(rightSeats);
+  // === 각 테이블 안에서 외/내 row까지 M/F 정확 비례 ===
+  function splitRow(rowN, totalRowsInTable, tableM, tableF) {
+    if (rowN === 0) return { m: 0, f: 0 };
+    let m = Math.round(tableM * rowN / totalRowsInTable);
+    if (rowN - m > tableF) m = rowN - tableF;
+    if (m > tableM) m = tableM;
+    if (m < 0) m = 0;
+    if (m > rowN) m = rowN;
+    return { m: m, f: rowN - m };
+  }
+
+  const loD = splitRow(lo_n, L, leftM, leftF);
+  const liD = { m: leftM - loD.m, f: leftF - loD.f };
+  const roD = splitRow(ro_n, R, rightM, rightF);
+  const riD = { m: rightM - roD.m, f: rightF - roD.f };
+
+  // 각 row 셔플 후 앞 M 남자 / 뒤 F 여자
+  function distRow(seats, m, f) {
+    const sh = shuffle(seats);
+    return { male: sh.slice(0, m), female: sh.slice(m, m + f) };
+  }
+  const lo = distRow(lo_seats, loD.m, loD.f);
+  const li = distRow(li_seats, liD.m, liD.f);
+  const ro = distRow(ro_seats, roD.m, roD.f);
+  const ri = distRow(ri_seats, riD.m, riD.f);
 
   return {
-    male: [].concat(leftSh.slice(0, leftM), rightSh.slice(0, rightM)),
-    female: [].concat(leftSh.slice(leftM), rightSh.slice(rightM))
+    male: [].concat(lo.male, li.male, ro.male, ri.male),
+    female: [].concat(lo.female, li.female, ro.female, ri.female)
   };
 }
 function seatsByGender(key){
@@ -559,7 +580,7 @@ function doMove(){
         if (seat2gender[s2] === myG && myS < s2) sameGenderEdges++;
       });
     });
-    return v * 1000 + rep * 10 + sameGenderEdges * 5;
+    return v * 1000 + sameGenderEdges * 20 + rep * 5;
   }
   var best=null, bs=Infinity;
   for (var k=0;k<800;k++){ var pos=assignOnce(); var sc=scoreOf(pos); if(sc<bs){ bs=sc; best=pos; } if(bs===0) break; }
