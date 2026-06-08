@@ -658,8 +658,8 @@ function pairPick(n){
   pinSelB = n; renderBoard();
   setTimeout(function(){
     var idx = pins.findIndex(function(p){ return (p[0]===sa&&p[1]===sb)||(p[0]===sb&&p[1]===sa); });
-    if (idx>=0) { pins.splice(idx,1); toast(sa+'번 · '+sb+'번 같이앉기 해제'); }
-    else { pins.push([sa,sb]); toast(sa+'번 · '+sb+'번 같이 앉기'); }
+    if (idx>=0) { pins.splice(idx,1); toast(seatLabel(sa)+' · '+seatLabel(sb)+' 같이앉기 해제'); }
+    else { pins.push([sa,sb]); toast(seatLabel(sa)+' · '+seatLabel(sb)+' 같이 앉기'); }
     lastMetaEditAt = Date.now();
     saveMeta('A14', JSON.stringify(pins));
     pinSelA = null; pinSelB = null; renderBoard();
