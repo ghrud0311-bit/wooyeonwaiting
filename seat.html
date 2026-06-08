@@ -95,9 +95,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro
 .pm-row.off1 { padding-left: calc(30px + 4px); }
 .pm-label { font-size: 11px; color: var(--text3); margin: 0.6rem 0 4px; }
 .pm-cell { width: 30px; height: 38px; padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer; color: var(--text); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.pm-cell.self { background: #fff4d8; border-color: #d4a82a; color: #8c5b1a; font-weight: 600; cursor: not-allowed; }
-.pm-cell.empty { background: #f0eee9; color: var(--text3); border-color: var(--border); cursor: not-allowed; }
-.pm-cell.sel { background: var(--accent); color: #fff; border-color: var(--accent); }
+.pm-cell.self { background: rgba(212,168,42,0.2); border-color: #d4a82a; font-weight: 700; cursor: not-allowed; box-shadow: 0 0 0 1.5px #d4a82a; }
+.pm-cell.empty { background: var(--surface2); color: var(--text3); border-color: var(--border); cursor: not-allowed; opacity: 0.5; }
+.pm-cell.sel { background: var(--accent); color: #fff !important; border-color: var(--accent); }
+.pm-cell.col-r { color: #ff453a; font-weight: 700; font-family: Georgia, serif; }
+.pm-cell.col-b { color: #0a84ff; font-weight: 700; font-family: Georgia, serif; }
+.pm-cell.sel.col-r, .pm-cell.sel.col-b { color: #fff !important; }
+.pm-cell.empty.col-r, .pm-cell.empty.col-b { opacity: 0.35; }
 .pm-legend { display: flex; gap: 12px; font-size: 11px; color: var(--text3); margin-bottom: 0.8rem; }
 .pm-legend-item { display: flex; align-items: center; gap: 4px; }
 .pm-legend-dot { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--border); }
@@ -242,7 +246,7 @@ input, textarea, select { color-scheme: dark; }
   </div>
 
   <div id="menuView" class="hidden menu-box">
-    <div class="menu-seat"><b id="mnSeat">—</b>번 자리</div>
+    <div class="menu-seat"><b id="mnSeat">—</b> 자리</div>
     <button class="menu-order" onclick="goToss()">🍷 주문하러 가기 →</button>
     <button class="menu-opt" onclick="openPair()">👫 같이 앉고싶은 분 신청 <span class="arrow">›</span></button>
     <button class="menu-opt" onclick="openInfo()">📌 안내사항 다시 보기 <span class="arrow">›</span></button>
@@ -280,10 +284,6 @@ input, textarea, select { color-scheme: dark; }
           </div>
           <div class="pm-row" id="pmR_cap"></div>
         </div>
-      </div>
-      <div class="pm-table">
-        <div class="pm-table-title">바 자리 (27~32)</div>
-        <div class="pm-row" id="pmB_bar"></div>
       </div>
     </div>
     <div class="pm-btns">
@@ -656,8 +656,7 @@ const PM_ROWS = {
   pmL_inner: [3,5,7,9,11],
   pmR_outer: [13,14,16,18,20,22,24],
   pmR_inner: [15,17,19,21,23,25],
-  pmR_cap: [26],
-  pmB_bar: [27,28,29,30,31,32]
+  pmR_cap: [26]
 };
 function openPair(){
   pmSel = 0;
@@ -674,8 +673,20 @@ function renderPairTables(){
       if (n === seatNum) { cls += ' self'; clickable = false; }
       else if (!activeSeats.has(n)) { cls += ' empty'; clickable = false; }
       if (n === pmSel) cls += ' sel';
+      // R/B 색상 클래스
+      var raw = SEAT_LABEL_MAP[n] || '';
+      var color = raw.charAt(0);
+      if (color === 'R') cls += ' col-r';
+      else if (color === 'B') cls += ' col-b';
+      var card = raw.substring(1);
+      var label;
+      if (card === 'K') {
+        label = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 10 L6 4 L9 8 L12 4 L15 8 L18 4 L21 10 Z" fill="currentColor"/><circle cx="6" cy="3.5" r="1.3" fill="currentColor"/><circle cx="12" cy="3.5" r="1.3" fill="currentColor"/><circle cx="18" cy="3.5" r="1.3" fill="currentColor"/><circle cx="12" cy="16" r="5.5" fill="currentColor"/><circle cx="12" cy="16.8" r="1.8" fill="#1a1a1a"/></svg>';
+      } else {
+        label = card || String(n);
+      }
       var click = clickable ? ' onclick="pickPair('+n+')"' : '';
-      return '<button class="'+cls+'"'+click+'>'+n+'</button>';
+      return '<button class="'+cls+'"'+click+'>'+label+'</button>';
     }).join('');
   });
 }
