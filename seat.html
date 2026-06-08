@@ -524,10 +524,12 @@ async function loadContext(){
         var rowPrev = parseInt(row[6]);
         var rowGuide = String(row[8]||'').toUpperCase() === 'TRUE';
         if (rowSeat) activeSeats.add(rowSeat);
-        if (rowPrev === seatNum && rowSeat !== seatNum && rowGuide && !oldHere) {
-          oldHere = { id: pad4(row[0]), newSeat: rowSeat };
+        // 직전자리=N + 안내필요: oldHere (자리 변경 또는 그대로 유지)
+        if (rowPrev === seatNum && rowGuide && !oldHere) {
+          oldHere = { id: pad4(row[0]), newSeat: rowSeat, sameSeat: (rowSeat === seatNum) };
         }
-        if (rowSeat === seatNum && !activeHere) {
+        // 현재자리=N + 안내필요 아님: activeHere (본인확인 모달)
+        if (rowSeat === seatNum && !rowGuide && !activeHere) {
           activeHere = { id: pad4(row[0]), gender: row[1] || '' };
         }
       }
