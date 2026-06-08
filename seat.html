@@ -527,12 +527,12 @@ async function loadContext(){
         var rowPrev = parseInt(row[6]);
         var rowGuide = String(row[8]||'').toUpperCase() === 'TRUE';
         if (rowSeat) activeSeats.add(rowSeat);
-        // 직전자리=N + 안내필요: oldHere (자리 변경 또는 그대로 유지)
-        if (rowPrev === seatNum && rowGuide && !oldHere) {
-          oldHere = { id: pad4(row[0]), newSeat: rowSeat, sameSeat: (rowSeat === seatNum) };
+        // 직전자리=N (rowGuide 무관) — oldHere 후보
+        if (rowPrev === seatNum && rowSeat !== seatNum && !oldHere) {
+          oldHere = { id: pad4(row[0]), newSeat: rowSeat, sameSeat: false };
         }
-        // 현재자리=N + 안내필요 아님: activeHere (본인확인 모달)
-        if (rowSeat === seatNum && !rowGuide && !activeHere) {
+        // 현재자리=N — activeHere 후보 (rowGuide 무관)
+        if (rowSeat === seatNum && !activeHere) {
           activeHere = { id: pad4(row[0]), gender: row[1] || '' };
         }
       }
@@ -540,14 +540,7 @@ async function loadContext(){
     noticeText = (d2 && d2.values && d2.values[0] && d2.values[0][0]) ? String(d2.values[0][0]) : '';
   } catch(e) {}
 
-  // (1) 옛 자리 큐알 첫 스캔 — 카드 3장 연출
-  if (oldHere) {
-    document.getElementById('headerTitle').textContent = '자리 이동 안내';
-    startCardShuffle(oldHere.newSeat);
-    return;
-  }
-
-  // (2) 이미 등록된 자리 → 본인 확인 모달 → 맞으면 메뉴, 아니면 leave + 새 등록
+  // (1) 자리에 현재 손님 있음 → 본인 확인 모달 (현재 손님 우선)
   if (activeHere) {
     var genderShort = activeHere.gender === '남성' ? '남' : (activeHere.gender === '여성' ? '여' : '?');
     showIdentityConfirm(
@@ -582,6 +575,13 @@ async function loadContext(){
         }, 600);
       }
     );
+    return;
+  }
+
+  // (2) 옛 자리 큐알 — 카드 3장 연출 (현재 손님 없을 때만)
+  if (oldHere) {
+    document.getElementById('headerTitle').textContent = '자리 이동 안내';
+    startCardShuffle(oldHere.newSeat);
     return;
   }
 
