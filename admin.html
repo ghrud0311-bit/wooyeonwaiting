@@ -1334,6 +1334,46 @@ function getCenterSeatsAdmin(numArr, count) {
     .slice(0, count).sort((a, b) => a.i - b.i).map(x => x.n);
 }
 function dynamicSeatPoolAdmin(totalM, totalF) {
+  // R=여자, B=남자 룰
+  const RED_SEATS_A  = new Set([1,2,5,6,9,10,13,15,16,19,20,23,24]);
+  const BLUE_SEATS_A = new Set([3,4,7,8,11,12,14,17,18,21,22,25,26]);
+  function centerOrderA(arr) {
+    if (arr.length <= 1) return arr.slice();
+    const mid = (arr.length - 1) / 2;
+    return arr.map((v, i) => ({ v, d: Math.abs(i - mid), i }))
+      .sort((a, b) => a.d - b.d || a.i - b.i).map(x => x.v);
+  }
+  function pickTable(outerSeats, innerSeats, m, f) {
+    const total = m + f;
+    if (total === 0) return { male: [], female: [] };
+    const outerC = centerOrderA(outerSeats);
+    const innerC = centerOrderA(innerSeats);
+    const seatOrder = [];
+    for (let i = 0; i < Math.max(outerC.length, innerC.length); i++) {
+      if (outerC[i] !== undefined) seatOrder.push(outerC[i]);
+      if (innerC[i] !== undefined) seatOrder.push(innerC[i]);
+    }
+    const chosen = seatOrder.slice(0, total);
+    const chosenSet = new Set(chosen);
+    const ordered = outerSeats.concat(innerSeats).filter(s => chosenSet.has(s));
+    const rSeats = ordered.filter(s => RED_SEATS_A.has(s));
+    const bSeats = ordered.filter(s => BLUE_SEATS_A.has(s));
+    let male = [], female = [];
+    if (f >= rSeats.length) {
+      female = rSeats.slice();
+      const overflow = f - rSeats.length;
+      const bCenter = centerOrderA(bSeats);
+      const fInB = new Set(bCenter.slice(0, overflow));
+      female = female.concat(bSeats.filter(s => fInB.has(s)));
+      male = bSeats.filter(s => !fInB.has(s));
+    } else {
+      const rCenter = centerOrderA(rSeats);
+      const fInR = new Set(rCenter.slice(0, f));
+      female = rSeats.filter(s => fInR.has(s));
+      male = rSeats.filter(s => !fInR.has(s)).concat(bSeats);
+    }
+    return { male, female };
+  }
   const total = totalM + totalF;
   if (total === 0) return { male: [], female: [], rows: { lo:[], li:[], ro:[], ri:[] } };
   const CAP_L = 12, CAP_R = 14;
@@ -1343,19 +1383,6 @@ function dynamicSeatPoolAdmin(totalM, totalF) {
   if (L > CAP_L) { L = CAP_L; R = total - L; }
   if (L < 0) L = 0;
   if (R < 0) R = 0;
-  const LO_cap = 7, LI_cap = 5, RO_cap = 8, RI_cap = 6;
-  let lo_n = Math.min(LO_cap, Math.floor(L * LO_cap / CAP_L));
-  let li_n = L - lo_n;
-  if (li_n > LI_cap) { li_n = LI_cap; lo_n = L - li_n; }
-  if (li_n < 0) li_n = 0;
-  let ro_n = Math.min(RO_cap, Math.floor(R * RO_cap / CAP_R));
-  let ri_n = R - ro_n;
-  if (ri_n > RI_cap) { ri_n = RI_cap; ro_n = R - ri_n; }
-  if (ri_n < 0) ri_n = 0;
-  const lo_seats = getCenterSeatsAdmin(NUM.lo, lo_n);
-  const li_seats = getCenterSeatsAdmin(NUM.li, li_n);
-  const ro_seats = getCenterSeatsAdmin(NUM.ro, ro_n);
-  const ri_seats = getCenterSeatsAdmin(NUM.ri, ri_n);
   let leftM = Math.round(totalM * L / total);
   if (L - leftM > totalF) leftM = L - totalF;
   if (leftM < 0) leftM = 0;
@@ -1364,77 +1391,24 @@ function dynamicSeatPoolAdmin(totalM, totalF) {
   const leftF = L - leftM;
   const rightM = totalM - leftM;
   const rightF = totalF - leftF;
-  function splitRow(rowN, totalRowsInTable, tableM, tableF) {
-    if (rowN === 0) return { m: 0, f: 0 };
-    let m = Math.round(tableM * rowN / totalRowsInTable);
-    if (rowN - m > tableF) m = rowN - tableF;
-    if (m > tableM) m = tableM;
-    if (m < 0) m = 0;
-    if (m > rowN) m = rowN;
-    return { m: m, f: rowN - m };
-  }
-  const loD = splitRow(lo_n, L, leftM, leftF);
-  const liD = { m: leftM - loD.m, f: leftF - loD.f };
-  const roD = splitRow(ro_n, R, rightM, rightF);
-  const riD = { m: rightM - roD.m, f: rightF - roD.f };
-  // COLS: 자리 → col 인덱스 (앞자리 매칭용)
-  const COLS_ADMIN = {1:0,2:1,4:2,6:3,8:4,10:5,12:6,3:1,5:2,7:3,9:4,11:5,13:0,14:1,16:2,18:3,20:4,22:5,24:6,26:7,15:1,17:2,19:3,21:4,23:5,25:6};
-  // 외곽 row: M/F 교대 (옆자리 동성 방지)
-  function distRow(seats, m, f) {
-    const male = [], female = [];
-    let mLeft = m, fLeft = f;
-    let useM = (m > f) || (m === f && Math.random() < 0.5);
-    for (let i = 0; i < seats.length; i++) {
-      if (useM && mLeft > 0) { male.push(seats[i]); mLeft--; }
-      else if (fLeft > 0) { female.push(seats[i]); fLeft--; }
-      else if (mLeft > 0) { male.push(seats[i]); mLeft--; }
-      useM = !useM;
-    }
-    return { male: male, female: female };
-  }
-  // 내곽 row: 외곽 col별 성별의 '반대' 성별 우선 배치 (앞자리 동성 방지)
-  function distRowOpposite(seats, m, f, outerColG) {
-    const male = [], female = [], used = new Set();
-    let mLeft = m, fLeft = f;
-    seats.forEach(function(seat){
-      const outerG = outerColG[COLS_ADMIN[seat]];
-      if (outerG === 'M' && fLeft > 0) { female.push(seat); fLeft--; used.add(seat); }
-      else if (outerG === 'F' && mLeft > 0) { male.push(seat); mLeft--; used.add(seat); }
-    });
-    let useM = (mLeft > fLeft) || (mLeft === fLeft && Math.random() < 0.5);
-    seats.forEach(function(seat){
-      if (used.has(seat)) return;
-      if (useM && mLeft > 0) { male.push(seat); mLeft--; }
-      else if (fLeft > 0) { female.push(seat); fLeft--; }
-      else if (mLeft > 0) { male.push(seat); mLeft--; }
-      useM = !useM;
-    });
-    return { male: male, female: female };
-  }
-  function rowColG(r) {
-    const m = {};
-    r.male.forEach(function(s){ m[COLS_ADMIN[s]] = 'M'; });
-    r.female.forEach(function(s){ m[COLS_ADMIN[s]] = 'F'; });
-    return m;
-  }
-  const lo = distRow(lo_seats, loD.m, loD.f);
-  const li = distRowOpposite(li_seats, liD.m, liD.f, rowColG(lo));
-  const ro = distRow(ro_seats, roD.m, roD.f);
-  const ri = distRowOpposite(ri_seats, riD.m, riD.f, rowColG(ro));
-  // 각 row의 position별 M/F/E 배열 구성
-  function buildOcc(rowSeats, rowDist) {
-    const setM = new Set(rowDist.male);
-    const setF = new Set(rowDist.female);
+  const leftPick = pickTable(NUM.lo, NUM.li, leftM, leftF);
+  const rightPick = pickTable(NUM.ro, NUM.ri, rightM, rightF);
+  // row별 M/F/E 배열
+  function buildOcc(rowSeats, allMale, allFemale) {
+    const setM = new Set(allMale);
+    const setF = new Set(allFemale);
     return rowSeats.map(seat => setM.has(seat) ? 'M' : (setF.has(seat) ? 'F' : 'E'));
   }
+  const allMale = [].concat(leftPick.male, rightPick.male);
+  const allFemale = [].concat(leftPick.female, rightPick.female);
   return {
-    male: [].concat(lo.male, li.male, ro.male, ri.male),
-    female: [].concat(lo.female, li.female, ro.female, ri.female),
+    male: allMale,
+    female: allFemale,
     rows: {
-      lo: buildOcc(NUM.lo, lo),
-      li: buildOcc(NUM.li, li),
-      ro: buildOcc(NUM.ro, ro),
-      ri: buildOcc(NUM.ri, ri)
+      lo: buildOcc(NUM.lo, allMale, allFemale),
+      li: buildOcc(NUM.li, allMale, allFemale),
+      ro: buildOcc(NUM.ro, allMale, allFemale),
+      ri: buildOcc(NUM.ri, allMale, allFemale)
     }
   };
 }

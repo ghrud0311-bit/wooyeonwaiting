@@ -297,24 +297,72 @@ ALLSEATS.forEach(function(nn){ NB[nn] = ALLSEATS.filter(function(mm){ if(mm===nn
 // 대각선 이웃(다른 줄 + 열차이 1)
 function isDiag(a,b){ if(a==null||b==null) return false; if((a<=12)!==(b<=12)) return false; return (OUTERSET.has(a)!==OUTERSET.has(b)) && Math.abs(COLS[a]-COLS[b])===1; }
 
-// SEATING_DATA 폐기 — 동적 알고리즘으로 대체. 호환성 위해 빈 객체 유지.
-const SEATING_DATA = {};
+// === 새 알고리즘 ===
+// 자리 자체에 R/B 색 박혀있음 (R=빨강, B=파랑)
+// 룰: R 자리 = 여자 우선, B 자리 = 남자 우선
+// 성비 불균형 시 overflow는 반대 색 자리로 (이성 인접 극대화)
+const RED_SEATS  = new Set([1,2,5,6,9,10,13,15,16,19,20,23,24]);   // 13개
+const BLUE_SEATS = new Set([3,4,7,8,11,12,14,17,18,21,22,25,26]); // 13개
 
-// 중앙 우선 자리 선택: numArr에서 count개를 가운데에서 바깥으로 뻗어가며 픽
-function getCenterSeats(numArr, count) {
-  if (count >= numArr.length) return numArr.slice();
-  if (count <= 0) return [];
-  const mid = (numArr.length - 1) / 2;
-  const indexed = numArr.map((n, i) => ({ n: n, i: i, dist: Math.abs(i - mid) }));
-  indexed.sort(function(a, b){ if(a.dist !== b.dist) return a.dist - b.dist; return a.i - b.i; });
-  return indexed.slice(0, count).sort(function(a, b){ return a.i - b.i; }).map(function(x){ return x.n; });
+// 배열을 중앙부터 외곽으로 정렬 (가운데 자리 우선 사용)
+function centerOrderArr(arr) {
+  if (arr.length <= 1) return arr.slice();
+  const mid = (arr.length - 1) / 2;
+  const idxed = arr.map((v, i) => ({ v: v, d: Math.abs(i - mid), i: i }));
+  idxed.sort(function(a, b){ return a.d - b.d || a.i - b.i; });
+  return idxed.map(function(x){ return x.v; });
 }
 
-// 동적 좌석 풀: 인원에 따라 좌/우 균형 + 각 테이블 중앙 우선
+// 한 테이블 안에서 자리 결정
+function pickTableSeats(outerSeats, innerSeats, m, f) {
+  const total = m + f;
+  if (total === 0) return { male: [], female: [] };
+  const cap = outerSeats.length + innerSeats.length;
+  if (total > cap) { /* 외부에서 이미 cap 보장 */ }
+
+  // 중앙 우선 정렬 + 외/내 인터리브
+  const outerC = centerOrderArr(outerSeats);
+  const innerC = centerOrderArr(innerSeats);
+  const seatOrder = [];
+  for (let i = 0; i < Math.max(outerC.length, innerC.length); i++) {
+    if (outerC[i] !== undefined) seatOrder.push(outerC[i]);
+    if (innerC[i] !== undefined) seatOrder.push(innerC[i]);
+  }
+  const chosen = seatOrder.slice(0, total);
+
+  // chosen 안에서 R/B 분리 (NUM 순서 유지 위해 outerSeats/innerSeats 기준 정렬)
+  const chosenSet = new Set(chosen);
+  const ordered = outerSeats.concat(innerSeats).filter(function(s){ return chosenSet.has(s); });
+  const rSeats = ordered.filter(function(s){ return RED_SEATS.has(s); });
+  const bSeats = ordered.filter(function(s){ return BLUE_SEATS.has(s); });
+
+  let male = [], female = [];
+  if (f >= rSeats.length) {
+    // R 자리 모두 F, 초과 F는 B 자리로 (B 자리 중앙부터 F에게 줌 → 인접 M과 마주봄)
+    female = rSeats.slice();
+    const overflow = f - rSeats.length;
+    // B 자리도 중앙부터 F에게 (이렇게 하면 외곽 끝 B는 M이 됨)
+    const bCenter = centerOrderArr(bSeats);
+    const fInB = bCenter.slice(0, overflow);
+    const mInB = bSeats.filter(function(s){ return fInB.indexOf(s) < 0; });
+    female = female.concat(fInB);
+    male = mInB;
+  } else {
+    // F < R 자리 수: F는 R 자리 일부만, 나머지 R 자리는 M이 채움
+    // R 자리 중앙부터 F에게 (외곽 끝 R은 M이 됨 → B 인접과 마주봄)
+    const rCenter = centerOrderArr(rSeats);
+    female = rCenter.slice(0, f);
+    const mInR = rSeats.filter(function(s){ return female.indexOf(s) < 0; });
+    male = mInR.concat(bSeats);
+  }
+  return { male: male, female: female };
+}
+
+// 동적 좌석 풀: R=여자, B=남자 룰 기반
 function dynamicSeatPool(totalM, totalF) {
   const total = totalM + totalF;
   if (total === 0) return { male: [], female: [] };
-  const CAP_L = 12, CAP_R = 14;  // 좌측 12자리, 우측 14자리
+  const CAP_L = 12, CAP_R = 14;
   // 좌/우 비례 분배 (12:14)
   let L = Math.round(total * CAP_L / (CAP_L + CAP_R));
   let R = total - L;
@@ -323,24 +371,7 @@ function dynamicSeatPool(totalM, totalF) {
   if (L < 0) L = 0;
   if (R < 0) R = 0;
 
-  // 각 테이블 내 외/내 분할 (외곽 우선 — 외곽이 더 편한 자리)
-  const LO_cap = 7, LI_cap = 5, RO_cap = 8, RI_cap = 6;
-  let lo_n = Math.min(LO_cap, Math.floor(L * LO_cap / CAP_L));
-  let li_n = L - lo_n;
-  if (li_n > LI_cap) { li_n = LI_cap; lo_n = L - li_n; }
-  if (li_n < 0) li_n = 0;
-  let ro_n = Math.min(RO_cap, Math.floor(R * RO_cap / CAP_R));
-  let ri_n = R - ro_n;
-  if (ri_n > RI_cap) { ri_n = RI_cap; ro_n = R - ri_n; }
-  if (ri_n < 0) ri_n = 0;
-
-  // 각 row에서 중앙 우선 자리 추출
-  const lo_seats = getCenterSeats(NUM.lo, lo_n);
-  const li_seats = getCenterSeats(NUM.li, li_n);
-  const ro_seats = getCenterSeats(NUM.ro, ro_n);
-  const ri_seats = getCenterSeats(NUM.ri, ri_n);
-
-  // === 좌/우 테이블별 M/F 비례 ===
+  // 좌/우 테이블별 M/F 비례
   let leftM = Math.round(totalM * L / total);
   if (L - leftM > totalF) leftM = L - totalF;
   if (leftM < 0) leftM = 0;
@@ -350,70 +381,12 @@ function dynamicSeatPool(totalM, totalF) {
   const rightM = totalM - leftM;
   const rightF = totalF - leftF;
 
-  // === 각 테이블 안에서 외/내 row까지 M/F 정확 비례 ===
-  function splitRow(rowN, totalRowsInTable, tableM, tableF) {
-    if (rowN === 0) return { m: 0, f: 0 };
-    let m = Math.round(tableM * rowN / totalRowsInTable);
-    if (rowN - m > tableF) m = rowN - tableF;
-    if (m > tableM) m = tableM;
-    if (m < 0) m = 0;
-    if (m > rowN) m = rowN;
-    return { m: m, f: rowN - m };
-  }
-
-  const loD = splitRow(lo_n, L, leftM, leftF);
-  const liD = { m: leftM - loD.m, f: leftF - loD.f };
-  const roD = splitRow(ro_n, R, rightM, rightF);
-  const riD = { m: rightM - roD.m, f: rightF - roD.f };
-
-  // 외곽 row: M/F 교대로 배치 (옆자리 동성 방지)
-  function distRow(seats, m, f) {
-    const male = [], female = [];
-    let mLeft = m, fLeft = f;
-    let useM = (m > f) || (m === f && Math.random() < 0.5);
-    for (let i = 0; i < seats.length; i++) {
-      if (useM && mLeft > 0) { male.push(seats[i]); mLeft--; }
-      else if (fLeft > 0) { female.push(seats[i]); fLeft--; }
-      else if (mLeft > 0) { male.push(seats[i]); mLeft--; }
-      useM = !useM;
-    }
-    return { male: male, female: female };
-  }
-  // 내곽 row: 외곽 col별 성별을 보고 같은 col에는 '반대' 성별 우선 배치 (앞자리 동성 방지)
-  function distRowOpposite(seats, m, f, outerColG) {
-    const male = [], female = [], used = new Set();
-    let mLeft = m, fLeft = f;
-    // 1차: 외곽과 반대 성별이 가능한 자리부터 채움
-    seats.forEach(function(seat){
-      const outerG = outerColG[COLS[seat]];
-      if (outerG === 'M' && fLeft > 0) { female.push(seat); fLeft--; used.add(seat); }
-      else if (outerG === 'F' && mLeft > 0) { male.push(seat); mLeft--; used.add(seat); }
-    });
-    // 2차: 남은 자리에 M/F 교대 (옆자리 동성도 최대한 회피)
-    let useM = (mLeft > fLeft) || (mLeft === fLeft && Math.random() < 0.5);
-    seats.forEach(function(seat){
-      if (used.has(seat)) return;
-      if (useM && mLeft > 0) { male.push(seat); mLeft--; }
-      else if (fLeft > 0) { female.push(seat); fLeft--; }
-      else if (mLeft > 0) { male.push(seat); mLeft--; }
-      useM = !useM;
-    });
-    return { male: male, female: female };
-  }
-  function rowColGender(rowResult) {
-    const map = {};
-    rowResult.male.forEach(function(s){ map[COLS[s]] = 'M'; });
-    rowResult.female.forEach(function(s){ map[COLS[s]] = 'F'; });
-    return map;
-  }
-  const lo = distRow(lo_seats, loD.m, loD.f);
-  const li = distRowOpposite(li_seats, liD.m, liD.f, rowColGender(lo));
-  const ro = distRow(ro_seats, roD.m, roD.f);
-  const ri = distRowOpposite(ri_seats, riD.m, riD.f, rowColGender(ro));
+  const leftPick = pickTableSeats(NUM.lo, NUM.li, leftM, leftF);
+  const rightPick = pickTableSeats(NUM.ro, NUM.ri, rightM, rightF);
 
   return {
-    male: [].concat(lo.male, li.male, ro.male, ri.male),
-    female: [].concat(lo.female, li.female, ro.female, ri.female)
+    male:   [].concat(leftPick.male,   rightPick.male),
+    female: [].concat(leftPick.female, rightPick.female)
   };
 }
 function seatsByGender(key){
@@ -631,7 +604,7 @@ function doMove(){
         if (seat2gender[s2] === myG && myS < s2) sameGenderEdges++;
       });
     });
-    return v * 1000 + sameColFront * 100 + sameGenderEdges * 20 + rep * 5;
+    return v * 1000 + sameColFront * 50 + sameGenderEdges * 20 + rep * 5;
   }
   var best=null, bs=Infinity;
   for (var k=0;k<2000;k++){ var pos=assignOnce(); var sc=scoreOf(pos); if(sc<bs){ bs=sc; best=pos; } if(bs===0) break; }
