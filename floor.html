@@ -401,8 +401,6 @@ function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.fl
 
 let occ = {};
 let cumLeave = 0;
-let waitIsFull = false, waitTM = 0, waitTF = 0;
-const TABLE_MAX_FLOOR = 26;
 let dupSet = new Set();
 let manualMode = false, selA = null;
 let pins = [];
@@ -432,14 +430,9 @@ async function loadSeats(){
     dupSet = new Set(Object.keys(seatCount).filter(function(k){return seatCount[k]>1;}).map(Number));
   } catch(e) { occ = {}; dupSet = new Set(); }
   try {
-    // A1=만석여부, A3=tM, A4=tF, A13=cumLeave 한번에
-    const r2 = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A1:A13')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+    const r2 = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('설정!A13')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
     const d2 = await r2.json();
-    const vv = (d2 && d2.values) ? d2.values : [];
-    waitIsFull = !!(vv[0] && vv[0][0] === 'TRUE');
-    waitTM = (vv[2] && vv[2][0]) ? (parseInt(vv[2][0])||0) : 0;
-    waitTF = (vv[3] && vv[3][0]) ? (parseInt(vv[3][0])||0) : 0;
-    cumLeave = (vv[12] && vv[12][0]) ? (parseInt(vv[12][0])||0) : 0;
+    cumLeave = (d2 && d2.values && d2.values[0] && d2.values[0][0]) ? (parseInt(d2.values[0][0])||0) : 0;
   } catch(e) {}
   renderBoard();
 }
@@ -481,14 +474,7 @@ function renderBoard(){
   const m = list.filter(o=>o.gender==='남성').length;
   const f = list.filter(o=>o.gender==='여성').length;
   const over = list.filter(function(o){var e=elapsedMin(o.lastOrder);return e!=null&&e>=80;}).length;
-  // admin 수기 좌석 기반 입장 상태
-  var waitTotal = waitTM + waitTF;
-  var waitRemain = Math.max(TABLE_MAX_FLOOR - waitTotal, 0);
-  var waitTxt;
-  if (waitRemain === 0) waitTxt = ' · 🔴 만석';
-  else if (waitRemain <= 3) waitTxt = ' · 🟡 ' + waitRemain + '명 입장 가능';
-  else waitTxt = ' · 🟢 입장 가능 (' + waitRemain + '명)';
-  document.getElementById('meta').textContent = '착석 '+list.length+'명 (남'+m+'/여'+f+')'+(over?' · 🔴'+over:'')+' · 영업누적 '+cumLeave+'명'+waitTxt;
+  document.getElementById('meta').textContent = '착석 '+list.length+'명 (남'+m+'/여'+f+')'+(over?' · 🔴'+over:'')+' · 영업누적 '+cumLeave+'명';
   var sInfo = document.getElementById('shuffleInfo'); if (sInfo) sInfo.textContent = shuffleLog.length ? ('🔀 이번 영업 자리 이동 '+shuffleLog.length+'회 · 마지막 '+shuffleLog[shuffleLog.length-1]+' (탭: 전체 시각)') : '🔀 이번 영업 자리 이동 없음';
   renderPairStatus();
 }
