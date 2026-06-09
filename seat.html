@@ -542,14 +542,7 @@ async function loadContext(){
     noticeText = (d2 && d2.values && d2.values[0] && d2.values[0][0]) ? String(d2.values[0][0]) : '';
   } catch(e) {}
 
-  // (1) 셔플 후 첫 1회 카드 뽑기 (rowGuide=TRUE 살아있는 동안)
-  if (oldHere) {
-    document.getElementById('headerTitle').textContent = '자리 이동 안내';
-    startCardShuffle(oldHere.newSeat);
-    return;
-  }
-
-  // (2) 자리에 현재 손님 있음 + 안내 다 본 후 → 본인 확인 모달
+  // (1) 자리에 현재 손님 있음 → 본인 확인 모달 (우선)
   if (activeHere) {
     var genderShort = activeHere.gender === '남성' ? '남' : (activeHere.gender === '여성' ? '여' : '?');
     showIdentityConfirm(
@@ -584,6 +577,13 @@ async function loadContext(){
         }, 600);
       }
     );
+    return;
+  }
+
+  // (2) 자리 비어있고 옛 손님(rowPrev=N) 있음 → 카드 뽑기 (영업 동안 영구)
+  if (oldHere) {
+    document.getElementById('headerTitle').textContent = '자리 이동 안내';
+    startCardShuffle(oldHere.newSeat);
     return;
   }
 
