@@ -378,6 +378,17 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <span class="op-text" id="opText" style="color:var(--text3)">웨이팅 불가</span>
         <span class="seat-remain ok" id="tRemain">남은 자리 26명</span>
       </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:10px;background:var(--surface2);border-radius:8px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">만석 강제 (수동)</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px;">ON일 땐 좌석 상관없이 웨이팅 등록 가능</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0;">
+          <input type="checkbox" id="forceFullToggle" onchange="toggleForceFull(this.checked)" style="opacity:0;width:0;height:0;">
+          <span id="forceFullSlider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;border-radius:26px;transition:.3s;"></span>
+          <span id="forceFullKnob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s;"></span>
+        </label>
+      </div>
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button class="shuffle-btn" id="shuffleBtn" onclick="showShuffle()" disabled style="flex:1;margin-top:0;">🃏 자리 섞기</button>
         <button class="notice-btn" onclick="showNotice()">📢 공지사항</button>
@@ -660,13 +671,17 @@ async function syncSettings() {
         }
         const autoTotal = autoM + autoF;
         const autoIsFull = autoTotal >= TABLE_MAX;
+        const forceFull = localStorage.getItem('forceFullToggle') === '1';
         // 좌석 시트 카운트가 현재 tM/tF와 다르면 자동 동기화
         if (autoM !== (parseInt(seats.tM)||0) || autoF !== (parseInt(seats.tF)||0)) {
           seats.tM = autoM;
           seats.tF = autoF;
-          isFull = autoIsFull;
+          isFull = forceFull ? true : autoIsFull;
           localStorage.setItem('seats', JSON.stringify(seats));
-          // GAS에도 즉시 반영
+          try { syncSeatsToGAS(); } catch(e) {}
+        } else if (forceFull && !isFull) {
+          // 카운트 변화 없지만 force 토글이 켜져있으면 강제 isFull
+          isFull = true;
           try { syncSeatsToGAS(); } catch(e) {}
         }
       }
@@ -824,9 +839,10 @@ function updateSeatUI(prefix, max) {
 function updateOpStatusUI() {
   const dot = document.getElementById('opDot');
   const text = document.getElementById('opText');
+  const forceFull = localStorage.getItem('forceFullToggle') === '1';
   if (isFull) {
     dot.className = 'op-dot on';
-    text.textContent = '만석 — 웨이팅 등록 가능';
+    text.textContent = forceFull ? '만석(강제) — 웨이팅 등록 가능' : '만석 — 웨이팅 등록 가능';
     text.style.color = 'var(--danger)';
   } else {
     dot.className = 'op-dot off';
@@ -1239,6 +1255,29 @@ function deleteLoyalConfirm(phone) {
 }
 
 // 모달 바깥 클릭으로 닫기
+function toggleForceFull(checked) {
+  localStorage.setItem('forceFullToggle', checked ? '1' : '0');
+  applyForceFullUI();
+  // 즉시 isFull 갱신 + GAS 동기화
+  if (checked) {
+    isFull = true;
+  } else {
+    // 자동 카운트 기준으로 재계산
+    const _tt = (parseInt(seats.tM)||0) + (parseInt(seats.tF)||0);
+    isFull = _tt >= TABLE_MAX;
+  }
+  updateOpStatusUI();
+  try { syncSeatsToGAS(); } catch(e) {}
+}
+function applyForceFullUI() {
+  const on = localStorage.getItem('forceFullToggle') === '1';
+  const chk = document.getElementById('forceFullToggle');
+  const slider = document.getElementById('forceFullSlider');
+  const knob = document.getElementById('forceFullKnob');
+  if (chk) chk.checked = on;
+  if (slider) slider.style.background = on ? 'var(--danger)' : '#ccc';
+  if (knob) knob.style.transform = on ? 'translateX(22px)' : 'translateX(0)';
+}
 document.addEventListener('DOMContentLoaded', function() {
   const overlay = document.getElementById('loyalListOverlay');
   if (overlay) {
@@ -1246,6 +1285,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (e.target === overlay) closeLoyalList();
     });
   }
+  applyForceFullUI();
   // 직원 쿠키 자동 로그인 (7일 유효)
   if (document.cookie.split(';').some(c => c.trim().startsWith('wooyeon_staff=1'))) {
     document.getElementById('loginWrap').style.display = 'none';
