@@ -779,7 +779,9 @@ function syncSeatsToGAS() {
   const tF = parseInt(seats.tF)||0;
   const tTotal = tM + tF;
   const remain = Math.max(TABLE_MAX - tTotal, 0);
-  const full = tTotal >= TABLE_MAX;
+  // 만석 강제 토글이 ON이면 좌석 카운트와 무관하게 TRUE
+  const forceFull = localStorage.getItem('forceFullToggle') === '1';
+  const full = forceFull || (tTotal >= TABLE_MAX);
   const opts = { method: 'GET', mode: 'no-cors', keepalive: true, cache: 'no-store' };
   try { fetch(GAS_URL + '?type=setSeatDetail&tM='+tM+'&tF='+tF+'&bM=0&bF=0', opts).catch(function(){}); } catch(e) {}
   try { fetch(GAS_URL + '?type=setSeats&value=' + remain, opts).catch(function(){}); } catch(e) {}
