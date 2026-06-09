@@ -519,8 +519,8 @@ function renderPairStatus(){
   var oCnt = items.filter(function(x){return x.type==='oneway';}).length;
   var html = '<div class="ps-head">🔗 같이앉기 신청 · 상호 '+mCnt+'쌍 · 일방향 '+oCnt+'건</div><div class="ps-list">';
   html += items.map(function(x){
-    if (x.type==='mutual') return '<span class="ps-item mutual">'+x.a+' ↔ '+x.b+' ✓</span>';
-    return '<span class="ps-item oneway">'+x.a+' → '+x.b+'</span>';
+    if (x.type==='mutual') return '<span class="ps-item mutual">'+seatLabel(x.a)+' ↔ '+seatLabel(x.b)+' ✓</span>';
+    return '<span class="ps-item oneway">'+seatLabel(x.a)+' → '+seatLabel(x.b)+'</span>';
   }).join('');
   html += '</div>';
   panel.innerHTML = html;
@@ -1091,8 +1091,4 @@ gRef.on('value', snap => {
   prevWinnerForSnd = v.winner || null;
   prevStateForSnd = v.state;
   lastGame = v;
-  renderGamePanel(v);
-});
-</script>
-</body>
-</html>
+  render
