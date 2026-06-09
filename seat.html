@@ -527,13 +527,14 @@ async function loadContext(){
         var rowPrev = parseInt(row[6]);
         var rowGuide = String(row[8]||'').toUpperCase() === 'TRUE';
         if (rowSeat) activeSeats.add(rowSeat);
-        // 직전자리=N + 안내필요 TRUE: oldHere (셔플 후 첫 1회 카드 뽑기)
-        // rowSeat 같든 다르든 OK — 자리 그대로 손님도 카드 뽑기 받음
+        // 직전자리=N + 안내필요 TRUE: oldHere (셔플로 이동한 옛 손님 — 옛 자리 카드 뽑기)
+        // 자리 그대로 손님도 포함 (rowSeat=seatNum도 OK)
         if (rowPrev === seatNum && rowGuide && !oldHere) {
           oldHere = { id: pad4(row[0]), newSeat: rowSeat, sameSeat: (rowSeat === seatNum) };
         }
-        // 현재자리=N + 안내필요 OFF: activeHere (카드 뽑기 끝난 후 본인확인)
-        if (rowSeat === seatNum && !rowGuide && !activeHere) {
+        // 현재자리=N (rowGuide 무관): activeHere (새 자리 도착 손님 본인확인)
+        // rowGuide=TRUE여도 OK — oldHere가 우선이라 자리에 옛 손님 있으면 카드 뽑기가 먼저
+        if (rowSeat === seatNum && !activeHere) {
           activeHere = { id: pad4(row[0]), gender: row[1] || '' };
         }
       }
@@ -789,7 +790,7 @@ function pickCard(idx){
     document.getElementById('moveResult').classList.remove('hidden');
   }, 1900);
 
-  clearGuide();
+  // clearGuide() 제거: 안내필요는 영업 종료까지 영구 유지 → 옛 자리 QR 매번 카드 뽑기
 }
 </script>
 
