@@ -527,13 +527,13 @@ async function loadContext(){
         var rowPrev = parseInt(row[6]);
         var rowGuide = String(row[8]||'').toUpperCase() === 'TRUE';
         if (rowSeat) activeSeats.add(rowSeat);
-        // 직전자리=N + 안내필요 TRUE: oldHere (셔플로 이동한 옛 손님 — 옛 자리 카드 뽑기)
-        // 자리 그대로 손님도 포함 (rowSeat=seatNum도 OK)
-        if (rowPrev === seatNum && rowGuide && !oldHere) {
+        // 직전자리=N: oldHere — 셔플 후 영업 동안 영구 매칭 (rowGuide 무관)
+        // 직전자리(G열)는 GAS seatMove가 셋팅하면 영업 종료까지 유지
+        // → 옛 자리 QR 찍으면 항상 카드 뽑기
+        if (rowPrev === seatNum && !oldHere) {
           oldHere = { id: pad4(row[0]), newSeat: rowSeat, sameSeat: (rowSeat === seatNum) };
         }
-        // 현재자리=N (rowGuide 무관): activeHere (새 자리 도착 손님 본인확인)
-        // rowGuide=TRUE여도 OK — oldHere가 우선이라 자리에 옛 손님 있으면 카드 뽑기가 먼저
+        // 현재자리=N: activeHere (본인확인용, rowGuide 무관)
         if (rowSeat === seatNum && !activeHere) {
           activeHere = { id: pad4(row[0]), gender: row[1] || '' };
         }
