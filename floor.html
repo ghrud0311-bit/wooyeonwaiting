@@ -579,9 +579,25 @@ function doMove(){
       var ok = sameG ? isDiag(a, b) : (NB[a].indexOf(b) >= 0);
       if (!ok) v++;
     });
-    // === 같은 성별 이웃 페널티 (성별 섞기) ===
+    // === 좌석별 성별 매핑 ===
     var seat2gender = {};
     persons.forEach(function(p){ seat2gender[pos[p.from]] = p.gender; });
+    // === 외-내 같은 col 페널티 (앞자리 동성 방지) — 가장 강하게 ===
+    var sameColFront = 0;
+    ALLSEATS.forEach(function(seat){
+      if (!OUTERSET.has(seat)) return;
+      var myCol = COLS[seat];
+      var myG = seat2gender[seat];
+      if (!myG) return;
+      ALLSEATS.forEach(function(other){
+        if (OUTERSET.has(other)) return;
+        if ((seat<=12) !== (other<=12)) return; // 같은 테이블 안에서만
+        if (COLS[other] === myCol && seat2gender[other] === myG) {
+          sameColFront++;
+        }
+      });
+    });
+    // === 같은 성별 이웃 페널티 (옆 자리) ===
     var sameGenderEdges = 0;
     persons.forEach(function(p){
       var myS = pos[p.from], myG = p.gender;
@@ -589,10 +605,10 @@ function doMove(){
         if (seat2gender[s2] === myG && myS < s2) sameGenderEdges++;
       });
     });
-    return v * 1000 + sameGenderEdges * 20 + rep * 5;
+    return v * 1000 + sameColFront * 100 + sameGenderEdges * 20 + rep * 5;
   }
   var best=null, bs=Infinity;
-  for (var k=0;k<800;k++){ var pos=assignOnce(); var sc=scoreOf(pos); if(sc<bs){ bs=sc; best=pos; } if(bs===0) break; }
+  for (var k=0;k<2000;k++){ var pos=assignOnce(); var sc=scoreOf(pos); if(sc<bs){ bs=sc; best=pos; } if(bs===0) break; }
   var unmet = apins.filter(function(pr){ var a=best[pr[0]], b=best[pr[1]]; var sameG = occ[pr[0]] && occ[pr[1]] && occ[pr[0]].gender===occ[pr[1]].gender; var ok = sameG ? isDiag(a,b) : (NB[a].indexOf(b)>=0); return !ok; }).length;
 
   var msg = persons.length+'명의 자리를 새로 배정할까요?\n(최대한 새로운 이웃과 앉도록 섞어요)';
