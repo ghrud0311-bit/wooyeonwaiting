@@ -1246,6 +1246,12 @@ document.addEventListener('DOMContentLoaded', function() {
       if (e.target === overlay) closeLoyalList();
     });
   }
+  // 직원 쿠키 자동 로그인 (7일 유효)
+  if (document.cookie.split(';').some(c => c.trim().startsWith('wooyeon_staff=1'))) {
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('adminWrap').style.display = 'block';
+    initAdmin();
+  }
 });
 
 
