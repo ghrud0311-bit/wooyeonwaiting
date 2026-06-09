@@ -642,6 +642,36 @@ async function syncSettings() {
 
     }
   } catch(e) {}
+  // === 좌석 시트 active 손님 수를 자동 카운트해서 tM/tF로 사용 (자리 등록/퇴장 자동 반영) ===
+  // seatRecentlyEdited(15초 내 수기 +/-)는 보호 — 그 외엔 좌석 시트가 ground truth
+  if (!(lastSeatEditAt > 0 && (Date.now() - lastSeatEditAt) < 15000)) {
+    try {
+      const sR = await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent('좌석!A:F')+'?key='+API_KEY+'&_='+Date.now(), {cache:'no-store'});
+      const sD = await sR.json();
+      if (sD && sD.values) {
+        let autoM = 0, autoF = 0;
+        for (let i = 1; i < sD.values.length; i++) {
+          const row = sD.values[i];
+          if (String(row[5]) !== 'active') continue;
+          const seat = parseInt(row[4]);
+          if (!seat || seat > 26) continue;  // 1~26번만 (바자리 제외)
+          if (row[1] === '남성') autoM++;
+          else if (row[1] === '여성') autoF++;
+        }
+        const autoTotal = autoM + autoF;
+        const autoIsFull = autoTotal >= TABLE_MAX;
+        // 좌석 시트 카운트가 현재 tM/tF와 다르면 자동 동기화
+        if (autoM !== (parseInt(seats.tM)||0) || autoF !== (parseInt(seats.tF)||0)) {
+          seats.tM = autoM;
+          seats.tF = autoF;
+          isFull = autoIsFull;
+          localStorage.setItem('seats', JSON.stringify(seats));
+          // GAS에도 즉시 반영
+          try { syncSeatsToGAS(); } catch(e) {}
+        }
+      }
+    } catch(e) {}
+  }
   const tMEl = document.getElementById('tM');
   const tFEl = document.getElementById('tF');
   if (tMEl) tMEl.value = seats.tM || 0;
