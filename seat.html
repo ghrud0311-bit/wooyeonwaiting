@@ -527,13 +527,12 @@ async function loadContext(){
         var rowPrev = parseInt(row[6]);
         var rowGuide = String(row[8]||'').toUpperCase() === 'TRUE';
         if (rowSeat) activeSeats.add(rowSeat);
-        // 직전자리=N: oldHere — 셔플 후 영업 동안 영구 매칭 (rowGuide 무관)
-        // 직전자리(G열)는 GAS seatMove가 셋팅하면 영업 종료까지 유지
-        // → 옛 자리 QR 찍으면 항상 카드 뽑기
-        if (rowPrev === seatNum && !oldHere) {
+        // 직전자리=N + 안내필요 살아있음: oldHere (셔플 후 첫 1회 카드 뽑기)
+        // 카드 뽑기 본 후 clearGuide로 rowGuide OFF → 다음부터 매칭 안 됨
+        if (rowPrev === seatNum && rowGuide && !oldHere) {
           oldHere = { id: pad4(row[0]), newSeat: rowSeat, sameSeat: (rowSeat === seatNum) };
         }
-        // 현재자리=N: activeHere (본인확인용, rowGuide 무관)
+        // 현재자리=N: activeHere (rowGuide 무관, 본인확인)
         if (rowSeat === seatNum && !activeHere) {
           activeHere = { id: pad4(row[0]), gender: row[1] || '' };
         }
@@ -542,7 +541,14 @@ async function loadContext(){
     noticeText = (d2 && d2.values && d2.values[0] && d2.values[0][0]) ? String(d2.values[0][0]) : '';
   } catch(e) {}
 
-  // (1) 자리에 현재 손님 있음 → 본인 확인 모달 (우선)
+  // (1) 옛 자리 카드 뽑기 (셔플 후 첫 1회만 — rowGuide=TRUE 살아있는 동안)
+  if (oldHere) {
+    document.getElementById('headerTitle').textContent = '자리 이동 안내';
+    startCardShuffle(oldHere.newSeat);
+    return;
+  }
+
+  // (2) 자리에 현재 손님 있음 → 본인 확인 모달
   if (activeHere) {
     var genderShort = activeHere.gender === '남성' ? '남' : (activeHere.gender === '여성' ? '여' : '?');
     showIdentityConfirm(
@@ -577,13 +583,6 @@ async function loadContext(){
         }, 600);
       }
     );
-    return;
-  }
-
-  // (2) 자리 비어있고 옛 손님(rowPrev=N) 있음 → 카드 뽑기 (영업 동안 영구)
-  if (oldHere) {
-    document.getElementById('headerTitle').textContent = '자리 이동 안내';
-    startCardShuffle(oldHere.newSeat);
     return;
   }
 
@@ -790,7 +789,7 @@ function pickCard(idx){
     document.getElementById('moveResult').classList.remove('hidden');
   }, 1900);
 
-  // clearGuide() 제거: 안내필요는 영업 종료까지 영구 유지 → 옛 자리 QR 매번 카드 뽑기
+  clearGuide();
 }
 </script>
 
