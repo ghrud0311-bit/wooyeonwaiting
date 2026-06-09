@@ -1377,8 +1377,10 @@ function dynamicSeatPoolAdmin(totalM, totalF) {
   const liD = { m: leftM - loD.m, f: leftF - loD.f };
   const roD = splitRow(ro_n, R, rightM, rightF);
   const riD = { m: rightM - roD.m, f: rightF - roD.f };
+  // COLS: 자리 → col 인덱스 (앞자리 매칭용)
+  const COLS_ADMIN = {1:0,2:1,4:2,6:3,8:4,10:5,12:6,3:1,5:2,7:3,9:4,11:5,13:0,14:1,16:2,18:3,20:4,22:5,24:6,26:7,15:1,17:2,19:3,21:4,23:5,25:6};
+  // 외곽 row: M/F 교대 (옆자리 동성 방지)
   function distRow(seats, m, f) {
-    // row 안 자리는 NUM 순서대로 (옆 자리끼리 인접) — M/F 교대 배치로 같은 성별 인접 방지
     const male = [], female = [];
     let mLeft = m, fLeft = f;
     let useM = (m > f) || (m === f && Math.random() < 0.5);
@@ -1390,10 +1392,35 @@ function dynamicSeatPoolAdmin(totalM, totalF) {
     }
     return { male: male, female: female };
   }
+  // 내곽 row: 외곽 col별 성별의 '반대' 성별 우선 배치 (앞자리 동성 방지)
+  function distRowOpposite(seats, m, f, outerColG) {
+    const male = [], female = [], used = new Set();
+    let mLeft = m, fLeft = f;
+    seats.forEach(function(seat){
+      const outerG = outerColG[COLS_ADMIN[seat]];
+      if (outerG === 'M' && fLeft > 0) { female.push(seat); fLeft--; used.add(seat); }
+      else if (outerG === 'F' && mLeft > 0) { male.push(seat); mLeft--; used.add(seat); }
+    });
+    let useM = (mLeft > fLeft) || (mLeft === fLeft && Math.random() < 0.5);
+    seats.forEach(function(seat){
+      if (used.has(seat)) return;
+      if (useM && mLeft > 0) { male.push(seat); mLeft--; }
+      else if (fLeft > 0) { female.push(seat); fLeft--; }
+      else if (mLeft > 0) { male.push(seat); mLeft--; }
+      useM = !useM;
+    });
+    return { male: male, female: female };
+  }
+  function rowColG(r) {
+    const m = {};
+    r.male.forEach(function(s){ m[COLS_ADMIN[s]] = 'M'; });
+    r.female.forEach(function(s){ m[COLS_ADMIN[s]] = 'F'; });
+    return m;
+  }
   const lo = distRow(lo_seats, loD.m, loD.f);
-  const li = distRow(li_seats, liD.m, liD.f);
+  const li = distRowOpposite(li_seats, liD.m, liD.f, rowColG(lo));
   const ro = distRow(ro_seats, roD.m, roD.f);
-  const ri = distRow(ri_seats, riD.m, riD.f);
+  const ri = distRowOpposite(ri_seats, riD.m, riD.f, rowColG(ro));
   // 각 row의 position별 M/F/E 배열 구성
   function buildOcc(rowSeats, rowDist) {
     const setM = new Set(rowDist.male);

@@ -366,9 +366,8 @@ function dynamicSeatPool(totalM, totalF) {
   const roD = splitRow(ro_n, R, rightM, rightF);
   const riD = { m: rightM - roD.m, f: rightF - roD.f };
 
-  // 각 row 셔플 후 앞 M 남자 / 뒤 F 여자
+  // 외곽 row: M/F 교대로 배치 (옆자리 동성 방지)
   function distRow(seats, m, f) {
-    // row 안 자리는 NUM 순서대로 (옆 자리끼리 인접) — M/F 교대 배치로 같은 성별 인접 방지
     const male = [], female = [];
     let mLeft = m, fLeft = f;
     let useM = (m > f) || (m === f && Math.random() < 0.5);
@@ -380,10 +379,37 @@ function dynamicSeatPool(totalM, totalF) {
     }
     return { male: male, female: female };
   }
+  // 내곽 row: 외곽 col별 성별을 보고 같은 col에는 '반대' 성별 우선 배치 (앞자리 동성 방지)
+  function distRowOpposite(seats, m, f, outerColG) {
+    const male = [], female = [], used = new Set();
+    let mLeft = m, fLeft = f;
+    // 1차: 외곽과 반대 성별이 가능한 자리부터 채움
+    seats.forEach(function(seat){
+      const outerG = outerColG[COLS[seat]];
+      if (outerG === 'M' && fLeft > 0) { female.push(seat); fLeft--; used.add(seat); }
+      else if (outerG === 'F' && mLeft > 0) { male.push(seat); mLeft--; used.add(seat); }
+    });
+    // 2차: 남은 자리에 M/F 교대 (옆자리 동성도 최대한 회피)
+    let useM = (mLeft > fLeft) || (mLeft === fLeft && Math.random() < 0.5);
+    seats.forEach(function(seat){
+      if (used.has(seat)) return;
+      if (useM && mLeft > 0) { male.push(seat); mLeft--; }
+      else if (fLeft > 0) { female.push(seat); fLeft--; }
+      else if (mLeft > 0) { male.push(seat); mLeft--; }
+      useM = !useM;
+    });
+    return { male: male, female: female };
+  }
+  function rowColGender(rowResult) {
+    const map = {};
+    rowResult.male.forEach(function(s){ map[COLS[s]] = 'M'; });
+    rowResult.female.forEach(function(s){ map[COLS[s]] = 'F'; });
+    return map;
+  }
   const lo = distRow(lo_seats, loD.m, loD.f);
-  const li = distRow(li_seats, liD.m, liD.f);
+  const li = distRowOpposite(li_seats, liD.m, liD.f, rowColGender(lo));
   const ro = distRow(ro_seats, roD.m, roD.f);
-  const ri = distRow(ri_seats, riD.m, riD.f);
+  const ri = distRowOpposite(ri_seats, riD.m, riD.f, rowColGender(ro));
 
   return {
     male: [].concat(lo.male, li.male, ro.male, ri.male),
