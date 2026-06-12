@@ -208,7 +208,12 @@ input, textarea, select { color-scheme: dark; }
       <div class="seat-badge-label">현재 자리</div>
       <div class="seat-badge-num"><span id="ntSeat">—</span></div>
     </div>
-    <div class="info-box" id="ntInfo">불러오는 중...</div>
+    <div class="notice-box">
+      <div class="notice-item"><span>📶</span><span><b>Wi-Fi</b><br>ID: midninght<br>PW: a123456789</span></div>
+      <div class="notice-item"><span>🚻</span><span><b>화장실 비밀번호</b><br>남자: 반층 아래 - 1009*</span></div>
+      <div class="notice-item"><span>📢</span><span><b>공지</b><br>자리 이동을 원할 경우 직원에게 말씀해주세요.<br>직원에게 언급 없이 15분 이상 자리를 비울 경우 자리를 치울 수 있습니다.</span></div>
+    </div>
+    <div class="info-box" id="ntInfo" style="display:none"></div>
     <button class="btn" onclick="noticeNext()">확인했어요</button>
   </div>
 
@@ -218,7 +223,7 @@ input, textarea, select { color-scheme: dark; }
       <div class="seat-badge-num"><span id="regSeat">—</span></div>
     </div>
     <div class="notice-box">
-      <div class="notice-item"><span>🪑</span><span>입력하신 번호는 <b>자리 관리용</b>으로만 사용돼요.</span></div>
+      <div class="notice-item"><span>🪑</span><span>입력하신 번호는 <b>자리 관리용</b>으로만 사용되고 퇴장 시 바로 삭제됩니다.</span></div>
       <div class="notice-item"><span>🔔</span><span>웨이팅이 있을 땐, 마지막 주문 후 <b>90분</b>이 지나면 추가 주문을 부탁드릴 수 있어요.</span></div>
       <div class="notice-item"><span>↔️</span><span>자리 이동 안내가 오면, 안내된 번호로 옮겨주세요.</span></div>
     </div>
@@ -572,13 +577,14 @@ async function loadContext(){
         } catch(e) {}
         // 잠시 후 새 등록 (시트 반영 약간 기다림)
         setTimeout(function() {
-          if (noticeText && noticeText.trim()) {
+          {
             document.getElementById('ntSeat').innerHTML = seatBadge(seatNum);
-            document.getElementById('ntInfo').textContent = noticeText;
+            if (noticeText && noticeText.trim()) {
+              document.getElementById('ntInfo').textContent = noticeText;
+              document.getElementById('ntInfo').style.display = '';
+            }
             document.getElementById('headerTitle').textContent = '안내사항';
             show('noticeView');
-          } else {
-            goToReg();
           }
         }, 600);
       }
@@ -586,16 +592,14 @@ async function loadContext(){
     return;
   }
 
-  // (3) 빈 자리 → 안내사항 페이지 (안내 텍스트 있으면) → 등록 폼
+  // (3) 빈 자리 → 안내사항 페이지 (wifi/화장실/공지 + 옵션 noticeText) → 등록 폼
+  document.getElementById('ntSeat').innerHTML = seatBadge(seatNum);
   if (noticeText && noticeText.trim()) {
-    document.getElementById('ntSeat').innerHTML = seatBadge(seatNum);
     document.getElementById('ntInfo').textContent = noticeText;
-    document.getElementById('headerTitle').textContent = '안내사항';
-    show('noticeView');
-  } else {
-    // 안내 텍스트 없으면 바로 등록 폼
-    goToReg();
+    document.getElementById('ntInfo').style.display = '';
   }
+  document.getElementById('headerTitle').textContent = '안내사항';
+  show('noticeView');
 }
 
 
