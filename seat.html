@@ -210,10 +210,9 @@ input, textarea, select { color-scheme: dark; }
     </div>
     <div class="notice-box">
       <div class="notice-item"><span>📶</span><span><b>Wi-Fi</b><br>ID: midninght<br>PW: a123456789</span></div>
-      <div class="notice-item"><span>🚻</span><span><b>화장실 비밀번호</b><br>남자: 반층 아래 - 1009*</span></div>
-      <div class="notice-item"><span>📢</span><span><b>공지</b><br>자리 이동을 원할 경우 직원에게 말씀해주세요.<br>직원에게 언급 없이 15분 이상 자리를 비울 경우 자리를 치울 수 있습니다.</span></div>
+      <div class="notice-item"><span>🚻</span><span><b>화장실</b><br>남자: 반층 아래 (비밀번호 1009*)<br>여자: 반층 위 (비밀번호 없음)</span></div>
+      <div class="notice-item"><span>📢</span><span><b>공지</b><br>자리 이동을 원할 경우 직원에게 말씀해주세요.<br>직원에게 언급 없이 15분 이상 자리를 비울 경우 자리를 치울 수 있습니다.<br>물과 기본안주는 셀프입니다.</span></div>
     </div>
-    <div class="info-box" id="ntInfo" style="display:none"></div>
     <button class="btn" onclick="noticeNext()">확인했어요</button>
   </div>
 
@@ -579,10 +578,6 @@ async function loadContext(){
         setTimeout(function() {
           {
             document.getElementById('ntSeat').innerHTML = seatBadge(seatNum);
-            if (noticeText && noticeText.trim()) {
-              document.getElementById('ntInfo').textContent = noticeText;
-              document.getElementById('ntInfo').style.display = '';
-            }
             document.getElementById('headerTitle').textContent = '안내사항';
             show('noticeView');
           }
@@ -592,12 +587,8 @@ async function loadContext(){
     return;
   }
 
-  // (3) 빈 자리 → 안내사항 페이지 (wifi/화장실/공지 + 옵션 noticeText) → 등록 폼
+  // (3) 빈 자리 → 안내사항 페이지 → 등록 폼
   document.getElementById('ntSeat').innerHTML = seatBadge(seatNum);
-  if (noticeText && noticeText.trim()) {
-    document.getElementById('ntInfo').textContent = noticeText;
-    document.getElementById('ntInfo').style.display = '';
-  }
   document.getElementById('headerTitle').textContent = '안내사항';
   show('noticeView');
 }
